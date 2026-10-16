@@ -2,73 +2,143 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gothic Mage Circle - DepthGlow preview</title>
+<title>Gothic Mage Circle — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:#0a0a0f;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-
-.bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%,#1e1b4b 0%,#0b0914 65%)}
-.ring{position:absolute;left:50%;top:50%;translate:-50% -50%;animation:spinCW 40s linear infinite}
-.ring.r2{animation:spinCCW 55s linear infinite}
-.ring.r3{animation:spinCW 70s linear infinite}
-@keyframes spinCW{to{rotate:360deg}}
-@keyframes spinCCW{to{rotate:-360deg}}
-.rune-float{position:absolute;color:#a78bfa;font-size:18px;opacity:.7;animation:up 11s linear infinite}
-@keyframes up{to{translate:0 -30vh;opacity:0;rotate:40deg}}
-.candle{position:absolute;width:10px;height:14px;border-radius:50% 50% 40% 40%;background:radial-gradient(#fde68a,#f59e0b 60%,transparent);animation:cf 2.6s ease-in-out infinite}
-@keyframes cf{50%{scale:1.15 .9;opacity:.85}}
-.cfloor{position:absolute;width:70px;height:18px;border-radius:50%;background:radial-gradient(rgba(251,191,36,.35),transparent 70%)}
-canvas{position:absolute;inset:0}
-
-.content{position:relative;z-index:5;text-align:center;padding:0 24px;max-width:760px}
-h1{font-size:clamp(2.2rem,6vw,4.2rem);line-height:1.05;letter-spacing:-.03em;font-weight:800}
-p.sub{color:#a1a1b3;font-size:clamp(.95rem,2vw,1.15rem);margin-top:16px;line-height:1.6}
-.tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(255,255,255,.22);padding:6px 14px;border-radius:999px;margin-bottom:22px;color:#cfcfe0}
+body{margin:0;height:100vh;background:#07050c;overflow:hidden}
+canvas{display:block}
+.ui{position:fixed;inset:0;pointer-events:none;z-index:3}
+.grain{position:absolute;inset:0;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,transparent 35%,rgba(0,0,0,.7) 100%)}
+.r{display:block;overflow:hidden}
+.r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes up{to{transform:translateY(0)}}
+h1{position:absolute;left:0;right:0;top:12%;text-align:center;font-family:system-ui,sans-serif;
+  font-size:clamp(1.6rem,4vw,2.9rem);letter-spacing:.08em;text-transform:uppercase;color:#c4b5fd;
+  text-shadow:0 0 40px rgba(139,92,246,.6);font-weight:800;margin:0}
+p{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 3.8em);font-family:system-ui,sans-serif;
+  color:#8b7fb0;font-size:clamp(.78rem,1.5vw,.95rem);max-width:420px;line-height:1.6;text-align:center;
+  padding:0 20px;text-shadow:0 2px 12px #000}
+.tag{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 2.4em);font-family:system-ui,sans-serif;
+  font-size:11px;letter-spacing:.16em;color:#a78bfa;border:1px solid rgba(167,139,250,.45);padding:5px 12px;
+  border-radius:999px;display:inline-block;background:rgba(7,5,12,.5);backdrop-filter:blur(6px);text-transform:uppercase}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important}}
 </style>
 </head>
 <body>
-
-<div class="bg"></div>
-<canvas id="stars"></canvas>
-<svg class="ring r3" width="560" height="560" viewBox="0 0 560 560"><circle cx="280" cy="280" r="258" stroke="#8b5cf6" stroke-width="1.5" fill="none" stroke-dasharray="18 10" opacity=".5"/></svg>
-<svg class="ring r2" width="440" height="440" viewBox="0 0 440 440"><circle cx="220" cy="220" r="208" stroke="#a78bfa" stroke-width="2" fill="none"/><polygon points="220,40 360,300 80,300" stroke="#c4b5fd" stroke-width="1.5" fill="none" opacity=".7"/><polygon points="220,400 80,140 360,140" stroke="#c4b5fd" stroke-width="1.5" fill="none" opacity=".7"/></svg>
-<svg class="ring" width="320" height="320" viewBox="0 0 320 320"><circle cx="160" cy="160" r="150" stroke="#c4b5fd" stroke-width="2.5" fill="none"/><circle cx="160" cy="160" r="120" stroke="#8b5cf6" stroke-width="1" fill="none" stroke-dasharray="6 6"/></svg>
-<svg style="position:absolute;left:50%;top:56%;translate:-50% -50%;z-index:4" width="220" height="340" viewBox="0 0 220 340">
-<path d="M110 30 L86 66 L90 96 Q60 110 56 160 L40 336 L180 336 L164 160 Q160 110 130 96 L134 66 Z" fill="#0b0914" stroke="#312e81" stroke-width="3"/>
-<path d="M56 160 L18 120 M164 160 L202 120" stroke="#0b0914" stroke-width="16" stroke-linecap="round"/>
-</svg>
-<div id="frunes"></div>
-<div id="candles"></div>
-
-<div class="content">
-<span class="tag">DepthGlow preview</span>
-<h1>Gothic Mage Circle</h1>
-<p class="sub">Live demo — the paid prompt rebuilds this scene and more in your AI.</p>
+<div class="ui"><div class="vig"></div><div class="grain"></div>
+<span class="r tag"><span>Max · three.js shaders</span></span>
+<h1><span class="r"><span>Gothic mage</span></span><br><span class="r"><span>circle</span></span></h1>
+<p><span class="r"><span>A rotating arcane seal drawn with procedural canvas textures — runes, rings, glyphs.</span></span></p>
 </div>
+<script src="../../js/vendor/three.min.js"></script>
 <script>
 (function(){
-  // starfield
-  var cv=document.getElementById('stars'),cx=cv.getContext('2d');
-  function size(){cv.width=innerWidth;cv.height=innerHeight}
-  size();addEventListener('resize',size);
-  var S=[];for(var i=0;i<90;i++)S.push({x:Math.random(),y:Math.random(),p:Math.random()*7});
-  (function loop(t){
-    cx.clearRect(0,0,cv.width,cv.height);
-    S.forEach(function(s){cx.fillStyle='rgba(224,231,255,'+(0.3+0.5*Math.abs(Math.sin(t*0.001+s.p)))+')';cx.fillRect(s.x*cv.width,s.y*cv.height,1.6,1.6)});
-    requestAnimationFrame(loop);
-  })(0);
-  // floating runes
-  var host=document.getElementById('frunes'),g=['ᚲ','ᛇ','ᛚ','ᛞ','ᛟ','ᛁ','ᛉ','ᚾ'];
-  for(var r=0;r<14;r++){var d=document.createElement('div');d.className='rune-float';d.textContent=g[r%g.length];
-    d.style.left=(10+Math.random()*80)+'%';d.style.top=(30+Math.random()*50)+'%";
-    d.style.animationDuration=(9+Math.random()*5)+'s';d.style.animationDelay=(-Math.random()*11)+'s';host.appendChild(d);}
-  // candles
-  var ch=document.getElementById('candles');
-  for(var c=0;c<5;c++){var f=document.createElement('div');f.className='candle';
-    f.style.left=(14+c*18)+'%';f.style.bottom='8vh';f.style.animationDuration=(2.2+Math.random()*.9)+'s';
-    var fl=document.createElement('div');fl.className='cfloor';fl.style.left=((14+c*18)-1.2)+'%';fl.style.bottom='7vh';
-    ch.appendChild(f);ch.appendChild(fl);}
+  var W=innerWidth,H=innerHeight;
+  var scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x07050c,.07);
+  var camera=new THREE.PerspectiveCamera(50,W/H,.1,80);camera.position.set(0,4.6,6.4);
+  var renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+
+  scene.add(new THREE.AmbientLight(0x3b2d5c,.6));
+  var moon=new THREE.DirectionalLight(0xc4b5fd,.9);moon.position.set(3,8,2);scene.add(moon);
+  var violet=new THREE.PointLight(0x8b5cf6,2.6,20);violet.position.set(0,1.4,0);scene.add(violet);
+
+  // ground
+  var floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),
+    new THREE.MeshStandardMaterial({color:0x0b0812,roughness:.7}));
+  floor.rotation.x=-Math.PI/2;scene.add(floor);
+  // gothic pillars
+  var pilMat=new THREE.MeshStandardMaterial({color:0x171226,roughness:.6});
+  [-1,1].forEach(function(s){
+    var pil=new THREE.Mesh(new THREE.CylinderGeometry(.35,.42,7,8),pilMat);pil.position.set(s*3.6,3.5,-3.2);scene.add(pil);
+    var cap=new THREE.Mesh(new THREE.BoxGeometry(1,.4,1),pilMat);cap.position.set(s*3.6,7.1,-3.2);scene.add(cap);
+  });
+
+  // procedural magic circle texture (canvas)
+  function makeCircle(size,rings,glow){
+    var c=document.createElement('canvas');c.width=c.height=size;var x=c.getContext('2d');
+    x.clearRect(0,0,size,size);
+    var cx=size/2,cy=size/2;
+    x.strokeStyle=glow;x.fillStyle=glow;x.lineWidth=3;x.shadowColor=glow;x.shadowBlur=18;
+    rings.forEach(function(r){x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke();});
+    // rune ticks
+    for(var i=0;i<28;i++){var a=i/28*Math.PI*2;
+      x.save();x.translate(cx,cy);x.rotate(a);
+      x.fillRect(rings[1]-8,-3,16,6);
+      x.restore();}
+    // inner star
+    x.beginPath();
+    for(var k=0;k<5;k++){var a2=-Math.PI/2+k*2*Math.PI*2/5;
+      var px=cx+Math.cos(a2)*(rings[0]-18),py=cy+Math.sin(a2)*(rings[0]-18);
+      k?x.lineTo(px,py):x.moveTo(px,py);}
+    x.closePath();x.stroke();
+    // glyph dots
+    for(var g=0;g<10;g++){var ag=g/10*Math.PI*2+.3;
+      x.beginPath();x.arc(cx+Math.cos(ag)*(rings[2]-14),cy+Math.sin(ag)*(rings[2]-14),4,0,Math.PI*2);x.fill();}
+    return new THREE.CanvasTexture(c);
+  }
+  var texA=makeCircle(512,[150,200,240],'#a78bfa');
+  var texB=makeCircle(512,[120,185,230],'#7c3aed');
+  var texC=makeCircle(512,[170,210,245],'#c4b5fd');
+
+  var seals=[];
+  function seal(tex,y,dir,sc){
+    var m=new THREE.Mesh(new THREE.PlaneGeometry(7*sc,7*sc),
+      new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false,opacity:.85}));
+    m.rotation.x=-Math.PI/2;m.position.y=y;scene.add(m);seals.push({m:m,dir:dir});return m;
+  }
+  seal(texA,.02,1,1); seal(texB,.35,-.6,.72); seal(texC,.8,.35,.5);
+
+  // vertical rune column (particles rising through circle)
+  var N=400,pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  for(var i=0;i<N;i++){
+    var a=Math.random()*Math.PI*2,r=Math.random()*2.6;
+    pos[i*3]=Math.cos(a)*r;pos[i*3+1]=Math.random()*4;pos[i*3+2]=Math.sin(a)*r;
+    col[i*3]=.65+Math.random()*.35;col[i*3+1]=.45+Math.random()*.3;col[i*3+2]=1;
+  }
+  var pg=new THREE.BufferGeometry();
+  pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  pg.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var pts=new THREE.Points(pg,new THREE.PointsMaterial({size:.06,vertexColors:true,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false}));
+  scene.add(pts);
+
+  // floating grimoire
+  var book=new THREE.Group();
+  var pageMat=new THREE.MeshStandardMaterial({color:0xefe7d5,roughness:.9});
+  var lP=new THREE.Mesh(new THREE.BoxGeometry(.7,.05,.9),pageMat);lP.position.x=-.35;lP.rotation.z=.12;
+  var rP=new THREE.Mesh(new THREE.BoxGeometry(.7,.05,.9),pageMat);rP.position.x=.35;rP.rotation.z=-.12;
+  var cover=new THREE.Mesh(new THREE.BoxGeometry(1.55,.04,1),new THREE.MeshStandardMaterial({color:0x3b1d6e,roughness:.5}));
+  cover.position.y=-.05;
+  book.add(lP,rP,cover);book.position.set(0,2.1,0);scene.add(book);
+  var bookGlow=new THREE.PointLight(0xa78bfa,1.6,6);bookGlow.position.set(0,2.1,0);scene.add(bookGlow);
+
+  var mx=0,my=0;
+  document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);my=(e.clientY/H-.5);},{passive:true});
+
+  var clock=new THREE.Clock(),t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),.05);t+=dt;
+    seals.forEach(function(s){s.m.rotation.z+=dt*.4*s.dir;});
+    var pa=pg.attributes.position.array;
+    for(var i=0;i<N;i++){pa[i*3+1]+=dt*(.5+(i%7)*.08);if(pa[i*3+1]>4.4)pa[i*3+1]=0;}
+    pg.attributes.position.needsUpdate=true;
+    book.position.y=2.1+Math.sin(t*1.6)*.12;book.rotation.y=Math.sin(t*.7)*.18;
+    book.rotation.z=Math.sin(t*1.1)*.04;
+    bookGlow.intensity=1.4+Math.sin(t*4)*.5;
+    violet.intensity=2.2+Math.sin(t*2.2)*.6;
+    camera.position.x+=((mx*2.2)-camera.position.x)*.045;
+    camera.position.y+=((4.6-my*1.4)-camera.position.y)*.045;
+    camera.lookAt(0,1.2,0);
+    renderer.render(scene,camera);
+  }
+  animate();
+  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);});
 })();
 </script>
 </body>

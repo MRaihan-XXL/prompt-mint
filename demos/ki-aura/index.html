@@ -2,94 +2,122 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ki Aura Burst - DepthGlow preview</title>
+<title>Ki Aura Burst — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:#0a0a0f;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-
-.aura{position:absolute;left:50%;top:52%;translate:-50% -50%;width:280px;height:420px;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 80%,#facc15 0%,#f97316 40%,transparent 70%);opacity:.55;transform-origin:50% 100%;animation:flame 1.6s ease-in-out infinite alternate}
-.aura.b{width:340px;height:480px;opacity:.3;animation-duration:2s}
-.aura.c{width:400px;height:540px;opacity:.18;animation-duration:2.4s}
-@keyframes flame{to{scale:1.12 1.06}}
-.ground{position:absolute;left:50%;top:78%;translate:-50%;width:360px;height:60px;border-radius:50%;background:radial-gradient(ellipse,rgba(249,115,22,.7),transparent 70%);animation:gp 1.6s ease-in-out infinite alternate}
-@keyframes gp{to{scale:1.05}}
-canvas{position:absolute;inset:0;z-index:2}
-.meter{position:absolute;left:50%;bottom:7vh;translate:-50%;width:240px;height:8px;border-radius:99px;background:#27272a;border:1px solid #52525b;z-index:9;overflow:hidden}
-.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#facc15,#f97316);animation:fill 6s linear forwards}
-@keyframes fill{to{width:100%}}
-.flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:10;pointer-events:none;animation:flash .08s step-end 6s}
-@keyframes flash{0%,99%{opacity:0}100%{opacity:.8}}
-
-.content{position:relative;z-index:5;text-align:center;padding:0 24px;max-width:760px}
-h1{font-size:clamp(2.2rem,6vw,4.2rem);line-height:1.05;letter-spacing:-.03em;font-weight:800}
-p.sub{color:#a1a1b3;font-size:clamp(.95rem,2vw,1.15rem);margin-top:16px;line-height:1.6}
-.tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(255,255,255,.22);padding:6px 14px;border-radius:999px;margin-bottom:22px;color:#cfcfe0}
+body{margin:0;height:100vh;background:#040208;overflow:hidden}
+canvas{display:block}
+.ui{position:fixed;inset:0;pointer-events:none;z-index:3}
+.grain{position:absolute;inset:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.r{display:block;overflow:hidden}
+.r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes up{to{transform:translateY(0)}}
+h1{position:absolute;left:30px;bottom:18%;font-family:system-ui,sans-serif;
+  font-size:clamp(1.7rem,4.2vw,3.1rem);letter-spacing:.03em;text-transform:uppercase;color:#fde68a;
+  text-shadow:0 0 40px rgba(250,204,21,.55);font-weight:900;margin:0}
+p{position:absolute;left:30px;bottom:12%;font-family:system-ui,sans-serif;color:#b5a36a;
+  font-size:clamp(.8rem,1.6vw,1rem);max-width:400px;line-height:1.6;margin:0;text-shadow:0 2px 12px #000}
+.tag{position:absolute;left:30px;bottom:calc(18% + 4em);font-family:system-ui,sans-serif;font-size:11px;
+  letter-spacing:.16em;color:#fbbf24;border:1px solid rgba(251,191,36,.45);padding:5px 12px;border-radius:999px;
+  display:inline-block;background:rgba(4,2,8,.5);backdrop-filter:blur(6px);text-transform:uppercase}
+.hint{position:absolute;right:30px;bottom:24px;font-family:system-ui,sans-serif;color:#6b5e3a;font-size:12px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important}}
 </style>
 </head>
 <body>
-
-<div class="aura c"></div><div class="aura b"></div><div class="aura"></div>
-<canvas id="ki"></canvas>
-<svg style="position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:4" width="240" height="360" viewBox="0 0 240 360">
-<path d="M120 30 L96 6 L92 40 L64 16 L74 50 L44 40 L70 68 L36 74 L74 88 L120 78 L166 88 L204 74 L170 68 L196 40 L166 50 L176 16 L148 40 L144 6 Z" fill="#0c0a09"/>
-<path d="M84 84 Q84 64 120 64 Q156 64 156 84 L156 120 Q156 140 140 148 L144 170 Q186 182 190 230 L200 356 L40 356 L50 230 Q54 182 96 170 L100 148 Q84 140 84 120Z" fill="#0c0a09"/>
-<rect x="58" y="196" width="34" height="90" rx="16" fill="#0c0a09" transform="rotate(14 75 240)"/>
-<rect x="148" y="196" width="34" height="90" rx="16" fill="#0c0a09" transform="rotate(-14 165 240)"/>
-</svg>
-<div id="bolts"></div>
-<div class="ground"></div>
-<div class="meter"><i></i></div>
-<div class="flash"></div>
-
-<div class="content">
-<span class="tag">DepthGlow preview</span>
-<h1>Ki Aura Burst</h1>
-<p class="sub">Live demo — the paid prompt rebuilds this scene and more in your AI.</p>
+<div class="ui">
+<div class="grain"></div>
+<span class="r tag"><span>Max · three.js particles</span></span>
+<h1><span class="r"><span>Ki aura</span></span><br><span class="r"><span>burst</span></span></h1>
+<p><span class="r"><span>2000 GPU particles erupting into a rising energy column — pure anime energy.</span></span></p>
+<div class="hint">Move to bend the aura · click to detonate</div>
 </div>
+<script src="../../js/vendor/three.min.js"></script>
 <script>
 (function(){
-  // ki particle canvas
-  var cv=document.getElementById('ki'),cx=cv.getContext('2d');
-  function size(){cv.width=innerWidth;cv.height=innerHeight}
-  size();addEventListener('resize',size);
-  var P=[];
-  setInterval(function(){
-    P.push({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*0.78,vy:-(1.5+Math.random()*3),vx:(Math.random()-.5)*.6,a:1,r:1+Math.random()*2});
-  },16);
-  (function loop(){
-    cx.clearRect(0,0,cv.width,cv.height);
-    P=P.filter(function(p){p.y+=p.vy;p.x+=p.vx+Math.sin(p.y*.02)*.4;p.a-=.012;return p.a>0});
-    P.forEach(function(p){cx.fillStyle='rgba(250,204,21,'+p.a+')';cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill()});
-    requestAnimationFrame(loop);
-  })();
-  // lightning bolts
-  var host=document.getElementById('bolts');
-  for(var b=0;b<5;b++){(function(){
-    var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none';
-    var path=document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('stroke','#fff');path.setAttribute('stroke-width','2');path.setAttribute('fill','none');
-    path.style.filter='drop-shadow(0 0 6px #facc15)';
-    svg.appendChild(path);host.appendChild(svg);
-    function strike(){
-      var x=innerWidth/2+(Math.random()-.5)*260,y=innerHeight*0.25,d='M'+x+' '+y;
-      var cxp=x,cyp=y;
-      for(var i=0;i<6;i++){cxp+=(Math.random()-.5)*60;cyp+=30+Math.random()*40;d+=' L'+cxp+' '+cyp;}
-      path.setAttribute('d',d);svg.style.opacity=1;
-      setTimeout(function(){svg.style.opacity=0},90);
-      setTimeout(strike,400+Math.random()*500);
+  var W=innerWidth,H=innerHeight;
+  var scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x040208,.05);
+  var camera=new THREE.PerspectiveCamera(50,W/H,.1,100);camera.position.set(0,2.4,7.5);
+  var renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+
+  // ground disc
+  var disc=new THREE.Mesh(new THREE.CircleGeometry(3.2,48),
+    new THREE.MeshBasicMaterial({color:0x1a1005,transparent:true,opacity:.6}));
+  disc.rotation.x=-Math.PI/2;disc.position.y=-1.2;scene.add(disc);
+  var ring=new THREE.Mesh(new THREE.RingGeometry(3,3.12,64),
+    new THREE.MeshBasicMaterial({color:0xfbbf24,transparent:true,opacity:.55,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=-1.19;scene.add(ring);
+
+  // core glow sphere
+  var core=new THREE.Mesh(new THREE.SphereGeometry(.4,24,24),
+    new THREE.MeshBasicMaterial({color:0xfde68a,transparent:true,opacity:.9}));
+  scene.add(core);
+  var halo=new THREE.Mesh(new THREE.SphereGeometry(.55,24,24),
+    new THREE.MeshBasicMaterial({color:0xfbbf24,transparent:true,opacity:.2,blending:THREE.AdditiveBlending,depthWrite:false}));
+  scene.add(halo);
+
+  // particle system (CPU-sim, GPU-drawn — no external deps)
+  var N=2000;
+  var pos=new Float32Array(N*3),vel=new Float32Array(N*3),life=new Float32Array(N);
+  var col=new Float32Array(N*3);
+  function spawn(i,burst){
+    var a=Math.random()*Math.PI*2, r=Math.random()*(burst?2.4:.5);
+    pos[i*3]=Math.cos(a)*r; pos[i*3+1]=-1.2+Math.random()*(burst?.3:.2); pos[i*3+2]=Math.sin(a)*r;
+    var up=burst?(3.5+Math.random()*5):(2+Math.random()*3);
+    vel[i*3]=Math.cos(a)*(burst?.4:.15)*Math.random();
+    vel[i*3+1]=up; vel[i*3+2]=Math.sin(a)*(burst?.4:.15)*Math.random();
+    life[i]=.6+Math.random()*.9;
+    var warm=Math.random();
+    col[i*3]=1; col[i*3+1]=.6+warm*.35; col[i*3+2]=.15+warm*.35;
+  }
+  for(var i=0;i<N;i++){spawn(i,false);life[i]=Math.random()*1.5;}
+  var geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:.075,vertexColors:true,transparent:true,opacity:.95,
+    blending:THREE.AdditiveBlending,depthWrite:false});
+  var pts=new THREE.Points(geo,mat);scene.add(pts);
+
+  // mouse bend
+  var mx=0,my=0;
+  document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);my=(e.clientY/H-.5);},{passive:true});
+  document.addEventListener('click',function(){
+    for(var i=0;i<N;i++)spawn(i,true);
+    halo.scale.setScalar(2.6);
+  });
+
+  var clock=new THREE.Clock(),t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),.05);t+=dt;
+    var pa=geo.attributes.position.array, ca=geo.attributes.color.array;
+    for(var i=0;i<N;i++){
+      life[i]-=dt;
+      if(life[i]<=0){spawn(i,false);continue;}
+      vel[i*3]+=mx*.6*dt; vel[i*3+2]+=mx*.4*dt;
+      vel[i*3+1]-=6*dt; // gravity pulls back down
+      pos[i*3]+=vel[i*3]*dt; pos[i*3+1]+=vel[i*3+1]*dt; pos[i*3+2]+=vel[i*3+2]*dt;
+      if(pos[i*3+1]<-1.2){pos[i*3+1]=-1.2;vel[i*3+1]*=-.35;}
+      var f=Math.min(life[i],1);
+      ca[i*3+1]=col[i*3+1]*f; ca[i*3+2]=col[i*3+2]*f;
     }
-    setTimeout(strike,Math.random()*800);
-  })();}
-  // screen shake while meter fills (first 6s)
-  var t0=Date.now();
-  (function shake(){
-    if(Date.now()-t0<6000){
-      document.body.style.translate=(Math.random()*4-2)+'px '+(Math.random()*4-2)+'px';
-      setTimeout(shake,120);
-    } else document.body.style.translate='';
-  })();
+    geo.attributes.position.needsUpdate=true;geo.attributes.color.needsUpdate=true;
+    core.scale.setScalar(1+Math.sin(t*6)*.08); halo.scale.multiplyScalar(.94);
+    ring.scale.setScalar(1+Math.sin(t*2)*.03);
+    ring.material.opacity=.4+Math.sin(t*4)*.15;
+    camera.position.x+=((mx*2)-camera.position.x)*.04;
+    camera.position.y+=((2.4-my*1.2)-camera.position.y)*.04;
+    camera.lookAt(0,1.4,0);
+    renderer.render(scene,camera);
+  }
+  animate();
+  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);});
 })();
 </script>
 </body>

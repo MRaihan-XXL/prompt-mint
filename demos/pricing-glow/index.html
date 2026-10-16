@@ -7,7 +7,24 @@
 <title>Pricing Glow — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#08060f;color:#f3f1f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:70px 22px}
+body{background:#08060f;color:#f3f1f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:70px 22px;position:relative;min-height:100vh;overflow-x:hidden}
+.bg-mesh{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(600px 440px at 15% 20%,rgba(251,191,36,.08),transparent 70%),
+    radial-gradient(560px 400px at 85% 75%,rgba(244,114,182,.08),transparent 70%),
+    radial-gradient(480px 360px at 50% 50%,rgba(167,139,250,.05),transparent 70%);
+  will-change:transform}
+.cursor-glow{position:fixed;width:380px;height:380px;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle,rgba(244,114,182,.07),transparent 65%);transform:translate(-50%,-50%);
+  opacity:0;transition:opacity .4s;will-change:left,top}
+.head,.plans{position:relative;z-index:2}
+.card{opacity:0;transform:translateY(28px);animation:cin .7s cubic-bezier(.16,1,.3,1) forwards}
+.plans .card:nth-child(1){animation-delay:.1s}.pop-wrap .card{animation-delay:.25s}.plans .card:nth-child(3){animation-delay:.4s}
+@keyframes cin{to{opacity:1;transform:translateY(0)}}
+.pop-wrap .card.pop{transform:translateY(28px) scale(1.05)}
+@keyframes cinpop{to{opacity:1;transform:translateY(0) scale(1.05)}}
+.pop-wrap .card.pop{animation-name:cinpop}
+.grain{position:fixed;inset:0;z-index:50;opacity:.04;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .head{text-align:center;max-width:640px;margin:0 auto}
 .head h1{font-size:clamp(2rem,5vw,3rem);letter-spacing:-.03em;font-weight:800}
 .head p{color:#a29fb3;margin-top:12px}
@@ -37,6 +54,8 @@ li.off{color:#6b6880}li.off .ck{color:#6b6880}
 </style>
 </head>
 <body>
+<div class="bg-mesh" id="bgmesh"></div>
+<div class="cursor-glow" id="cglow"></div>
 <div class="head">
   <h1>Pricing that scales with you</h1>
   <p>Start free, upgrade when you're ready. Cancel anytime.</p>
@@ -71,6 +90,14 @@ function set(annual){
   });
 }
 m.onclick=function(){set(false)};y.onclick=function(){set(true)};
+// 2.5D: cursor glow + mesh parallax + grain
+var cglow=document.getElementById('cglow'),bgmesh=document.getElementById('bgmesh');
+document.addEventListener('mousemove',function(e){
+  cglow.style.left=e.clientX+'px';cglow.style.top=e.clientY+'px';cglow.style.opacity='1';
+  var x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
+  bgmesh.style.transform='translate('+(x*-16)+'px,'+(y*-12)+'px)';
+},{passive:true});
+var g=document.createElement('div');g.className='grain';document.body.appendChild(g);
 </script>
 </body>
 </html>

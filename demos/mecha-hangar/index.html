@@ -2,75 +2,131 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mecha Hangar - DepthGlow preview</title>
+<title>Mecha Hangar — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:#0a0a0f;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-
-.floor{position:absolute;inset:40% -20% -20%;background:repeating-linear-gradient(90deg,#164e63 0 2px,transparent 2px 60px),repeating-linear-gradient(0deg,#164e63 0 2px,transparent 2px 60px);transform:perspective(500px) rotateX(72deg);opacity:.5}
-.rim{position:absolute;top:12%;bottom:24%;width:10px;background:#22d3ee;box-shadow:0 0 30px 6px rgba(34,211,238,.5)}
-.hazard{position:absolute;left:0;right:0;bottom:6vh;height:26px;background:repeating-linear-gradient(45deg,#eab308 0 18px,#0a0a0f 18px 36px);opacity:.85}
-.mecha{position:absolute;left:50%;top:46%;translate:-50% -50%;z-index:3;animation:breathe 5s ease-in-out infinite alternate}
-@keyframes breathe{to{translate:-50% calc(-50% - 6px)}}
-.panel{position:absolute;border:3px solid #0f172a}
-.shadow-tone{position:absolute;background:rgba(15,23,42,.55)}
-.visor{position:absolute;height:12px;background:#22d3ee;box-shadow:0 0 18px #22d3ee;border:2px solid #0f172a;animation:flick 7s step-end infinite}
-@keyframes flick{0%,96%,100%{opacity:1}97%{opacity:.3}}
-.steam{position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.12);filter:blur(40px);animation:drift 20s ease-in-out infinite alternate}
-@keyframes drift{to{translate:120px -30px}}
-.hud{position:absolute;left:50%;top:44%;translate:-50% -50%;width:420px;height:420px;border-radius:50%;background:conic-gradient(rgba(34,211,238,.35) 0 12deg,transparent 12deg 40deg);mask:radial-gradient(circle,transparent 58%,#000 60%,#000 63%,transparent 65%);animation:spin 20s linear infinite;z-index:2}
-@keyframes spin{to{rotate:360deg}}
-.pillar{position:absolute;top:0;bottom:0;width:9vw;background:#111827;border-inline:3px solid #0f172a;z-index:6}
-
-.content{position:relative;z-index:5;text-align:center;padding:0 24px;max-width:760px}
-h1{font-size:clamp(2.2rem,6vw,4.2rem);line-height:1.05;letter-spacing:-.03em;font-weight:800}
-p.sub{color:#a1a1b3;font-size:clamp(.95rem,2vw,1.15rem);margin-top:16px;line-height:1.6}
-.tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(255,255,255,.22);padding:6px 14px;border-radius:999px;margin-bottom:22px;color:#cfcfe0}
+body{margin:0;height:100vh;background:#05060c;overflow:hidden}
+canvas{display:block}
+.ui{position:fixed;inset:0;pointer-events:none;z-index:3}
+.grain{position:absolute;inset:0;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.r{display:block;overflow:hidden}
+.r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes up{to{transform:translateY(0)}}
+h1{position:absolute;right:30px;top:26%;text-align:right;font-family:system-ui,sans-serif;
+  font-size:clamp(1.6rem,4vw,3rem);letter-spacing:.04em;text-transform:uppercase;color:#f1f5f9;
+  text-shadow:0 0 30px rgba(244,63,94,.4);font-weight:900}
+h1 .hot{color:#f43f5e}
+p{position:absolute;right:30px;top:calc(26% + 5.4em);text-align:right;font-family:system-ui,sans-serif;
+  color:#7c869c;font-size:clamp(.8rem,1.6vw,1rem);max-width:380px;line-height:1.6}
+.tag{position:absolute;right:30px;top:calc(26% + 3.6em);font-family:system-ui,sans-serif;font-size:11px;
+  letter-spacing:.16em;color:#f43f5e;border:1px solid rgba(244,63,94,.4);padding:5px 12px;border-radius:999px;
+  display:inline-block;background:rgba(5,6,12,.5);backdrop-filter:blur(6px);text-transform:uppercase}
+@media(max-width:600px){h1{top:16%;left:20px;right:20px;text-align:center}
+  .tag,p{left:20px;right:20px;text-align:center;top:auto}
+  .tag{top:12%}p{top:calc(16% + 9em);margin:0 auto}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important}}
 </style>
 </head>
 <body>
-
-<div class="floor"></div>
-<div class="rim" style="left:24%"></div>
-<div class="rim" style="right:24%"></div>
-<div class="hud"></div>
-<div class="steam" style="left:10%;bottom:10%"></div>
-<div class="steam" style="right:12%;bottom:16%;animation-delay:-9s"></div>
-<div class="mecha" id="mecha"></div>
-<div class="hazard"></div>
-<div class="pillar" style="left:0"></div>
-<div class="pillar" style="right:0"></div>
-
-<div class="content">
-<span class="tag">DepthGlow preview</span>
-<h1>Mecha Hangar</h1>
-<p class="sub">Live demo — the paid prompt rebuilds this scene and more in your AI.</p>
+<div class="ui">
+<div class="grain"></div>
+<span class="r tag"><span>Max · three.js 3D</span></span>
+<h1><span class="r"><span>Mecha in the</span></span><br><span class="r"><span class="hot">hangar</span></span></h1>
+<p><span class="r"><span>Walk-around hangar — a hand-built mech with glowing joints and a turntable camera.</span></span></p>
 </div>
+<script src="../../js/vendor/three.min.js"></script>
 <script>
 (function(){
-  var m=document.getElementById('mecha');
-  function p(cls,css){var d=document.createElement('div');d.className='panel '+cls;d.style.cssText=css;m.appendChild(d);return d;}
-  // legs
-  p('','left:38%;top:56%;width:44px;height:150px;background:#334155');p('shadow-tone','left:60%;top:56%;width:22px;height:150px');
-  p('','left:56%;top:56%;width:44px;height:150px;background:#475569');
-  // hips
-  p('','left:36%;top:48%;width:120px;height:34px;background:#1e3a5f');
+  var W=innerWidth,H=innerHeight;
+  var scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x05060c,0.055);
+  var camera=new THREE.PerspectiveCamera(45,W/H,0.1,120);
+  camera.position.set(0,2.6,9);
+  var renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+
+  scene.add(new THREE.AmbientLight(0x2a3040,0.7));
+  var key=new THREE.DirectionalLight(0xffffff,0.9);key.position.set(5,8,4);scene.add(key);
+  var red=new THREE.PointLight(0xf43f5e,2.4,24);red.position.set(0,1.4,2.5);scene.add(red);
+  var fill=new THREE.PointLight(0x38bdf8,1.4,18);fill.position.set(-5,3,-3);scene.add(fill);
+
+  // floor + hangar walls
+  var floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),
+    new THREE.MeshStandardMaterial({color:0x0d0f18,roughness:.6,metalness:.4}));
+  floor.rotation.x=-Math.PI/2;scene.add(floor);
+  var grid=new THREE.GridHelper(40,40,0x334,0x1a1d2a);grid.position.y=0.001;scene.add(grid);
+  var wallMat=new THREE.MeshStandardMaterial({color:0x0a0c14,roughness:.8});
+  var wallB=new THREE.Mesh(new THREE.BoxGeometry(40,10,.3),wallMat);wallB.position.set(0,5,-10);scene.add(wallB);
+  var pillarMat=new THREE.MeshStandardMaterial({color:0x12152a,roughness:.5,metalness:.3});
+  for(var p=-1;p<=1;p+=2){var pil=new THREE.Mesh(new THREE.BoxGeometry(.6,10,.6),pillarMat);pil.position.set(p*7,5,-9);scene.add(pil);}
+  // emissive hangar strips
+  var stripMat=new THREE.MeshBasicMaterial({color:0xf43f5e});
+  for(var s=0;s<2;s++){var st=new THREE.Mesh(new THREE.BoxGeometry(14,.1,.1),stripMat);st.position.set(0,6.5,-9.8+s*.15);scene.add(st);}
+
+  // mecha (procedural boxes, joints glow)
+  var mecha=new THREE.Group();
+  var armor=new THREE.MeshStandardMaterial({color:0x9aa3b5,roughness:.35,metalness:.6});
+  var armorD=new THREE.MeshStandardMaterial({color:0x4b5568,roughness:.4,metalness:.55});
+  var joint=new THREE.MeshStandardMaterial({color:0xf43f5e,emissive:0xf43f5e,emissiveIntensity:1.6,roughness:.3});
+  function box(w,h,d,x,y,z,m){var mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m||armor);mesh.position.set(x,y,z);return mesh;}
   // torso
-  p('','left:34%;top:26%;width:150px;height:120px;background:#1d4ed8');p('shadow-tone','left:104px;top:26px;width:80px;height:120px;left:calc(34% + 74px)');
-  // shoulders
-  p('','left:18%;top:22%;width:60px;height:60px;background:#0ea5e9;rotate:-14deg');
-  p('','left:calc(100% - 78px);top:22%;width:60px;height:60px;background:#0284c7;rotate:14deg');
+  mecha.add(box(1.5,1.6,.9,0,3.1,0));
+  mecha.add(box(1.8,.5,1,0,4.0,0,armorD)); // chest plate
+  mecha.add(box(.35,.35,.35,0,3.4,.55,joint)); // chest core
   // head
-  p('','left:44%;top:12%;width:56px;height:44px;background:#334155');
-  // V-fin
-  var vf=document.createElement('div');vf.style.cssText='position:absolute;left:41%;top:4%;width:70px;height:16px;background:linear-gradient(90deg,#eab308,#facc15,#eab308);clip-path:polygon(0 100%,18% 0,50% 60%,82% 0,100% 100%);z-index:4;border:2px solid #0f172a';m.appendChild(vf);
-  // visor
-  var v=document.createElement('div');v.className='visor';v.style.cssText+=';left:45.5%;top:20%;width:40px';m.appendChild(v);
-  // chest vents
-  p('','left:42%;top:34%;width:16px;height:26px;background:#f43f5e;opacity:.9');
-  p('','left:47%;top:34%;width:16px;height:26px;background:#f43f5e;opacity:.7');
-  m.style.width='100%';m.style.height='100%';m.style.position='absolute';
+  mecha.add(box(.6,.55,.55,0,4.55,0,armorD));
+  mecha.add(box(.34,.06,.36,0,4.55,.3,new THREE.MeshBasicMaterial({color:0x38bdf8}))); // visor
+  // shoulders + arms
+  [-1,1].forEach(function(s){
+    mecha.add(box(.55,.7,.7,s*1.1,3.9,0,armor));
+    mecha.add(box(.3,.3,.3,s*1.1,3.4,0,joint)); // shoulder joint glow
+    mecha.add(box(.3,1.1,.35,s*1.15,2.7,0,armorD));
+    mecha.add(box(.26,.9,.3,s*1.15,1.75,0,armor));
+    mecha.add(box(.2,.2,.2,s*1.15,1.2,0,joint)); // fist
+  });
+  // hips + legs
+  mecha.add(box(1.4,.4,.7,0,2.15,0,armorD));
+  [-1,1].forEach(function(s){
+    mecha.add(box(.28,.28,.28,s*.5,1.9,0,joint)); // hip glow
+    mecha.add(box(.4,1.1,.45,s*.55,1.35,0,armor));
+    mecha.add(box(.24,.24,.24,s*.55,.78,0,joint)); // knee glow
+    mecha.add(box(.32,1,.4,s*.55,.45,0,armorD));
+    mecha.add(box(.4,.2,.65,s*.55,.1,.12,armor)); // foot
+  });
+  // backpack thrusters
+  mecha.add(box(1.1,.8,.3,0,3.6,-.65,armorD));
+  [-1,1].forEach(function(s){mecha.add(new THREE.Mesh(new THREE.CylinderGeometry(.14,.2,.5,8),
+    new THREE.MeshStandardMaterial({color:0x1e293b,emissive:0x38bdf8,emissiveIntensity:.9}))).position.set(s*.3,3.2,-.85);});
+  mecha.position.y=0;scene.add(mecha);
+
+  // floating dust
+  var dustG=new THREE.BufferGeometry(),dustN=300,dustP=new Float32Array(dustN*3);
+  for(var i=0;i<dustN;i++){dustP[i*3]=(Math.random()-.5)*18;dustP[i*3+1]=Math.random()*7;dustP[i*3+2]=(Math.random()-.5)*16;}
+  dustG.setAttribute('position',new THREE.BufferAttribute(dustP,3));
+  scene.add(new THREE.Points(dustG,new THREE.PointsMaterial({color:0xf43f5e,size:.035,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false})));
+
+  // turntable camera + mouse tilt
+  var mx=0,my=0;
+  document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);my=(e.clientY/H-.5);},{passive:true});
+  var clock=new THREE.Clock(),t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),.05);t+=dt;
+    var ang=t*.28+mx*1.2;
+    camera.position.x=Math.sin(ang)*8.5;
+    camera.position.z=Math.cos(ang)*8.5;
+    camera.position.y=2.6+my*1.4+Math.sin(t*.4)*.25;
+    camera.lookAt(0,2.6,0);
+    red.intensity=2.2+Math.sin(t*3)*.5;
+    renderer.render(scene,camera);
+  }
+  animate();
+  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);});
 })();
 </script>
 </body>

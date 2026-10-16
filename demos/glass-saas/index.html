@@ -7,52 +7,82 @@
 <title>Glass SaaS — DepthGlow free preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0b1020;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
-.blob{position:fixed;border-radius:50%;filter:blur(90px);z-index:0;opacity:.5}
-.b1{width:520px;height:520px;background:#3b82f6;left:-140px;top:-120px;animation:float 20s ease-in-out infinite alternate}
-.b2{width:460px;height:460px;background:#8b5cf6;right:-120px;top:120px;animation:float 24s ease-in-out infinite alternate-reverse}
+body{background:#070b18;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden;position:relative}
+.mesh{position:fixed;inset:0;z-index:0;opacity:.5;
+  background:
+    radial-gradient(600px 400px at 15% 10%,rgba(59,130,246,.22),transparent 70%),
+    radial-gradient(500px 380px at 85% 30%,rgba(139,92,246,.18),transparent 70%),
+    radial-gradient(420px 320px at 50% 95%,rgba(14,165,233,.12),transparent 70%)}
+.blob{position:fixed;border-radius:50%;filter:blur(90px);z-index:0}
+.b1{width:520px;height:520px;background:#3b82f6;left:-140px;top:-120px;animation:float 20s ease-in-out infinite alternate;will-change:transform}
+.b2{width:460px;height:460px;background:#8b5cf6;right:-120px;top:120px;animation:float 24s ease-in-out infinite alternate-reverse;will-change:transform}
 @keyframes float{to{transform:translate(60px,80px) scale(1.15)}}
+.grid-lines{position:fixed;inset:0;z-index:0;opacity:.05;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
+  background-size:72px 72px;mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%)}
+.grain{position:fixed;inset:0;z-index:5;opacity:.04;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 22px}
 .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.1);border-radius:20px}
+  border:1px solid rgba(255,255,255,.1);border-radius:20px;transition:border-color .3s,transform .3s}
+.glass:hover{border-color:rgba(255,255,255,.25)}
 nav{position:sticky;top:14px;z-index:10;margin:14px auto 0;display:flex;align-items:center;gap:28px;
   padding:12px 20px;border-radius:999px;max-width:900px}
 .logo{font-weight:700;font-size:17px;display:flex;gap:8px;align-items:center}
-.dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)}
+.dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 0 16px rgba(99,102,241,.6)}
 nav .links{display:flex;gap:24px;margin-left:auto;font-size:14px;color:#c3c3d4}
-nav .links a{text-decoration:none;color:inherit}
+nav .links a{text-decoration:none;color:inherit;position:relative}
+nav .links a::after{content:'';position:absolute;left:0;bottom:-4px;width:0;height:1.5px;background:#8b5cf6;transition:width .25s}
 nav .links a:hover{color:#fff}
-.mini{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#0b1020;padding:9px 16px;border-radius:999px;font-weight:600;font-size:13px}
+nav .links a:hover::after{width:100%}
+.mini{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#0b1020;padding:9px 16px;border-radius:999px;font-weight:600;font-size:13px;text-decoration:none;
+  transition:transform .2s,box-shadow .2s}
+.mini:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.45)}
 .hero{text-align:center;padding:74px 0 10px}
-h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.035em;line-height:1.04;font-weight:800}
-.hero p{color:#a6a6bd;max-width:52ch;margin:20px auto 0;font-size:1.12rem}
-.cta{display:flex;gap:12px;justify-content:center;margin-top:30px;flex-wrap:wrap}
-.btn{padding:13px 26px;border-radius:12px;font-weight:600;text-decoration:none;font-size:15px}
-.primary{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
-.ghost{border:1px solid rgba(255,255,255,.2);color:#fff}
+.hero .pill{display:inline-block;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#93c5fd;
+  border:1px solid rgba(147,197,253,.3);border-radius:999px;padding:5px 14px;margin-bottom:22px;
+  animation:pop .6s cubic-bezier(.16,1,.3,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.035em;line-height:1.04;font-weight:800;
+  animation:rise .7s .08s cubic-bezier(.16,1,.3,1) both}
+h1 .grad{background:linear-gradient(120deg,#60a5fa,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+@keyframes rise{from{opacity:0;transform:translateY(26px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+.hero p{color:#a6a6bd;max-width:52ch;margin:20px auto 0;font-size:1.12rem;animation:rise .7s .16s cubic-bezier(.16,1,.3,1) both}
+.cta{display:flex;gap:12px;justify-content:center;margin-top:30px;flex-wrap:wrap;animation:rise .7s .24s cubic-bezier(.16,1,.3,1) both}
+.btn{padding:13px 26px;border-radius:12px;font-weight:600;text-decoration:none;font-size:15px;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px)}
+.primary{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;box-shadow:0 8px 26px rgba(59,130,246,.35)}
+.ghost{border:1px solid rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(6px)}
 .trusted{margin-top:40px;text-align:center;color:#6b6b82;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
-.logos{display:flex;gap:34px;justify-content:center;margin-top:16px;flex-wrap:wrap;opacity:.5}
-.logos span{font-weight:700;font-size:16px;color:#9090a8}
+.logos{display:flex;gap:34px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.logos span{font-weight:700;font-size:16px;color:#9090a8;opacity:.55;transition:opacity .3s,color .3s;cursor:default}
+.logos span:hover{opacity:1;color:#c7d2fe}
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:56px 0}
-.card{padding:26px;transition:transform .3s,border-color .3s}
-.card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.28)}
-.card .ic{width:42px;height:42px;border-radius:12px;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+.card{padding:26px;transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .3s,box-shadow .3s;will-change:transform}
+.card:hover{transform:translateY(-8px);border-color:rgba(255,255,255,.3);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.card .ic{width:42px;height:42px;border-radius:12px;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;
+  box-shadow:inset 0 0 0 1px rgba(139,92,246,.35)}
 .card h3{font-size:18px;margin-bottom:8px}
 .card p{color:#a6a6bd;font-size:14px;line-height:1.6}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:40px 0 60px;text-align:center}
 .stat .n{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent}
 .stat .l{color:#a6a6bd;font-size:13px;margin-top:4px}
 @media(max-width:720px){.features,.stats{grid-template-columns:1fr}nav .links{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-<div class="blob b1"></div><div class="blob b2"></div>
+<div class="mesh"></div>
+<div class="blob b1" id="bl1"></div><div class="blob b2" id="bl2"></div>
+<div class="grid-lines"></div>
+<div class="grain"></div>
 <div class="wrap">
   <nav class="glass"><div class="logo"><span class="dot"></span>Nimbus</div>
     <div class="links"><a href="#">Product</a><a href="#">Features</a><a href="#">Pricing</a><a href="#">Docs</a></div>
     <a class="mini" href="#">Start free</a></nav>
   <div class="hero">
-    <h1>Ship your best work, faster.</h1>
+    <span class="pill">Free template · 2D</span>
+    <h1>Ship your best work, <span class="grad">faster.</span></h1>
     <p>The all-in-one workspace that keeps your team in flow. Plan, build and launch — without the busywork.</p>
     <div class="cta"><a class="btn primary" href="#">Start free trial</a><a class="btn ghost" href="#">Book a demo</a></div>
   </div>
@@ -69,5 +99,31 @@ h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.035em;line-height:1.04;font
     <div class="stat"><div class="n">4.9★</div><div class="l">Average rating</div></div>
   </div>
 </div>
+<script>
+(function(){
+  var b1=document.getElementById('bl1'),b2=document.getElementById('bl2');
+  document.addEventListener('mousemove',function(e){
+    var x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
+    b1.style.marginLeft=(x*-34)+'px';b1.style.marginTop=(y*-24)+'px';
+    b2.style.marginLeft=(x*28)+'px';b2.style.marginTop=(y*20)+'px';
+  },{passive:true});
+  // count-up stats
+  var done=false;
+  function countUp(){
+    if(done)return;done=true;
+    document.querySelectorAll('.stat .n').forEach(function(el){
+      var raw=el.textContent,m=raw.match(/[\d.]+/);if(!m)return;
+      var target=parseFloat(m[0]),suffix=raw.replace(m[0],''),t0=performance.now();
+      (function tick(t){
+        var p=Math.min((t-t0)/1200,1),e=1-Math.pow(1-p,3);
+        var v=target%1? (target*e).toFixed(1):Math.round(target*e);
+        el.textContent=v+suffix;
+        if(p<1)requestAnimationFrame(tick);
+      })(t0);
+    });
+  }
+  new IntersectionObserver(function(en){if(en[0].isIntersecting)countUp()},{threshold:.4}).observe(document.querySelector('.stats'));
+})();
+</script>
 </body>
 </html>

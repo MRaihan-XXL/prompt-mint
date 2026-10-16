@@ -2,91 +2,118 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Web Slinger Noir - DepthGlow preview</title>
+<title>Web Slinger Noir — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:#0a0a0f;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-
+body{min-height:100vh;background:#020617;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .sky{position:absolute;inset:0;background:linear-gradient(#020617,#0f172a 55%,#1e1b4b)}
-.bldg{position:absolute;bottom:0;background:#0f172a}
-.win{position:absolute;width:4px;height:6px;background:#fbbf24;opacity:.8}
-.neon{position:absolute;font-weight:800;letter-spacing:.2em;text-shadow:0 0 12px currentColor}
-.swing{position:absolute;left:18%;top:-4%;z-index:4;transform-origin:50% 0;animation:swing 6s ease-in-out infinite alternate}
-@keyframes swing{to{rotate:5deg}}
-.rainl{position:absolute;width:1px;height:18px;background:rgba(148,163,184,.5);animation:rfall .9s linear infinite}
-@keyframes rfall{to{translate:0 100vh;opacity:0}}
-.grain{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.search{position:absolute;top:-30%;left:-20%;width:40%;height:160%;background:linear-gradient(100deg,transparent,rgba(251,191,36,.06),transparent);animation:sweep 12s ease-in-out infinite alternate;z-index:2}
-@keyframes sweep{to{translate:140vw 0}}
-
-.content{position:relative;z-index:5;text-align:center;padding:0 24px;max-width:760px}
-h1{font-size:clamp(2.2rem,6vw,4.2rem);line-height:1.05;letter-spacing:-.03em;font-weight:800}
-p.sub{color:#a1a1b3;font-size:clamp(.95rem,2vw,1.15rem);margin-top:16px;line-height:1.6}
-.tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(255,255,255,.22);padding:6px 14px;border-radius:999px;margin-bottom:22px;color:#cfcfe0}
+.layer{position:absolute;inset:0;pointer-events:none;will-change:transform}
+.search{position:absolute;top:-30%;left:-20%;width:40%;height:160%;background:linear-gradient(100deg,transparent,rgba(251,191,36,.055),transparent);
+  animation:sweep 12s ease-in-out infinite alternate}
+@keyframes sweep{to{transform:translateX(140vw)}}
+.bldg{position:absolute;bottom:0}
+.win{position:absolute;width:4px;height:6px;background:#fbbf24;opacity:.85;animation:wintw 6s ease-in-out infinite}
+@keyframes wintw{50%{opacity:.35}}
+.neon{position:absolute;font-weight:800;letter-spacing:.2em;text-shadow:0 0 14px currentColor,0 0 40px currentColor;
+  animation:nglow 3s ease-in-out infinite alternate}
+@keyframes nglow{to{text-shadow:0 0 6px currentColor,0 0 18px currentColor}}
+.swing{position:absolute;left:18%;top:-4%;z-index:6;transform-origin:50% 0;animation:swing 6s ease-in-out infinite alternate;will-change:transform}
+@keyframes swing{to{transform:rotate(4.5deg)}}
+.grain{position:fixed;inset:0;z-index:8;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+canvas{position:fixed;inset:0;z-index:7;pointer-events:none}
+.content{position:relative;z-index:9;text-align:center;padding:0 24px;max-width:780px;pointer-events:none}
+.r{display:block;overflow:hidden}
+.r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
+.r:nth-child(1)>*{animation-delay:.05s}.r:nth-child(2)>*{animation-delay:.15s}
+.r:nth-child(3)>*{animation-delay:.26s}
+@keyframes up{to{transform:translateY(0)}}
+h1{font-size:clamp(2rem,5.5vw,3.8rem);line-height:1.05;letter-spacing:-.03em;font-weight:900;text-shadow:0 6px 30px rgba(0,0,0,.7)}
+h1 .red{color:#f43f5e;text-shadow:0 0 24px rgba(244,63,94,.5)}
+p.sub{color:#94a3b8;font-size:clamp(.92rem,2vw,1.12rem);margin-top:14px;line-height:1.6;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(244,63,94,.4);
+  color:#fda4af;padding:6px 14px;border-radius:999px;margin-bottom:20px;background:rgba(2,6,23,.5);backdrop-filter:blur(6px)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-
 <div class="sky"></div>
-<div class="search"></div>
-<div id="city"></div>
+<div class="layer" id="l1"><div class="search"></div></div>
+<div class="layer" id="l2"><div id="city-far"></div></div>
+<div class="layer" id="l3"><div id="city-mid"></div></div>
+<div class="layer" id="l4"><div id="city-near"></div></div>
 <svg class="swing" width="260" height="420" viewBox="0 0 260 420">
 <line x1="10" y1="0" x2="130" y2="180" stroke="#e2e8f0" stroke-width="3"/>
 <g transform="translate(118,170) rotate(35)">
-<!-- body -->
 <rect x="-16" y="0" width="32" height="90" rx="14" fill="#1d4ed8" stroke="#0f172a" stroke-width="4"/>
-<!-- chest spider-mark abstraction -->
 <circle cx="0" cy="34" r="7" fill="#ef4444"/>
-<!-- arm up to line -->
 <rect x="-8" y="-46" width="14" height="60" rx="7" fill="#1d4ed8" stroke="#0f172a" stroke-width="4"/>
-<!-- legs -->
 <rect x="-26" y="82" width="14" height="64" rx="7" fill="#b91c1c" stroke="#0f172a" stroke-width="4" transform="rotate(18)"/>
 <rect x="12" y="82" width="14" height="64" rx="7" fill="#b91c1c" stroke="#0f172a" stroke-width="4" transform="rotate(-24)"/>
-<!-- head + mask -->
 <circle cx="0" cy="-18" r="22" fill="#1d4ed8" stroke="#0f172a" stroke-width="4"/>
 <path d="M-14 -22 Q-4 -30 2 -20 Q-6 -14 -14 -22Z" fill="#f8fafc"/>
 <path d="M4 -20 Q12 -28 16 -18 Q8 -12 4 -20Z" fill="#f8fafc"/>
 </g>
 </svg>
+<canvas id="rain"></canvas>
 <div class="grain"></div>
-
 <div class="content">
-<span class="tag">DepthGlow preview</span>
-<h1>Web Slinger Noir</h1>
-<p class="sub">Live demo — the paid prompt rebuilds this scene and more in your AI.</p>
+  <span class="r"><span class="tag">Pro · 2.5D noir</span></span>
+  <h1><span class="r"><span>Swing into the</span></span><br><span class="r"><span class="red">hero section</span></span></h1>
+  <p class="sub"><span class="r"><span>Masked acrobat swinging over a neon noir skyline — parallax on mouse move.</span></span></p>
 </div>
 <script>
 (function(){
-  var city=document.getElementById('city');
-  var layers=[[.02,'#1e293b',120,9],[.06,'#0f172a',170,11],[.14,'#1e293b',230,13],[.26,'#0f172a',300,15]];
-  layers.forEach(function(L,li){
-    var d=L[0],color=L[1],h=L[2],n=L[3];
+  // layered skyline
+  function build(el,n,color,hMin,hMax,winRate){
     for(var i=0;i<n;i++){
       var b=document.createElement('div');b.className='bldg';
-      var w=40+Math.random()*70,bh=h+Math.random()*140;
-      b.style.cssText='left:'+(i*(100/n))+'%;width:'+w+'px;height:'+bh+'px;background:'+color+';z-index:'+(li+1)+';bottom:0';
-      for(var wI=0;wI<6;wI++){var win=document.createElement('div');win.className='win';
+      var w=40+Math.random()*70,bh=hMin+Math.random()*(hMax-hMin);
+      b.style.cssText='left:'+(i*(100/n))+'%;width:'+w+'px;height:'+bh+'px;background:'+color+';z-index:2';
+      for(var j=0;j<8;j++){
+        if(Math.random()>winRate)continue;
+        var win=document.createElement('div');win.className='win';
         win.style.left=(6+Math.random()*(w-12))+'px';win.style.top=(10+Math.random()*(bh-24))+'px';
-        if(Math.random()>.4)b.appendChild(win);}
-      city.appendChild(b);
+        win.style.animationDelay=(Math.random()*6)+'s';
+        b.appendChild(win);
+      }
+      el.appendChild(b);
     }
+  }
+  build(document.getElementById('city-far'),13,'#1e293b',90,180,.55);
+  build(document.getElementById('city-mid'),11,'#0f172a',150,260,.65);
+  build(document.getElementById('city-near'),9,'#020617',220,340,.75);
+  var neon=[['NOIR','#f43f5e','12%','56%','20px'],['GLOW','#22d3ee','70%','44%','22px'],['2099','#a78bfa','40%','64%','18px']];
+  var near=document.getElementById('city-near');
+  neon.forEach(function(nn){
+    var s=document.createElement('div');s.className='neon';s.textContent=nn[0];
+    s.style.cssText+=';color:'+nn[1]+';left:'+nn[2]+';top:'+nn[3]+';font-size:'+nn[4]+';z-index:5';near.appendChild(s);
   });
-  var neon=[['NOIR','#f43f5e','12%','58%'],['GLOW','#22d3ee','70%','46%'],['2099','#a78bfa','40%','66%']];
-  neon.forEach(function(nn){var s=document.createElement('div');s.className='neon';s.textContent=nn[0];
-    s.style.cssText+=';color:'+nn[1]+';left:'+nn[2]+';top:'+nn[3]+';font-size:20px;z-index:5';city.appendChild(s);});
-  for(var r=0;r<36;r++){var rl=document.createElement('div');rl.className='rainl';
-    rl.style.left=(Math.random()*100)+'%';rl.style.top=(Math.random()*-20)+'%';
-    rl.style.animationDelay=(Math.random()*.9)+'s';city.appendChild(rl);}
   // parallax
-  document.body.addEventListener('mousemove',function(e){
-    var x=(e.clientX/window.innerWidth-.5);
-    city.style.translate='';
-    [].forEach.call(city.children,function(c){
-      var z=parseInt(c.style.zIndex||1,10);
-      c.style.translate=(x*z*14)+'px 0';
+  var L=[document.getElementById('l1'),document.getElementById('l2'),document.getElementById('l3'),document.getElementById('l4')];
+  var depths=[8,18,32,52];
+  document.addEventListener('mousemove',function(e){
+    var x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
+    L.forEach(function(el,i){el.style.transform='translate('+(x*-depths[i])+'px,'+(y*-depths[i]*.5)+'px)';});
+  },{passive:true});
+  // rain canvas
+  var cv=document.getElementById('rain'),cx=cv.getContext('2d');
+  function size(){cv.width=innerWidth;cv.height=innerHeight}
+  size();addEventListener('resize',size);
+  var drops=[];
+  for(var i=0;i<70;i++)drops.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,v:9+Math.random()*7,l:12+Math.random()*10});
+  (function loop(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    cx.strokeStyle='rgba(148,163,184,.4)';cx.lineWidth=1;
+    drops.forEach(function(d){
+      cx.beginPath();cx.moveTo(d.x,d.y);cx.lineTo(d.x-2,d.y+d.l);cx.stroke();
+      d.y+=d.v;if(d.y>cv.height){d.y=-20;d.x=Math.random()*cv.width;}
     });
-  });
+    requestAnimationFrame(loop);
+  })();
 })();
 </script>
 </body>

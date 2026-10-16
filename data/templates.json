@@ -44,9 +44,9 @@
       "category": "Hero",
       "tier": "free",
       "tags": [
-        "2D",
-        "hero",
-        "gradient"
+        "Hero",
+        "2d",
+        "free"
       ],
       "demo": "demos/aurora-hero/index.html",
       "accent": "linear-gradient(135deg,#7c3aed,#06b6d4)",
@@ -61,9 +61,9 @@
       "category": "SaaS",
       "tier": "free",
       "tags": [
-        "2D",
-        "saas",
-        "glassmorphism"
+        "SaaS",
+        "2d",
+        "free"
       ],
       "demo": "demos/glass-saas/index.html",
       "accent": "linear-gradient(135deg,#3b82f6,#8b5cf6)",
@@ -78,9 +78,9 @@
       "category": "Creative",
       "tier": "free",
       "tags": [
-        "2D",
-        "creative",
-        "typography"
+        "Creative",
+        "2d",
+        "free"
       ],
       "demo": "demos/kinetic-type/index.html",
       "accent": "linear-gradient(135deg,#f59e0b,#ef4444)",
@@ -95,9 +95,9 @@
       "category": "Portfolio",
       "tier": "free",
       "tags": [
-        "2D",
-        "portfolio",
-        "editorial"
+        "Portfolio",
+        "2d",
+        "free"
       ],
       "demo": "demos/editorial-portfolio/index.html",
       "accent": "linear-gradient(135deg,#10b981,#3b82f6)",
@@ -113,8 +113,8 @@
       "tier": "pro",
       "tags": [
         "3D",
-        "three.js",
-        "particles"
+        "2.5d",
+        "pro"
       ],
       "demo": "demos/mesh-waves/index.html",
       "accent": "linear-gradient(135deg,#06b6d4,#8b5cf6)",
@@ -129,8 +129,8 @@
       "tier": "pro",
       "tags": [
         "3D",
-        "three.js",
-        "low-poly"
+        "2.5d",
+        "pro"
       ],
       "demo": "demos/prism-orbit/index.html",
       "accent": "linear-gradient(135deg,#f472b6,#a78bfa)",
@@ -144,9 +144,9 @@
       "category": "Landing Page",
       "tier": "pro",
       "tags": [
-        "2D",
-        "scroll",
-        "landing"
+        "Landing Page",
+        "2.5d",
+        "pro"
       ],
       "demo": "demos/scroll-reveal/index.html",
       "accent": "linear-gradient(135deg,#22d3ee,#4ade80)",
@@ -160,9 +160,9 @@
       "category": "SaaS",
       "tier": "pro",
       "tags": [
-        "2D",
-        "pricing",
-        "saas"
+        "SaaS",
+        "2.5d",
+        "pro"
       ],
       "demo": "demos/pricing-glow/index.html",
       "accent": "linear-gradient(135deg,#fbbf24,#f472b6)",
@@ -177,9 +177,8 @@
       "tier": "max",
       "tags": [
         "3D",
-        "three.js",
-        "particles",
-        "premium"
+        "3d",
+        "max"
       ],
       "demo": "demos/galaxy-particles/index.html",
       "accent": "linear-gradient(135deg,#8b5cf6,#ec4899)",
@@ -193,9 +192,9 @@
       "category": "Interactive",
       "tier": "max",
       "tags": [
-        "3D",
-        "shader",
-        "premium"
+        "Interactive",
+        "3d",
+        "max"
       ],
       "demo": "demos/liquid-metal/index.html",
       "accent": "linear-gradient(135deg,#38bdf8,#a78bfa)",
@@ -210,8 +209,8 @@
       "tier": "max",
       "tags": [
         "3D",
-        "procedural",
-        "premium"
+        "3d",
+        "max"
       ],
       "demo": "demos/city-flyover/index.html",
       "accent": "linear-gradient(135deg,#34d399,#22d3ee)",
@@ -226,8 +225,8 @@
       "tier": "max",
       "tags": [
         "3D",
-        "procedural",
-        "premium"
+        "3d",
+        "max"
       ],
       "demo": "demos/terrain-hike/index.html",
       "accent": "linear-gradient(135deg,#a3e635,#14b8a6)",
@@ -240,9 +239,9 @@
       "category": "Gaming",
       "title": "Voxel Frontier",
       "tags": [
-        "2D",
-        "gaming",
-        "voxel"
+        "Gaming",
+        "2d",
+        "free"
       ],
       "accent": "linear-gradient(135deg,#4ade80,#0ea5e9)",
       "blurb": "Blocky voxel terrain hero - floating island, drifting clouds, retro-game energy.",
@@ -257,9 +256,9 @@
       "category": "Anime",
       "title": "Lofi Study Room",
       "tags": [
-        "2D",
-        "anime",
-        "lofi"
+        "Anime",
+        "2d",
+        "free"
       ],
       "accent": "linear-gradient(135deg,#f9a8d4,#c4b5fd)",
       "blurb": "Cozy lofi study-room mood - warm lamp, rain window, soft anime palette.",
@@ -274,9 +273,9 @@
       "category": "Anime",
       "title": "Cel-Shaded Hero",
       "tags": [
-        "2D",
-        "anime",
-        "cel-shading"
+        "Anime",
+        "2.5d",
+        "pro"
       ],
       "accent": "linear-gradient(135deg,#f43f5e,#f59e0b)",
       "blurb": "Shonen-style hero bust - hard two-tone cel shadows, halftone dots, speed lines.",
@@ -291,9 +290,9 @@
       "category": "Creative",
       "title": "Web Slinger Noir",
       "tags": [
-        "2D",
-        "hero",
-        "noir"
+        "Creative",
+        "2.5d",
+        "pro"
       ],
       "accent": "linear-gradient(135deg,#ef4444,#1e3a8a)",
       "blurb": "Masked acrobat swinging over a neon noir skyline - parallax on mouse move.",
@@ -308,9 +307,9 @@
       "category": "Creative",
       "title": "Samurai Slash",
       "tags": [
-        "2D",
-        "anime",
-        "impact"
+        "Creative",
+        "2.5d",
+        "pro"
       ],
       "accent": "linear-gradient(135deg,#e11d48,#0f172a)",
       "blurb": "One frozen frame of a katana slash - speed lines, impact flash, drifting petals.",
@@ -326,8 +325,8 @@
       "title": "Mecha Hangar",
       "tags": [
         "3D",
-        "mecha",
-        "cel-shading"
+        "3d",
+        "max"
       ],
       "accent": "linear-gradient(135deg,#22d3ee,#a855f7)",
       "blurb": "Giant mecha silhouette in a neon hangar - 3D depth + 2D cel outline combo.",
@@ -343,8 +342,8 @@
       "title": "Ki Aura Burst",
       "tags": [
         "3D",
-        "anime",
-        "particles"
+        "3d",
+        "max"
       ],
       "accent": "linear-gradient(135deg,#facc15,#f97316)",
       "blurb": "Energy warrior powering up - rising ki particles, lightning arcs, aura flame.",
@@ -360,8 +359,8 @@
       "title": "Gothic Mage Circle",
       "tags": [
         "3D",
-        "fantasy",
-        "runes"
+        "3d",
+        "max"
       ],
       "accent": "linear-gradient(135deg,#8b5cf6,#1e1b4b)",
       "blurb": "Occult magic circle with drifting runes - dark fantasy hero, candle light.",
