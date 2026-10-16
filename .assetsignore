@@ -1,0 +1,18 @@
+# Keep site assets only — no code/secrets in the static upload.
+.env
+.env.*
+node_modules
+functions
+src
+scripts
+.git
+.gitignore
+.github
+package.json
+package-lock.json
+tsconfig.json
+wrangler.jsonc
+.assetsignore
+.DS_Store
+Thumbs.db
+*.log

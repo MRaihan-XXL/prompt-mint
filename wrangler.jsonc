@@ -1,0 +1,11 @@
+{
+  "name": "depthglow",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./",
+    "not_found_handling": "404-page"
+  },
+  "observability": { "enabled": true }
+}
