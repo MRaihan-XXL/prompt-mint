@@ -4,6 +4,9 @@ import {
   activeTier,
   json,
 } from "../../_lib/api";
+// Bundle the catalog into the worker at deploy time — no runtime self-fetch
+// (fetching our own origin from inside the worker proved unreliable).
+import templatesData from "../../../data/templates.json";
 
 // GET /api/prompt/:id  (Authorization: Bearer <supabase access token>)
 // The paywall gate: only returns a premium prompt when the signed-in user
@@ -23,32 +26,18 @@ const COVERS: Record<string, string[]> = {
   max: ["max"],
 };
 
-// Module-scope cache: templates.json rarely changes and an isolate lives for a
-// while — avoids re-fetching it on every gate request (latency + origin load).
 interface TplInfo {
   tier: string;
   prompt: string | null;
 }
-let _tplCache: { t: number; map: Map<string, TplInfo> } | null = null;
-const TPL_TTL_MS = 5 * 60 * 1000;
 
-async function getTemplate(origin: string, id: string): Promise<TplInfo | null> {
-  const now = Date.now();
-  if (!_tplCache || now - _tplCache.t > TPL_TTL_MS) {
-    try {
-      const res = await fetch(`${origin}/data/templates.json`);
-      const data: any = await res.json();
-      const map = new Map<string, TplInfo>();
-      for (const x of data.templates || []) {
-        map.set(x.id, { tier: x.tier, prompt: x.prompt || null });
-      }
-      _tplCache = { t: now, map };
-    } catch {
-      _tplCache = null;
-    }
-  }
-  return _tplCache ? _tplCache.map.get(id) || null : null;
-}
+// Static catalog map (id -> tier/prompt) built once per isolate from the import.
+const TPL: Map<string, TplInfo> = new Map(
+  ((templatesData as any).templates || []).map((x: any) => [
+    x.id,
+    { tier: x.tier, prompt: x.prompt || null } as TplInfo,
+  ])
+);
 
 export async function onRequestGet(context: Ctx): Promise<Response> {
   const { request, params, env } = context;
@@ -61,9 +50,8 @@ export async function onRequestGet(context: Ctx): Promise<Response> {
   const user = await supabaseUser(env, bearer);
   if (!user) return json({ error: "auth_required" }, 401);
 
-  // 2) what tier is this template? (public metadata, cached)
-  const origin = new URL(request.url).origin;
-  const tpl = await getTemplate(origin, id);
+  // 2) what tier is this template? (bundled public metadata)
+  const tpl = TPL.get(id) || null;
   if (!tpl) return json({ error: "not_found" }, 404);
   const tier = tpl.tier;
 
