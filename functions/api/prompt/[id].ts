@@ -44,23 +44,22 @@ export async function onRequestGet(context: Ctx): Promise<Response> {
   const id = params.id;
   if (!id) return json({ error: "missing id" }, 400);
 
-  // 1) who is calling?
+  // 1) tier lookup first — free prompts are public, skip auth entirely.
+  const tpl = TPL.get(id) || null;
+  if (!tpl) return json({ error: "not_found" }, 404);
+  const tier = tpl.tier;
+
+  if (tier === "free") {
+    return json({ id, tier, prompt: tpl.prompt, access: "free" });
+  }
+
+  // 2) premium → who is calling?
   const bearer =
     request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") || null;
   const user = await supabaseUser(env, bearer);
   if (!user) return json({ error: "auth_required" }, 401);
 
-  // 2) what tier is this template? (bundled public metadata)
-  const tpl = TPL.get(id) || null;
-  if (!tpl) return json({ error: "not_found" }, 404);
-  const tier = tpl.tier;
-
-  // 3) free tier → prompt is public anyway.
-  if (tier === "free") {
-    return json({ id, tier, prompt: tpl.prompt, access: "free" });
-  }
-
-  // 4) premium → require an active subscription that covers this tier.
+  // 3) premium → require an active subscription that covers this tier.
   const access = await activeTier(env, user.id, user.email);
   if (!access || !COVERS[tier].includes(access.tier)) {
     return json({ error: "subscription_required", required: tier, current: access ? access.tier : null }, 402);

@@ -5,8 +5,8 @@
   "vars": {
     "SUPABASE_URL": "https://cuvclcicqzgewfsbqdnw.supabase.co",
     "SUPABASE_ANON_KEY": "sb_publishable_NYHDwz3hF7pilEGuxJkTDg_G4lfwD2W",
-    "PAYPAL_CLIENT_ID": "BAAARmgTjzjIeaPDSl2KXm3FtQF_wgZyjy9Y2j7EVuWJ0tayyuCa8gfphywci8W440PKdpmPsldUc2X-Bs",
-    "PAYPAL_MODE": "sandbox"
+    "PAYPAL_CLIENT_ID": "BAA6Xl6SI-h9CapMfALGvAv7moGbPQ2kfQ7Qz0mA-KFD-LHcyoF5eavPcQa5Lg95JFdrJ3SdRiF1UyO6NI",
+    "PAYPAL_MODE": "live"
   },
   "assets": {
     "binding": "ASSETS",

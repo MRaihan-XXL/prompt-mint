@@ -42,6 +42,14 @@
     if (/glass|saas|pricing/i.test(id)) return "▤";
     if (/type|kinetic/i.test(id)) return "Aa";
     if (/portfolio|editorial/i.test(id)) return "▣";
+    if (/voxel/i.test(id)) return "⬒";
+    if (/waifu|lofi/i.test(id)) return "♡";
+    if (/cel-shaded|hero/i.test(id)) return "⚡";
+    if (/web-slinger|noir/i.test(id)) return "◆";
+    if (/samurai|slash/i.test(id)) return "✕";
+    if (/mecha|hangar/i.test(id)) return "⬡";
+    if (/ki-aura|aura/i.test(id)) return "◉";
+    if (/gothic|mage/i.test(id)) return "☽";
     return "◐";
   }
 
@@ -76,11 +84,14 @@
     visible().forEach(function (t) {
       var card = document.createElement("article");
       card.className = "card";
-      card.innerHTML =
+      var thumbHtml =
         '<div class="thumb" style="background:' + esc(t.accent) + '">' +
-          '<span class="glyph">' + glyphFor(t.category, t.id) + "</span>" +
+          (t.thumb
+            ? '<img src="' + esc(t.thumb) + '" alt="" loading="lazy" decoding="async">'
+            : '<span class="glyph">' + glyphFor(t.category, t.id) + "</span>") +
           '<span class="badge ' + tierClass(t.tier) + '">' + t.tier.toUpperCase() + "</span>" +
-        "</div>" +
+        "</div>";
+      card.innerHTML = thumbHtml +
         '<div class="body">' +
           "<h3>" + esc(t.title) + "</h3>" +
           "<p>" + esc(t.blurb) + "</p>" +
@@ -101,12 +112,16 @@
     }
   }
 
-  function openModal(t) {
+  var modalTemplateId = null;
+
+  function openModal(t, fromHistory) {
     els.mTitle.textContent = t.title;
     els.mBadge.textContent = t.tier.toUpperCase();
     els.mBadge.className = "badge " + tierClass(t.tier);
     els.mBlurb.textContent = t.blurb;
     els.mFrame.src = t.demo;
+    modalTemplateId = t.id;
+    if (!fromHistory) history.pushState({ dgModal: t.id }, "", "#t/" + t.id);
 
     var isFree = t.tier === "free";
     if (isFree) {
@@ -132,12 +147,30 @@
     }
     els.modal.classList.add("open");
     document.body.style.overflow = "hidden";
+    // a11y: move focus into the dialog
+    try { els.modal.setAttribute("tabindex", "-1"); els.modal.focus(); } catch (e) {}
   }
 
-  function closeModal() {
+  function closeModal(fromHistory) {
     els.modal.classList.remove("open");
     els.mFrame.src = "about:blank";
     document.body.style.overflow = "";
+    if (modalTemplateId) {
+      modalTemplateId = null;
+      if (!fromHistory && location.hash.indexOf("#t/") === 0) history.back();
+    }
+  }
+
+  // deep-link: #t/<id> opens the modal directly (shareable + refresh-safe)
+  function openFromHash() {
+    var m = location.hash.match(/^#t\/([^&=?]+)/);
+    if (!m || !DATA) return;
+    var id = decodeURIComponent(m[1]);
+    var t = null;
+    for (var i = 0; i < DATA.templates.length; i++) {
+      if (DATA.templates[i].id === id) { t = DATA.templates[i]; break; }
+    }
+    if (t) openModal(t, true);
   }
 
   function copyPrompt(text, btn) {
@@ -230,15 +263,61 @@
     if (a.expires_at && Date.now() > a.expires_at * 1000) return null; // MVP: re-sign-in on expiry
     return a.access_token;
   }
+  function b64UrlEncode(buf) {
+    var str = "";
+    var bytes = new Uint8Array(buf);
+    for (var i = 0; i < bytes.byteLength; i++) str += String.fromCharCode(bytes[i]);
+    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  // PKCE-first sign-in: new Supabase projects default to the authorization-code
+  // flow, older ones still accept implicit tokens in the URL hash. We send a
+  // code_challenge with the hosted authorize page and handle BOTH returns.
   function signIn() {
     var c = cfg();
     if (!c.SUPABASE_URL) { toast("Sign-in not configured yet — add Supabase keys in js/config.js"); return; }
-    // Hosted Supabase auth page: shows email sign-in (enabled by default) and any
-    // extra providers we turn on later (Google) — no provider lock-in here.
-    var url = c.SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/authorize" +
-      "?redirect_to=" + encodeURIComponent(c.REDIRECT || location.href);
-    if (c.SUPABASE_ANON_KEY) url += "&apikey=" + encodeURIComponent(c.SUPABASE_ANON_KEY);
-    location.href = url;
+    var verifier = b64UrlEncode(crypto.getRandomValues(new Uint8Array(32)));
+    try { localStorage.setItem("dg_pkce_verifier", verifier); } catch (e) {}
+    var finish = function (challenge) {
+      var url = c.SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/authorize" +
+        "?redirect_to=" + encodeURIComponent(c.REDIRECT || location.origin + location.pathname);
+      if (challenge) url += "&code_challenge=" + encodeURIComponent(challenge) + "&code_challenge_method=s256";
+      if (c.SUPABASE_ANON_KEY) url += "&apikey=" + encodeURIComponent(c.SUPABASE_ANON_KEY);
+      location.href = url;
+    };
+    if (crypto.subtle && crypto.subtle.digest) {
+      crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)).then(function (hash) {
+        finish(b64UrlEncode(hash));
+      }, function () { finish(null); });
+    } else { finish(null); }
+  }
+  // PKCE return: ?code=... must be exchanged for tokens with the stored verifier.
+  function consumeCode() {
+    var params = new URLSearchParams(location.search);
+    var code = params.get("code");
+    if (!code) return;
+    var c = cfg();
+    var verifier = null;
+    try { verifier = localStorage.getItem("dg_pkce_verifier"); localStorage.removeItem("dg_pkce_verifier"); } catch (e) {}
+    if (!verifier || !c.SUPABASE_URL) return;
+    fetch(c.SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/token?grant_type=pkce", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: c.SUPABASE_ANON_KEY || "" },
+      body: JSON.stringify({ auth_code: code, code_verifier: verifier })
+    })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        if (!d.access_token) throw new Error("no access_token");
+        saveAuth({
+          access_token: d.access_token,
+          refresh_token: d.refresh_token || "",
+          token_type: d.token_type || "bearer",
+          expires_at: Math.floor(Date.now() / 1000) + (d.expires_in || 3600)
+        });
+        history.replaceState(null, "", location.pathname);
+        updateAuthBtn();
+        toast("Signed in");
+      })
+      .catch(function () { toast("Sign-in failed — try again"); });
   }
   function signOut() { clearAuth(); updateAuthBtn(); toast("Signed out"); }
   // Proactive refresh: implicit-grant tokens last ~1h; refresh_token is rotated
@@ -364,9 +443,13 @@
     if (h.scrollTop > 30) els.nav.classList.add("solid"); else els.nav.classList.remove("solid");
   }, { passive: true });
 
-  els.mClose.onclick = closeModal;
+  els.mClose.onclick = function () { closeModal(); };
   els.modal.addEventListener("click", function (e) { if (e.target === els.modal || e.target.classList.contains("modal-bg")) closeModal(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+  window.addEventListener("popstate", function () {
+    if (location.hash.indexOf("#t/") !== 0 && modalTemplateId) closeModal(true);
+    else openFromHash();
+  });
 
   var freeCta = document.getElementById("free-cta");
   if (freeCta) freeCta.onclick = function () {
@@ -374,6 +457,7 @@
     if (lib) lib.scrollIntoView({ behavior: "smooth" });
   };
 
+  consumeCode();
   consumeHash();
   refreshAuth();
   updateAuthBtn();
@@ -396,6 +480,7 @@
       document.querySelectorAll("[data-count]").forEach(function (n) { n.textContent = d.templates.length; });
       renderChips();
       renderGrid();
+      openFromHash();
       ensurePaypal(renderPaypalButtons);
     })
     .catch(function (err) {

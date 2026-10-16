@@ -1,7 +1,7 @@
 :root{
   --bg:#07070b; --bg-2:#0c0c14; --panel:#101018; --panel-2:#14141f;
   --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
-  --txt:#f5f5f7; --muted:#9a9aa8; --dim:#6b6b7a;
+  --txt:#f5f5f7; --muted:#9a9aa8; --dim: #8a8a99;
   --brand:#8b5cf6; --brand-2:#22d3ee; --ok:#34d399;
   --max-w:1180px; --r:16px;
   --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -170,3 +170,27 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:44px 0;color:var
 /* keyboard accessibility: visible focus ring on all interactive elements */
 .card:focus-visible,.chip:focus-visible,.btn:focus-visible,button:focus-visible,a:focus-visible{
   outline:2px solid var(--brand);outline-offset:2px}
+
+/* Accessibility: honor reduced-motion — kill decorative animation entirely. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screenshot thumbnails fill the thumb box; keep the accent as fallback bg. */
+.thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* FAQ */
+.faq{padding:64px 22px 40px}
+.faq .section-head{margin-bottom:32px}
+.faq-item{border:1px solid var(--line-2);border-radius:12px;margin-bottom:12px;background:var(--panel);overflow:hidden}
+.faq-item summary{padding:16px 20px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--txt);font-size:15px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:'+';font-size:20px;color:var(--muted);transition:transform .2s}
+.faq-item[open] summary::after{transform:rotate(45deg)}
+.faq-item p{padding:0 20px 18px;color:var(--muted);font-size:14px;line-height:1.7;margin:0}
+.faq-item a{color:var(--brand)}

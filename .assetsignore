@@ -17,3 +17,7 @@ wrangler.jsonc
 Thumbs.db
 *.log
 .dev.vars
+schema.sql
+README.md
+.wrangler
+demos/*/*.md

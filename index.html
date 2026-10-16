@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.paypal.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://www.paypal.com https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'self' https://www.paypal.com; object-src 'none'; base-uri 'self'; form-action 'self' https://www.paypal.com; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DepthGlow — Cinematic 3D site prompts that glow</title>
 <meta name="description" content="Copy a prompt, paste it into your AI, launch a site that glows. Original 2D and real-time 3D scene prompts for Lovable, Bolt, Cursor, v0 and Claude.">
@@ -20,7 +19,22 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"DepthGlow","url":"https://depthglow.dev/","description":"Cinematic 3D site prompts that glow. Copy a prompt, paste it into your AI."}
+{
+  "@context":"https://schema.org",
+  "@graph":[
+    {"@type":"WebSite","name":"DepthGlow","url":"https://depthglow.dev/","description":"Cinematic 3D site prompts that glow. Copy a prompt, paste it into your AI."},
+    {"@type":"FAQPage","mainEntity":[
+      {"@type":"Question","name":"What is DepthGlow?","acceptedAnswer":{"@type":"Answer","text":"DepthGlow is a library of copy-paste prompts that make AI tools (Claude, Cursor, v0, Bolt, Lovable) generate cinematic 2D and real-time 3D hero sections, landing pages and full sites — without the generic AI look."}},
+      {"@type":"Question","name":"Which AI tools do these prompts work with?","acceptedAnswer":{"@type":"Answer","text":"Any text-to-site or text-to-code AI that accepts a long-form prompt. Tested with Claude, Cursor, v0, Bolt, Lovable and GPT-4o."}},
+      {"@type":"Question","name":"Can I use the prompts for client or commercial projects?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every paid plan (Pro and Max) includes a commercial license. Free prompts are for personal/evaluation use only."}},
+      {"@type":"Question","name":"How do I access Pro or Max prompts after subscribing?","acceptedAnswer":{"@type":"Answer","text":"Sign in with the same email you used on PayPal. Pro and Max templates unlock automatically."}},
+      {"@type":"Question","name":"Can I cancel anytime?","acceptedAnswer":{"@type":"Answer","text":"Yes. Subscriptions are managed through PayPal. Cancel anytime. Access continues until the end of the billing period."}},
+      {"@type":"Question","name":"Do I get new templates after subscribing?","acceptedAnswer":{"@type":"Answer","text":"New drops ship weekly. Pro members see every new template. Max members get priority access to premium 3D and shader prompts first."}}
+    ]},
+    {"@type":"Product","name":"DepthGlow Pro","description":"Full library access — every 2D template and standard 3D scene prompts.","offers":{"@type":"Offer","price":"7","priceCurrency":"USD","availability":"https://schema.org/InStock"}},
+    {"@type":"Product","name":"DepthGlow Max","description":"Everything, including the premium high-detail 3D scene vault.","offers":{"@type":"Offer","price":"15","priceCurrency":"USD","availability":"https://schema.org/InStock"}}
+  ]
+}
 </script>
 </head>
 <body>
@@ -50,7 +64,7 @@
         <a class="btn btn-primary" href="#library">Browse the library</a>
         <a class="btn btn-ghost" href="#pricing">See pricing</a>
       </div>
-      <p class="hero-note"><span data-count>12</span> live templates · <span class="tier-free">free to try</span> · 3D scenes included</p>
+      <p class="hero-note"><span data-count>20</span> live templates · <span class="tier-free">free to try</span> · 3D scenes included</p>
     </div>
   </section>
 
@@ -93,6 +107,7 @@
           <li><span class="ck">✓</span> All Pro templates</li>
           <li><span class="ck">✓</span> Standard 3D scene prompts</li>
           <li><span class="ck">✓</span> New drops every week</li>
+          <li><span class="ck">✓</span> Commercial license</li>
           <li class="off"><span class="ck">✗</span> Premium high-detail 3D</li>
         </ul>
         <div id="paypal-button-pro" class="paypal-btn" data-plan="pro"></div>
@@ -107,7 +122,6 @@
           <li><span class="ck">✓</span> Premium high-detail 3D scenes</li>
           <li><span class="ck">✓</span> Shader &amp; procedural prompts</li>
           <li><span class="ck">✓</span> Priority new drops</li>
-          <li><span class="ck">✓</span> Commercial use</li>
         </ul>
         <div id="paypal-button-max" class="paypal-btn" data-plan="max"></div>
       </div>
@@ -122,6 +136,16 @@
       <div class="step"><div class="n">2</div><h4>Copy it</h4><p>Hit copy on any free prompt, or unlock Pro/Max for the full vault including real-time 3D scenes.</p></div>
       <div class="step"><div class="n">3</div><h4>Paste &amp; ship</h4><p>Paste into Claude, Cursor, v0 or Bolt. Swap in your own brand, copy and colors. Ship it.</p></div>
     </div>
+  </section>
+
+  <section class="wrap faq" id="faq">
+    <div class="section-head"><h2>FAQ</h2><p>Everything you need to know before subscribing.</p></div>
+    <details class="faq-item"><summary>What is DepthGlow?</summary><p>DepthGlow is a library of copy-paste prompts that make AI tools (Claude, Cursor, v0, Bolt, Lovable) generate cinematic 2D and real-time 3D hero sections, landing pages and full sites — without the generic AI look.</p></details>
+    <details class="faq-item"><summary>Which AI tools do these prompts work with?</summary><p>Any text-to-site or text-to-code AI that accepts a long-form prompt. Tested with Claude, Cursor, v0, Bolt, Lovable and GPT-4o. The prompts are tool-agnostic — paste wherever you work.</p></details>
+    <details class="faq-item"><summary>Can I use the prompts for client or commercial projects?</summary><p>Yes. Every paid plan (Pro and Max) includes a commercial license. You can use the generated sites for your own products, client work, or anything you sell. Free prompts are for personal / evaluation use only.</p></details>
+    <details class="faq-item"><summary>How do I access Pro or Max prompts after subscribing?</summary><p>Sign in with the same email you used on PayPal. The Pro and Max templates unlock automatically — copy buttons activate and full prompt text becomes visible.</p></details>
+    <details class="faq-item"><summary>Can I cancel anytime?</summary><p>Yes. Subscriptions are managed entirely through PayPal. Cancel anytime at <a href="https://www.paypal.com/myaccount/autopay/" target="_blank" rel="noopener">paypal.com/myaccount/autopay</a>. You keep access until the end of the current billing period.</p></details>
+    <details class="faq-item"><summary>Do I get new templates after subscribing?</summary><p>New drops ship weekly. Pro members see every new 2D and standard 3D template. Max members get priority access to premium high-detail 3D and shader prompts first.</p></details>
   </section>
 </main>
 
@@ -141,7 +165,7 @@
 </footer>
 
 <!-- modal -->
-<div class="modal" id="modal" role="dialog" aria-modal="true">
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
   <div class="modal-bg"></div>
   <div class="modal-card">
     <div class="modal-head">
@@ -161,6 +185,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/config.js"></script>
+<script src="js/hero3d.js" defer></script>
 <script src="js/app.js" defer></script>
 </body>
 </html>

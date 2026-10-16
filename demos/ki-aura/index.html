@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ki Aura Burst - DepthGlow preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#0a0a0f;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+
+.aura{position:absolute;left:50%;top:52%;translate:-50% -50%;width:280px;height:420px;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 80%,#facc15 0%,#f97316 40%,transparent 70%);opacity:.55;transform-origin:50% 100%;animation:flame 1.6s ease-in-out infinite alternate}
+.aura.b{width:340px;height:480px;opacity:.3;animation-duration:2s}
+.aura.c{width:400px;height:540px;opacity:.18;animation-duration:2.4s}
+@keyframes flame{to{scale:1.12 1.06}}
+.ground{position:absolute;left:50%;top:78%;translate:-50%;width:360px;height:60px;border-radius:50%;background:radial-gradient(ellipse,rgba(249,115,22,.7),transparent 70%);animation:gp 1.6s ease-in-out infinite alternate}
+@keyframes gp{to{scale:1.05}}
+canvas{position:absolute;inset:0;z-index:2}
+.meter{position:absolute;left:50%;bottom:7vh;translate:-50%;width:240px;height:8px;border-radius:99px;background:#27272a;border:1px solid #52525b;z-index:9;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#facc15,#f97316);animation:fill 6s linear forwards}
+@keyframes fill{to{width:100%}}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:10;pointer-events:none;animation:flash .08s step-end 6s}
+@keyframes flash{0%,99%{opacity:0}100%{opacity:.8}}
+
+.content{position:relative;z-index:5;text-align:center;padding:0 24px;max-width:760px}
+h1{font-size:clamp(2.2rem,6vw,4.2rem);line-height:1.05;letter-spacing:-.03em;font-weight:800}
+p.sub{color:#a1a1b3;font-size:clamp(.95rem,2vw,1.15rem);margin-top:16px;line-height:1.6}
+.tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;border:1px solid rgba(255,255,255,.22);padding:6px 14px;border-radius:999px;margin-bottom:22px;color:#cfcfe0}
+</style>
+</head>
+<body>
+
+<div class="aura c"></div><div class="aura b"></div><div class="aura"></div>
+<canvas id="ki"></canvas>
+<svg style="position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:4" width="240" height="360" viewBox="0 0 240 360">
+<path d="M120 30 L96 6 L92 40 L64 16 L74 50 L44 40 L70 68 L36 74 L74 88 L120 78 L166 88 L204 74 L170 68 L196 40 L166 50 L176 16 L148 40 L144 6 Z" fill="#0c0a09"/>
+<path d="M84 84 Q84 64 120 64 Q156 64 156 84 L156 120 Q156 140 140 148 L144 170 Q186 182 190 230 L200 356 L40 356 L50 230 Q54 182 96 170 L100 148 Q84 140 84 120Z" fill="#0c0a09"/>
+<rect x="58" y="196" width="34" height="90" rx="16" fill="#0c0a09" transform="rotate(14 75 240)"/>
+<rect x="148" y="196" width="34" height="90" rx="16" fill="#0c0a09" transform="rotate(-14 165 240)"/>
+</svg>
+<div id="bolts"></div>
+<div class="ground"></div>
+<div class="meter"><i></i></div>
+<div class="flash"></div>
+
+<div class="content">
+<span class="tag">DepthGlow preview</span>
+<h1>Ki Aura Burst</h1>
+<p class="sub">Live demo — the paid prompt rebuilds this scene and more in your AI.</p>
+</div>
+<script>
+(function(){
+  // ki particle canvas
+  var cv=document.getElementById('ki'),cx=cv.getContext('2d');
+  function size(){cv.width=innerWidth;cv.height=innerHeight}
+  size();addEventListener('resize',size);
+  var P=[];
+  setInterval(function(){
+    P.push({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*0.78,vy:-(1.5+Math.random()*3),vx:(Math.random()-.5)*.6,a:1,r:1+Math.random()*2});
+  },16);
+  (function loop(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    P=P.filter(function(p){p.y+=p.vy;p.x+=p.vx+Math.sin(p.y*.02)*.4;p.a-=.012;return p.a>0});
+    P.forEach(function(p){cx.fillStyle='rgba(250,204,21,'+p.a+')';cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill()});
+    requestAnimationFrame(loop);
+  })();
+  // lightning bolts
+  var host=document.getElementById('bolts');
+  for(var b=0;b<5;b++){(function(){
+    var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none';
+    var path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('stroke','#fff');path.setAttribute('stroke-width','2');path.setAttribute('fill','none');
+    path.style.filter='drop-shadow(0 0 6px #facc15)';
+    svg.appendChild(path);host.appendChild(svg);
+    function strike(){
+      var x=innerWidth/2+(Math.random()-.5)*260,y=innerHeight*0.25,d='M'+x+' '+y;
+      var cxp=x,cyp=y;
+      for(var i=0;i<6;i++){cxp+=(Math.random()-.5)*60;cyp+=30+Math.random()*40;d+=' L'+cxp+' '+cyp;}
+      path.setAttribute('d',d);svg.style.opacity=1;
+      setTimeout(function(){svg.style.opacity=0},90);
+      setTimeout(strike,400+Math.random()*500);
+    }
+    setTimeout(strike,Math.random()*800);
+  })();}
+  // screen shake while meter fills (first 6s)
+  var t0=Date.now();
+  (function shake(){
+    if(Date.now()-t0<6000){
+      document.body.style.translate=(Math.random()*4-2)+'px '+(Math.random()*4-2)+'px';
+      setTimeout(shake,120);
+    } else document.body.style.translate='';
+  })();
+})();
+</script>
+</body>
+</html>

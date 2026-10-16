@@ -156,17 +156,41 @@ export async function activeTier(
     console.error("activeTier miss:", JSON.stringify({ email: em, userId }));
     return null;
   }
+  // Self-check the paid-through date: a cancelled-in-period row stays ACTIVE in
+  // the DB until its period ends — deny (and demote) once next_billing_time passed.
+  if (row.next_billing_time) {
+    const until = Date.parse(row.next_billing_time);
+    if (!isNaN(until) && until <= Date.now()) {
+      void fetch(
+        `${env.SUPABASE_URL}/rest/v1/subscriptions?paypal_sub_id=eq.${encodeURIComponent(row.paypal_sub_id)}`,
+        {
+          method: "PATCH",
+          headers: {
+            apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ status: "INACTIVE" }),
+        }
+      ).catch(() => {});
+      console.error("activeTier: period ended, demoted", row.paypal_sub_id);
+      return null;
+    }
+  }
   const tier = planTier(env, row.plan);
   if (tier !== "pro" && tier !== "max") return null;
   return { tier, subId: row.paypal_sub_id || "", rowUserId: row.user_id || null };
 }
 
 // Upsert a subscription row (idempotent on paypal_sub_id — must be PRIMARY KEY).
+// Throws on failure so callers decide: webhook → non-2xx makes PayPal retry;
+// status.ts catches and logs (the buyer already has the page open).
 export async function upsertSubscription(
   env: Env,
   row: Record<string, unknown>
 ): Promise<void> {
-  await fetch(
+  const res = await fetch(
     `${env.SUPABASE_URL}/rest/v1/subscriptions?on_conflict=paypal_sub_id`,
     {
       method: "POST",
@@ -179,11 +203,37 @@ export async function upsertSubscription(
       body: JSON.stringify(row),
     }
   );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`subscription upsert failed: ${res.status} ${body.slice(0, 200)}`);
+  }
 }
 
 export function json(data: unknown, status = 200, extra: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...extra },
+    headers: {
+      "Content-Type": "application/json",
+      // Premium prompt content + payment state must never sit in a cache.
+      "Cache-Control": "no-store",
+      ...extra,
+    },
   });
+}
+
+// Best-effort per-isolate rate limit (no KV/DO cost). Cloudflare isolates are
+// short-lived and sharded, so this is a soft brake against hammering, not a
+// hard quota — enough to blunt naive /api/status loops.
+const _hits = new Map<string, number[]>();
+export function rateLimit(key: string, max: number, windowMs: number): boolean {
+  const now = Date.now();
+  const arr = (_hits.get(key) || []).filter((t) => now - t < windowMs);
+  if (arr.length >= max) {
+    _hits.set(key, arr);
+    return false;
+  }
+  arr.push(now);
+  _hits.set(key, arr);
+  if (_hits.size > 5000) _hits.clear(); // isolate hygiene
+  return true;
 }

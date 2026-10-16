@@ -18,18 +18,26 @@ export default {
 
     // API routes — never let a handler exception become a CF HTML 500; return JSON.
     try {
-      if (pathname === "/api/status" && method === "GET") {
+      if (pathname.replace(/\/+$/, "") === "/api/status" && method === "GET") {
         return statusGet({ request, env });
       }
-      if (pathname === "/api/paypal/webhook" && method === "POST") {
+      if (pathname.replace(/\/+$/, "") === "/api/paypal/webhook" && method === "POST") {
         return webhookPost({ request, env });
       }
       const m = pathname.match(/^\/api\/prompt\/([^/]+)\/?$/);
       if (m && method === "GET") {
-        return promptGet({ request, env, params: { id: decodeURIComponent(m[1]) } });
+        let id = "";
+        try {
+          id = decodeURIComponent(m[1]);
+        } catch {
+          return json({ error: "bad id" }, 400);
+        }
+        return promptGet({ request, env, params: { id } });
       }
     } catch (e) {
-      return json({ error: "internal", detail: String((e as Error)?.message || e) }, 500);
+      // Log the real error server-side; clients only ever see "internal".
+      console.error("worker handler error:", pathname, e);
+      return json({ error: "internal" }, 500);
     }
     if (pathname.startsWith("/api/")) {
       return json({ error: "not_found" }, 404);

@@ -61,11 +61,17 @@ async function ensureBucket() {
 }
 
 async function upload(id, content) {
+  // Supabase Storage upsert: POST + x-upsert header (query ?upsert=true alone is not enough on some versions)
   const res = await fetch(
-    `${SUPA_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(id)}.md?upsert=true`,
+    `${SUPA_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(id)}.md`,
     {
       method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "text/markdown" },
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": "text/markdown",
+        "x-upsert": "true",
+      },
       body: content,
     }
   );
