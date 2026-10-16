@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora Hero — PromptMint free preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#0a0a0f;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.aurora{position:absolute;inset:-30%;z-index:0;filter:blur(80px);opacity:.7}
+.bloom{position:absolute;border-radius:50%;mix-blend-mode:screen}
+.b1{width:46vw;height:46vw;left:8%;top:12%;background:radial-gradient(circle,#7c3aed,transparent 65%);animation:d1 22s ease-in-out infinite alternate}
+.b2{width:40vw;height:40vw;right:6%;top:20%;background:radial-gradient(circle,#06b6d4,transparent 65%);animation:d2 26s ease-in-out infinite alternate}
+.b3{width:36vw;height:36vw;left:30%;bottom:6%;background:radial-gradient(circle,#ec4899,transparent 65%);animation:d3 19s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translate(12vw,8vh) scale(1.15)}}
+@keyframes d2{to{transform:translate(-10vw,10vh) scale(1.1)}}
+@keyframes d3{to{transform:translate(8vw,-10vh) scale(1.2)}}
+.grain{position:fixed;inset:0;z-index:2;opacity:.04;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.content{position:relative;z-index:1;text-align:center;padding:0 24px;max-width:820px;
+  animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px);filter:blur(12px)}to{opacity:1;transform:none;filter:blur(0)}}
+.tag{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#c4b5fd;
+  border:1px solid rgba(196,181,253,.3);padding:6px 14px;border-radius:999px;margin-bottom:26px}
+h1{font-size:clamp(2.8rem,8vw,5.5rem);line-height:1.02;letter-spacing:-.04em;font-weight:800;font-feature:"ss01"}
+p.sub{color:#a1a1b3;font-size:clamp(1rem,2.4vw,1.25rem);margin:22px auto 0;max-width:52ch;line-height:1.6}
+.cta{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
+.btn{padding:14px 28px;border-radius:999px;font-weight:600;font-size:15px;cursor:pointer;border:none;text-decoration:none;display:inline-block}
+.primary{background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#0a0a0f}
+.ghost{background:transparent;color:#f5f5f7;border:1px solid rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div class="aurora"><div class="bloom b1"></div><div class="bloom b2"></div><div class="bloom b3"></div></div>
+<div class="grain"></div>
+<div class="content">
+  <span class="tag">✦ Free template</span>
+  <h1>Design that feels alive.</h1>
+  <p class="sub">Aurora Hero — a living gradient backdrop with floating light blooms. Copy the prompt, paste it into your AI, ship it.</p>
+  <div class="cta">
+    <a class="btn primary" href="#">Get started</a>
+    <a class="btn ghost" href="#">See the work</a>
+  </div>
+</div>
+</body>
+</html>

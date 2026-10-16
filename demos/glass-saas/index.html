@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glass SaaS — PromptMint free preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b1020;color:#f5f5f7;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+.blob{position:fixed;border-radius:50%;filter:blur(90px);z-index:0;opacity:.5}
+.b1{width:520px;height:520px;background:#3b82f6;left:-140px;top:-120px;animation:float 20s ease-in-out infinite alternate}
+.b2{width:460px;height:460px;background:#8b5cf6;right:-120px;top:120px;animation:float 24s ease-in-out infinite alternate-reverse}
+@keyframes float{to{transform:translate(60px,80px) scale(1.15)}}
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 22px}
+.glass{background:rgba(255,255,255,.05);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.1);border-radius:20px}
+nav{position:sticky;top:14px;z-index:10;margin:14px auto 0;display:flex;align-items:center;gap:28px;
+  padding:12px 20px;border-radius:999px;max-width:900px}
+.logo{font-weight:700;font-size:17px;display:flex;gap:8px;align-items:center}
+.dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)}
+nav .links{display:flex;gap:24px;margin-left:auto;font-size:14px;color:#c3c3d4}
+nav .links a{text-decoration:none;color:inherit}
+nav .links a:hover{color:#fff}
+.mini{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#0b1020;padding:9px 16px;border-radius:999px;font-weight:600;font-size:13px}
+.hero{text-align:center;padding:74px 0 10px}
+h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.035em;line-height:1.04;font-weight:800}
+.hero p{color:#a6a6bd;max-width:52ch;margin:20px auto 0;font-size:1.12rem}
+.cta{display:flex;gap:12px;justify-content:center;margin-top:30px;flex-wrap:wrap}
+.btn{padding:13px 26px;border-radius:12px;font-weight:600;text-decoration:none;font-size:15px}
+.primary{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff}
+.ghost{border:1px solid rgba(255,255,255,.2);color:#fff}
+.trusted{margin-top:40px;text-align:center;color:#6b6b82;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.logos{display:flex;gap:34px;justify-content:center;margin-top:16px;flex-wrap:wrap;opacity:.5}
+.logos span{font-weight:700;font-size:16px;color:#9090a8}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:56px 0}
+.card{padding:26px;transition:transform .3s,border-color .3s}
+.card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.28)}
+.card .ic{width:42px;height:42px;border-radius:12px;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+.card h3{font-size:18px;margin-bottom:8px}
+.card p{color:#a6a6bd;font-size:14px;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:40px 0 60px;text-align:center}
+.stat .n{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .l{color:#a6a6bd;font-size:13px;margin-top:4px}
+@media(max-width:720px){.features,.stats{grid-template-columns:1fr}nav .links{display:none}}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="wrap">
+  <nav class="glass"><div class="logo"><span class="dot"></span>Nimbus</div>
+    <div class="links"><a href="#">Product</a><a href="#">Features</a><a href="#">Pricing</a><a href="#">Docs</a></div>
+    <a class="mini" href="#">Start free</a></nav>
+  <div class="hero">
+    <h1>Ship your best work, faster.</h1>
+    <p>The all-in-one workspace that keeps your team in flow. Plan, build and launch — without the busywork.</p>
+    <div class="cta"><a class="btn primary" href="#">Start free trial</a><a class="btn ghost" href="#">Book a demo</a></div>
+  </div>
+  <div class="trusted">Trusted by fast-moving teams</div>
+  <div class="logos"><span>Vertex</span><span>Lumen</span><span>Northwind</span><span>Cascade</span><span>Orbit</span></div>
+  <div class="features">
+    <div class="card glass"><div class="ic">⚡</div><h3>Blazing fast</h3><p>Everything loads instantly. No spinners, no waiting — just momentum.</p></div>
+    <div class="card glass"><div class="ic">🔒</div><h3>Secure by default</h3><p>Enterprise-grade security and compliance out of the box.</p></div>
+    <div class="card glass"><div class="ic">🧭</div><h3>Clear focus</h3><p>A calm interface that surfaces what matters and hides what doesn't.</p></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="n">40k+</div><div class="l">Teams building</div></div>
+    <div class="stat"><div class="n">99.9%</div><div class="l">Uptime</div></div>
+    <div class="stat"><div class="n">4.9★</div><div class="l">Average rating</div></div>
+  </div>
+</div>
+</body>
+</html>

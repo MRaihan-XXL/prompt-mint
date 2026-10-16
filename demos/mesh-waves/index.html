@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mesh Waves — PromptMint preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{margin:0;height:100%;overflow:hidden;background:#05070d}
+canvas{display:block}
+.hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);color:#7fd7ea;font-size:13px;
+  font-family:system-ui,sans-serif;background:rgba(5,10,18,.6);padding:8px 16px;border-radius:999px;
+  border:1px solid rgba(120,220,240,.2);backdrop-filter:blur(8px)}
+.tag{position:fixed;left:18px;top:16px;color:#5f7f95;font-size:12px;font-family:system-ui,sans-serif;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="tag">PROMPTMINT · MESH WAVES</div>
+<div class="hint">Move your pointer across the mesh</div>
+<script src="../../js/vendor/three.min.js"></script>
+<script>
+(function(){
+  var W=window.innerWidth,H=window.innerHeight;
+  var scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x05070d,0.06);
+  var camera=new THREE.PerspectiveCamera(55,W/H,0.1,100);
+  camera.position.set(0,3.2,7);camera.lookAt(0,0,0);
+  var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+
+  var GX=120,GY=120,SEP=0.16;
+  var count=GX*GY;
+  var positions=new Float32Array(count*3);
+  var i=0;
+  for(var y=0;y<GY;y++)for(var x=0;x<GX;x++){
+    positions[i++]=(x-GX/2)*SEP;
+    positions[i++]=0;
+    positions[i++]=(y-GY/2)*SEP;
+  }
+  var geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  var mat=new THREE.PointsMaterial({color:0x39d7f0,size:0.045,transparent:true,opacity:0.9,
+    blending:THREE.AdditiveBlending,depthWrite:false});
+  var pts=new THREE.Points(geo,mat);
+  scene.add(pts);
+
+  var pointer={x:0,z:0,active:0};
+  var ripple={x:0,z:0,amp:0};
+  window.addEventListener('pointermove',function(e){
+    pointer.x=(e.clientX/W-0.5)*GX*SEP;
+    pointer.z=-(e.clientY/H-0.5)*GY*SEP;
+    pointer.active=1;
+    ripple.x=pointer.x;ripple.z=pointer.z;ripple.amp=1;
+  });
+
+  var clock=new THREE.Clock(),t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),0.05);t+=dt;
+    if(ripple.amp>0)ripple.amp=Math.max(0,ripple.amp-dt/1.5);
+    var pos=geo.attributes.position.array;
+    for(var j=0,k=0;j<count;j++,k+=3){
+      var px=pos[k],pz=pos[k+2];
+      var wave=Math.sin(px*0.6+t*1.6)*0.22+Math.sin(pz*0.5-t*1.2)*0.22;
+      var dx=px-ripple.x,dz=pz-ripple.z;
+      var d=Math.sqrt(dx*dx+dz*dz);
+      var rip=Math.sin(d*1.6-t*7)*Math.exp(-d*0.35)*ripple.amp*0.9;
+      pos[k+1]=wave+rip;
+    }
+    geo.attributes.position.needsUpdate=true;
+    camera.position.x=Math.sin(t*0.15)*0.9;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',function(){
+    W=window.innerWidth;H=window.innerHeight;
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+  });
+})();
+</script>
+</body>
+</html>

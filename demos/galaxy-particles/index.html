@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galaxy Particles — PromptMint preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{margin:0;height:100%;overflow:hidden;background:#04030a}
+canvas{display:block}
+.tag{position:fixed;left:18px;top:16px;color:#b39ae0;font-size:12px;font-family:system-ui,sans-serif;letter-spacing:.08em}
+.cap{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);color:#8a7fb5;font-size:12px;
+  font-family:system-ui,sans-serif;background:rgba(10,6,22,.55);padding:8px 16px;border-radius:999px;
+  border:1px solid rgba(160,120,240,.2)}
+</style>
+</head>
+<body>
+<div class="tag">PROMPTMINT · GALAXY PARTICLES</div>
+<div class="cap">Drag to spin the galaxy</div>
+<script src="../../js/vendor/three.min.js"></script>
+<script>
+(function(){
+  var W=window.innerWidth,H=window.innerHeight;
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(58,W/H,0.1,200);
+  camera.position.set(0,10,26);camera.lookAt(0,0,0);
+  var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+
+  var COUNT=100000,ARMS=5,SPIN=1.1,RAND=4.2,INNER=1.6,VERT=0.55;
+  var pos=new Float32Array(COUNT*3),col=new Float32Array(COUNT*3);
+  var cInner=new THREE.Color(0xd8b4fe),cOuter=new THREE.Color(0x3b1d8f),cMid=new THREE.Color(0xec4899);
+  var p=0,q=0;
+  for(var i=0;i<COUNT;i++){
+    var i3=i*3;
+    var r=Math.pow(Math.random(),1.6)*12;
+    var branch=(i%ARMS)/ARMS*Math.PI*2;
+    var spin=r*SPIN;
+    var rx=Math.pow(Math.random(),3)*(Math.random()<0.5?1:-1)*RAND*0.6;
+    var ry=Math.pow(Math.random(),3)*(Math.random()<0.5?1:-1)*VERT*(12-r)*0.14;
+    var rz=Math.pow(Math.random(),3)*(Math.random()<0.5?1:-1)*RAND*0.6;
+    var ang=branch+spin;
+    pos[i3]=Math.cos(ang)*r+rx;
+    pos[i3+1]=ry;
+    pos[i3+2]=Math.sin(ang)*r+rz;
+    var t=r/12;
+    var c=cInner.clone();
+    if(t<0.5)c.lerp(cMid,t*2);else c.lerp(cOuter,(t-0.5)*2);
+    col[i3]=c.r;col[i3+1]=c.g;col[i3+2]=c.b;
+  }
+  var geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var mat=new THREE.PointsMaterial({size:0.055,vertexColors:true,transparent:true,opacity:0.95,
+    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
+  var galaxy=new THREE.Points(geo,mat);
+  scene.add(galaxy);
+
+  // drag spin with inertia
+  var dragging=false,lastX=0,spinVel=0.18;
+  function down(x){dragging=true;lastX=x}
+  function move(x){if(!dragging)return;spinVel+=(x-lastX)*0.0004;lastX=x}
+  function up(){dragging=false}
+  renderer.domElement.addEventListener('mousedown',function(e){down(e.clientX)});
+  window.addEventListener('mousemove',function(e){move(e.clientX)});
+  window.addEventListener('mouseup',up);
+  renderer.domElement.addEventListener('touchstart',function(e){down(e.touches[0].clientX)},{passive:true});
+  window.addEventListener('touchmove',function(e){move(e.touches[0].clientX)},{passive:true});
+  window.addEventListener('touchend',up);
+
+  var clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),0.05);
+    if(!dragging)spinVel+=(0.18-spinVel)*dt*0.5;
+    galaxy.rotation.y+=spinVel*dt;
+    camera.position.x=Math.sin(clock.elapsedTime*0.05)*2;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',function(){
+    W=window.innerWidth;H=window.innerHeight;
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+  });
+})();
+</script>
+</body>
+</html>

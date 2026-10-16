@@ -1,0 +1,139 @@
+{
+  "site": {
+    "name": "PromptMint",
+    "tagline": "Cinematic AI sites, mint fresh. Copy a prompt, paste it into your AI, launch a site that doesn't look AI-made.",
+    "version": "1.0.0"
+  },
+  "plans": {
+    "free": { "id": null, "price": 0, "label": "Free" },
+    "pro": { "id": "P-11T043662M944992ANLIMV2Y", "price": 7, "label": "Pro" },
+    "max": { "id": "P-1HB67148EX8070019NLIMWIY", "price": 15, "label": "Max" }
+  },
+  "categories": ["All", "Recent", "Hero", "Landing Page", "SaaS", "Portfolio", "Creative", "3D", "Gradient", "Interactive"],
+  "templates": [
+    {
+      "id": "aurora-hero",
+      "title": "Aurora Hero",
+      "category": "Hero",
+      "tier": "free",
+      "tags": ["2D", "hero", "gradient"],
+      "demo": "demos/aurora-hero/index.html",
+      "accent": "linear-gradient(135deg,#7c3aed,#06b6d4)",
+      "blurb": "Full-viewport hero with a slow-shifting aurora gradient and floating light blooms.",
+      "prompt": "Build a single self-contained HTML file: a full-viewport hero section with a living aurora gradient background. Layer 3 radial-gradient \"light blooms\" that drift slowly on independent 18–26s CSS keyframe loops. Keep the aurora on a fixed canvas-free div using conic-gradient + blur(80px) so it stays cheap. Center a headline in a geometric sans (font-feature \"ss01\"), a one-line subtitle in muted grey, and two pill CTAs (primary solid, secondary ghost). Add a subtle grain overlay via an inline SVG feTurbulence at 4% opacity. Animate the headline in on load with a 0.6s blur-up + translateY. No external JS. Pure HTML/CSS, dark background #0a0a0f, text near-white. Ensure it is responsive and text stays readable at 360px width."
+    },
+    {
+      "id": "glass-saas",
+      "title": "Glass SaaS",
+      "category": "SaaS",
+      "tier": "free",
+      "tags": ["2D", "saas", "glassmorphism"],
+      "demo": "demos/glass-saas/index.html",
+      "accent": "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+      "blurb": "Glassmorphism SaaS landing with a feature grid that lifts on hover.",
+      "prompt": "Build a single self-contained HTML file: a dark SaaS landing page using glassmorphism. Background is a deep navy (#0b1020) with two big blurred color blobs (blue + violet) drifting behind the content. Top nav bar is a floating glass pill (backdrop-filter blur, 1px white/10 border, radius 999px) with logo, 4 links, and a small CTA. Hero: centered headline, subtitle, one primary CTA, and a \"trusted by\" row of 5 greyed logo placeholders. Below, a 3-column feature grid where each card is glass (rgba white/5, blur, radius 20px) that lifts 6px with a brightened border on hover (0.3s ease). Add a stats strip. Pure HTML/CSS only, no external JS. Responsive: grid collapses to 1 column under 720px."
+    },
+    {
+      "id": "kinetic-type",
+      "title": "Kinetic Type",
+      "category": "Creative",
+      "tier": "free",
+      "tags": ["2D", "creative", "typography"],
+      "demo": "demos/kinetic-type/index.html",
+      "accent": "linear-gradient(135deg,#f59e0b,#ef4444)",
+      "blurb": "Oversized editorial type that slides, masks and reveals on load.",
+      "prompt": "Build a single self-contained HTML file: a bold creative/agency page centered on kinetic typography. Use an extremely oversized display headline (clamp from 3rem to 9vw) in a heavy grotesque, set in ALL CAPS with tight negative letter-spacing. Animate each line to slide up from a clipping mask on load, staggered 90ms apart. Behind the type, a thin outlined (stroke-only) duplicate of the same words drifts horizontally on a slow infinite marquee for depth. Add a small top bar with a logo and a single CTA, and a bottom row of 3 project cards (image-placeholder gradient blocks) that scale slightly on hover. Pure HTML/CSS, no external JS. Keep it high-contrast (near-white type on #0a0a0f) and fully responsive."
+    },
+    {
+      "id": "editorial-portfolio",
+      "title": "Editorial Portfolio",
+      "category": "Portfolio",
+      "tier": "free",
+      "tags": ["2D", "portfolio", "editorial"],
+      "demo": "demos/editorial-portfolio/index.html",
+      "accent": "linear-gradient(135deg,#10b981,#3b82f6)",
+      "blurb": "Magazine-style portfolio index with an animated work list.",
+      "prompt": "Build a single self-contained HTML file: an editorial portfolio index for a designer. Light, paper-like background (#f4f2ee) with near-black text for a print feel. A top masthead with the designer's name and a one-line role. Then a \"Selected Work\" list of 6 rows; each row shows an index number, a large project title, a small year, and a category tag. On hover, a row's title nudges right, the number fades, and a colored preview swatch slides in from the right edge. Stagger a reveal of the rows on load (translateY + opacity). Add a short about paragraph and a footer with contact links. Pure HTML/CSS only. Serif or high-contrast grotesque for titles. Responsive: rows stack cleanly on mobile."
+    },
+    {
+      "id": "mesh-waves",
+      "title": "Mesh Waves",
+      "category": "3D",
+      "tier": "pro",
+      "tags": ["3D", "three.js", "particles"],
+      "demo": "demos/mesh-waves/index.html",
+      "accent": "linear-gradient(135deg,#06b6d4,#8b5cf6)",
+      "blurb": "A rippling particle mesh that reacts to the pointer. Real-time three.js."
+    },
+    {
+      "id": "prism-orbit",
+      "title": "Prism Orbit",
+      "category": "3D",
+      "tier": "pro",
+      "tags": ["3D", "three.js", "low-poly"],
+      "demo": "demos/prism-orbit/index.html",
+      "accent": "linear-gradient(135deg,#f472b6,#a78bfa)",
+      "blurb": "Low-poly prisms orbiting a glowing core. Clean 3D scene prompt."
+    },
+    {
+      "id": "scroll-reveal",
+      "title": "Scroll Reveal",
+      "category": "Landing Page",
+      "tier": "pro",
+      "tags": ["2D", "scroll", "landing"],
+      "demo": "demos/scroll-reveal/index.html",
+      "accent": "linear-gradient(135deg,#22d3ee,#4ade80)",
+      "blurb": "A long landing page where every section reveals as you scroll."
+    },
+    {
+      "id": "pricing-glow",
+      "title": "Pricing Glow",
+      "category": "SaaS",
+      "tier": "pro",
+      "tags": ["2D", "pricing", "saas"],
+      "demo": "demos/pricing-glow/index.html",
+      "accent": "linear-gradient(135deg,#fbbf24,#f472b6)",
+      "blurb": "A conversion-focused pricing table with a highlighted premium tier."
+    },
+    {
+      "id": "galaxy-particles",
+      "title": "Galaxy Particles",
+      "category": "3D",
+      "tier": "max",
+      "tags": ["3D", "three.js", "particles", "premium"],
+      "demo": "demos/galaxy-particles/index.html",
+      "accent": "linear-gradient(135deg,#8b5cf6,#ec4899)",
+      "blurb": "100k-particle spiral galaxy with colour-graded arms. Premium scene."
+    },
+    {
+      "id": "liquid-metal",
+      "title": "Liquid Metal",
+      "category": "Interactive",
+      "tier": "max",
+      "tags": ["3D", "shader", "premium"],
+      "demo": "demos/liquid-metal/index.html",
+      "accent": "linear-gradient(135deg,#38bdf8,#a78bfa)",
+      "blurb": "An iridescent metaball blob driven by a custom GLSL shader."
+    },
+    {
+      "id": "city-flyover",
+      "title": "City Flyover",
+      "category": "3D",
+      "tier": "max",
+      "tags": ["3D", "procedural", "premium"],
+      "demo": "demos/city-flyover/index.html",
+      "accent": "linear-gradient(135deg,#34d399,#22d3ee)",
+      "blurb": "A procedural low-poly city with a cinematic camera flyover."
+    },
+    {
+      "id": "terrain-hike",
+      "title": "Terrain Hike",
+      "category": "3D",
+      "tier": "max",
+      "tags": ["3D", "procedural", "premium"],
+      "demo": "demos/terrain-hike/index.html",
+      "accent": "linear-gradient(135deg,#a3e635,#14b8a6)",
+      "blurb": "Procedural fog-lit terrain with a slow first-person drift."
+    }
+  ]
+}

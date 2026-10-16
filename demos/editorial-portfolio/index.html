@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editorial Portfolio — PromptMint free preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f4f2ee;color:#141414;font-family:Georgia,"Times New Roman",serif}
+.masthead{display:flex;justify-content:space-between;align-items:baseline;padding:26px 34px;border-bottom:1px solid #14141422}
+.masthead h1{font-size:20px;letter-spacing:-.01em}
+.masthead .role{font-family:system-ui,sans-serif;font-size:12.5px;color:#6b6b6b;letter-spacing:.04em;text-transform:uppercase}
+.section-title{font-family:system-ui,sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8a8a80;padding:44px 34px 10px}
+.list{border-top:1px solid #14141422}
+.row{display:flex;align-items:center;gap:22px;padding:26px 34px;border-bottom:1px solid #14141422;
+  position:relative;cursor:pointer;transition:padding .3s}
+.row:hover{padding-left:52px}
+.row .idx{font-family:system-ui,sans-serif;font-size:13px;color:#b6b2a8;width:30px;transition:opacity .3s}
+.row:hover .idx{opacity:0}
+.row .title{font-size:clamp(1.4rem,3.6vw,2.4rem);letter-spacing:-.02em;flex:1;transition:transform .3s}
+.row .year{font-family:system-ui,sans-serif;font-size:13px;color:#6b6b6b;width:52px;text-align:right}
+.row .tag{font-family:system-ui,sans-serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#141414;
+  border:1px solid #14141433;padding:4px 10px;border-radius:999px}
+.row .swatch{position:absolute;right:34px;width:0;height:52px;border-radius:8px;transition:width .3s;opacity:0}
+.row:hover .swatch{width:80px;opacity:1}
+.reveal{opacity:0;transform:translateY(18px);animation:in .6s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes in{to{opacity:1;transform:none}}
+.about{padding:56px 34px;max-width:60ch;font-size:1.15rem;line-height:1.7;color:#333}
+footer{display:flex;gap:26px;padding:30px 34px;border-top:1px solid #14141422;font-family:system-ui,sans-serif;font-size:13px}
+footer a{color:#6b6b6b;text-decoration:none}footer a:hover{color:#141414}
+@media(max-width:600px){.row .tag,.row .year{display:none}}
+</style>
+</head>
+<body>
+<div class="masthead"><h1>Mara Vance</h1><div class="role">Designer · Art Director</div></div>
+<div class="section-title">Selected Work</div>
+<div class="list">
+  <div class="row reveal" style="animation-delay:.05s"><span class="idx">01</span><span class="title">Atlas Type Foundry</span><span class="year">2026</span><span class="tag">Identity</span><span class="swatch" style="background:linear-gradient(135deg,#10b981,#3b82f6)"></span></div>
+  <div class="row reveal" style="animation-delay:.12s"><span class="idx">02</span><span class="title">Harbor Coffee Roasters</span><span class="year">2026</span><span class="tag">Packaging</span><span class="swatch" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></span></div>
+  <div class="row reveal" style="animation-delay:.19s"><span class="idx">03</span><span class="title">Meridian Architecture</span><span class="year">2025</span><span class="tag">Web</span><span class="swatch" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)"></span></div>
+  <div class="row reveal" style="animation-delay:.26s"><span class="idx">04</span><span class="title">Field Notes Journal</span><span class="year">2025</span><span class="tag">Editorial</span><span class="swatch" style="background:linear-gradient(135deg,#14b8a6,#22d3ee)"></span></div>
+  <div class="row reveal" style="animation-delay:.33s"><span class="idx">05</span><span class="title">Solstice Music Fest</span><span class="year">2024</span><span class="tag">Campaign</span><span class="swatch" style="background:linear-gradient(135deg,#f472b6,#a78bfa)"></span></div>
+  <div class="row reveal" style="animation-delay:.4s"><span class="idx">06</span><span class="title">Northbound Skincare</span><span class="year">2024</span><span class="tag">Brand</span><span class="swatch" style="background:linear-gradient(135deg,#34d399,#a3e635)"></span></div>
+</div>
+<div class="about">I build brands and interfaces with a bias toward clarity, restraint and a little bit of warmth. Currently taking on select projects.</div>
+<footer><a href="#">Email</a><a href="#">Instagram</a><a href="#">LinkedIn</a><a href="#">Are.na</a></footer>
+</body>
+</html>

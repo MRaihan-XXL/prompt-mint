@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scroll Reveal — PromptMint preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#070b14;color:#eef1f8;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#22d3ee,#4ade80);z-index:50}
+nav{position:fixed;top:0;left:0;right:0;z-index:40;transition:background .3s,box-shadow .3s;
+  display:flex;align-items:center;gap:26px;padding:16px 32px;backdrop-filter:blur(0)}
+nav.solid{background:rgba(7,11,20,.72);backdrop-filter:blur(14px);box-shadow:0 1px 0 rgba(255,255,255,.07)}
+nav .logo{font-weight:800;font-size:17px;display:flex;gap:8px;align-items:center}
+nav .logo i{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#22d3ee,#4ade80);display:inline-block}
+nav .links{margin-left:auto;display:flex;gap:22px;font-size:14px;color:#a9b0c4}
+nav .links a{color:inherit;text-decoration:none}
+nav .cta{background:linear-gradient(135deg,#22d3ee,#4ade80);color:#052e16;padding:9px 16px;border-radius:999px;font-weight:700;font-size:13px;text-decoration:none}
+section{opacity:0;transform:translateY(40px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1);
+  padding:96px 32px;max-width:1080px;margin:0 auto}
+section.in{opacity:1;transform:none}
+.hero{text-align:center;padding-top:150px}
+h1{font-size:clamp(2.4rem,6vw,4.2rem);letter-spacing:-.035em;line-height:1.03;font-weight:800}
+.hero p{color:#9aa3ba;max-width:52ch;margin:22px auto 0;font-size:1.15rem}
+.btn{display:inline-block;margin-top:30px;background:linear-gradient(135deg,#22d3ee,#4ade80);color:#052e16;
+  padding:14px 28px;border-radius:12px;font-weight:700;text-decoration:none}
+.trusted{text-align:center;color:#5f6b85;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:0 32px 40px}
+.logos{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;opacity:.55;font-weight:700;color:#8b95ad;font-size:15px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.split .img{height:280px;border-radius:18px}
+.split h2{font-size:clamp(1.6rem,3.4vw,2.4rem);letter-spacing:-.02em;margin-bottom:14px}
+.split p{color:#9aa3ba;line-height:1.7;font-size:1.05rem}
+.split.rev .img{order:2}
+.quote{text-align:center;max-width:760px;margin:0 auto}
+.quote blockquote{font-size:clamp(1.4rem,3.4vw,2.2rem);line-height:1.4;letter-spacing:-.01em;font-weight:600}
+.quote .who{color:#7b849c;margin-top:22px;font-size:14px}
+.cta-final{text-align:center}
+@media(max-width:760px){.split{grid-template-columns:1fr}.split.rev .img{order:0}nav .links{display:none}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav id="nav"><div class="logo"><i></i>Driftline</div>
+  <div class="links"><a href="#">Product</a><a href="#">Pricing</a><a href="#">Docs</a></div>
+  <a class="cta" href="#">Get started</a></nav>
+
+<section class="hero"><h1>Move work forward, effortlessly.</h1>
+  <p>Driftline keeps every project, doc and decision in one calm, fast place your team actually enjoys using.</p>
+  <a class="btn" href="#">Start free</a></section>
+
+<div class="trusted">Powering teams at</div>
+<div class="logos"><span>Northwind</span><span>Cascade</span><span>Lumen</span><span>Vertex</span><span>Orbit</span></div>
+
+<section><div class="split">
+  <div class="img" style="background:linear-gradient(135deg,#22d3ee,#0ea5e9)"></div>
+  <div><h2>Everything in one thread</h2><p>Comments, tasks and files stay attached to the work itself, so context never gets lost across a dozen tools.</p></div>
+</div></section>
+
+<section><div class="split rev">
+  <div class="img" style="background:linear-gradient(135deg,#4ade80,#22c55e)"></div>
+  <div><h2>Fast where it counts</h2><p>Instant search, instant sync, instant everything. Driftline is engineered to stay out of your way.</p></div>
+</div></section>
+
+<section class="quote"><blockquote>“We cut tool-switching in half. Driftline just gets out of the way and lets the team ship.”</blockquote>
+  <div class="who">— Priya N., Head of Product at Cascade</div></section>
+
+<section class="cta-final"><h2>Ready to drift into flow?</h2>
+  <p style="color:#9aa3ba;max-width:46ch;margin:14px auto 0">Start free, invite your team, and feel the difference in a week.</p>
+  <a class="btn" href="#">Start your free trial</a></section>
+
+<script>
+var nav=document.getElementById('nav'),bar=document.getElementById('bar');
+window.addEventListener('scroll',function(){
+  var h=document.documentElement,st=h.scrollTop;
+  bar.style.width=(st/(h.scrollHeight-h.clientHeight)*100)+'%';
+  nav.classList.toggle('solid',st>40);
+},{passive:true});
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('in')})},{threshold:0.2});
+document.querySelectorAll('section').forEach(function(s){io.observe(s)});
+</script>
+</body>
+</html>

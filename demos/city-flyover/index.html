@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>City Flyover — PromptMint preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{margin:0;height:100%;overflow:hidden;background:#05070f}
+canvas{display:block}
+.tag{position:fixed;left:18px;top:16px;color:#6fc9b0;font-size:12px;font-family:system-ui,sans-serif;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="tag">PROMPTMINT · CITY FLYOVER</div>
+<script src="../../js/vendor/three.min.js"></script>
+<script>
+(function(){
+  var W=window.innerWidth,H=window.innerHeight;
+  var scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x05070f);
+  scene.fog=new THREE.FogExp2(0x070a16,0.018);
+  var camera=new THREE.PerspectiveCamera(60,W/H,0.1,400);
+  var renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0x33406a,0.7));
+  var moon=new THREE.DirectionalLight(0x9fb4ff,0.9);moon.position.set(-40,60,20);scene.add(moon);
+
+  // --- procedural low-poly city (value noise for heights) ---
+  function hash(x,y){var n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);}
+  function vnoise(x,y){
+    var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+    var u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+    var a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);
+    return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;
+  }
+  var GRID=24,SP=2.4,BOX=1.5;
+  var boxGeo=new THREE.BoxGeometry(1,1,1);
+  var bodyMat=new THREE.MeshStandardMaterial({color:0x2a3350,roughness:0.85,metalness:0.1,flatShading:true});
+  var winMat=new THREE.MeshStandardMaterial({color:0x0d1020,emissive:0x66e0c0,emissiveIntensity:1.4,roughness:0.6});
+  var group=new THREE.Group();
+  var buildings=[];
+  for(var gx=0;gx<GRID;gx++)for(var gz=0;gz<GRID;gz++){
+    var n=vnoise(gx*0.35,gz*0.35);
+    var h=0.6+n*n*14;
+    var x=(gx-GRID/2)*SP,z=(gz-GRID/2)*SP;
+    var b=new THREE.Mesh(boxGeo,bodyMat);
+    b.scale.set(BOX,h,BOX);b.position.set(x,h/2,z);
+    group.add(b);buildings.push(b);
+    if(n>0.5){ // window strip on taller buildings
+      var w=new THREE.Mesh(boxGeo,winMat);
+      w.scale.set(BOX*1.02,h*0.5,BOX*1.02);w.position.set(x,h*0.55,z);
+      w.scale.x=BOX*0.999;w.scale.z=BOX*0.999;w.scale.y=0.35;w.position.y=h*0.62;
+      group.add(w);
+    }
+  }
+  scene.add(group);
+  // ground
+  var ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),
+    new THREE.MeshStandardMaterial({color:0x0a0e1c,roughness:1}));
+  ground.rotation.x=-Math.PI/2;ground.position.y=0;scene.add(ground);
+
+  // --- cinematic camera path ---
+  var curve=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-24,3.2,24),new THREE.Vector3(-8,2.4,8),
+    new THREE.Vector3(6,4.5,-6),new THREE.Vector3(20,3.0,-22),
+    new THREE.Vector3(24,6.0,10),new THREE.Vector3(4,2.8,22),
+    new THREE.Vector3(-24,3.2,24)
+  ],true,'catmullrom',0.5);
+
+  var clock=new THREE.Clock(),u=0;
+  var pos=new THREE.Vector3(),ahead=new THREE.Vector3(),look=new THREE.Vector3();
+  function animate(){
+    requestAnimationFrame(animate);
+    var dt=Math.min(clock.getDelta(),0.05);
+    u=(u+dt*0.02)%1;
+    curve.getPointAt(u,pos);
+    curve.getPointAt((u+0.02)%1,ahead);
+    camera.position.copy(pos);
+    look.copy(ahead);look.y=Math.max(ahead.y-0.5,1.2);
+    camera.lookAt(look);
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',function(){
+    W=window.innerWidth;H=window.innerHeight;
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+  });
+})();
+</script>
+</body>
+</html>

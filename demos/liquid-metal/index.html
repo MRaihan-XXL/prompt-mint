@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liquid Metal — PromptMint preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{margin:0;height:100%;overflow:hidden;background:#05060c}
+canvas{display:block}
+.tag{position:fixed;left:18px;top:16px;color:#8fb8e6;font-size:12px;font-family:system-ui,sans-serif;letter-spacing:.08em;z-index:2}
+</style>
+</head>
+<body>
+<div class="tag">PROMPTMINT · LIQUID METAL</div>
+<script src="../../js/vendor/three.min.js"></script>
+<script>
+(function(){
+  var W=window.innerWidth,H=window.innerHeight;
+  var scene=new THREE.Scene();
+  var camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+
+  var uniforms={
+    uTime:{value:0},
+    uMouse:{value:new THREE.Vector2(0.5,0.5)},
+    uRes:{value:new THREE.Vector2(W,H)}
+  };
+
+  var frag=[
+    "precision highp float;",
+    "uniform float uTime;uniform vec2 uMouse;uniform vec2 uRes;",
+    "varying vec2 vUv;",
+    // 2D hash + value noise
+    "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}",
+    "float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);vec2 u=f*f*(3.0-2.0*f);",
+    " return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}",
+    "float smin(float a,float b,float k){float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0);return mix(b,a,h)-k*h*(1.0-h);}",
+    // metaball field
+    "float field(vec2 uv,float t){",
+    " float m=1e9;",
+    " for(int i=0;i<5;i++){",
+    "   float fi=float(i);",
+    "   vec2 c=vec2(0.35*sin(t*0.7+fi*1.9),0.35*cos(t*0.6+fi*2.3));",
+    "   c=mix(c,uMouse*2.0-1.0,0.25*sin(fi+t*0.3));",
+    "   float d=length(uv-c);",
+    "   m=smin(m,d,0.45);",
+    " }",
+    " return m;",
+    "}",
+    "vec3 hue(float h){return 0.55+0.45*cos(6.28318*(h+vec3(0.0,0.33,0.67)));}",
+    "void main(){",
+    " vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uRes.y;",
+    " float t=uTime;",
+    " float e=0.0015;",
+    " float f0=field(uv,t);",
+    " float fx=field(uv+vec2(e,0.0),t);",
+    " float fy=field(uv+vec2(0.0,e),t);",
+    " vec3 n=normalize(vec3((f0-fx)/e,(f0-fy)/e,1.6));",
+    " vec3 v=normalize(vec3(uv,1.2));",
+    " float fres=pow(1.0-max(dot(n,v),0.0),2.5);",
+    // thin-film / oil-slick rainbow driven by angle + time + field
+    " float h=fres*1.4 + f0*1.8 + t*0.05 + dot(n,vec3(0.3,0.5,0.7));",
+    " vec3 chrome=mix(vec3(0.06,0.09,0.16),hue(h),0.75);",
+    " chrome+=fres*vec3(0.7,0.85,1.0)*0.9;",
+    " chrome*=smoothstep(0.85,0.15,f0);", // blob mask (inside is low distance)
+    " chrome*=1.0-0.35*length(uv)*0.5;", // vignette
+    " chrome+=vec3(0.02,0.03,0.06);",
+    " gl_FragColor=vec4(chrome,1.0);",
+    "}"
+  ].join("\n");
+
+  var vert=[
+    "varying vec2 vUv;",
+    "void main(){vUv=uv;gl_Position=vec4(position,1.0);}"
+  ].join("\n");
+
+  var quad=new THREE.Mesh(
+    new THREE.PlaneGeometry(2,2),
+    new THREE.ShaderMaterial({uniforms:uniforms,vertexShader:vert,fragmentShader:frag})
+  );
+  scene.add(quad);
+
+  window.addEventListener('pointermove',function(e){
+    uniforms.uMouse.value.set(e.clientX/W,1.0-e.clientY/H);
+  });
+
+  var clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    uniforms.uTime.value+=Math.min(clock.getDelta(),0.05);
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',function(){
+    W=window.innerWidth;H=window.innerHeight;
+    renderer.setSize(W,H);uniforms.uRes.value.set(W,H);
+  });
+})();
+</script>
+</body>
+</html>

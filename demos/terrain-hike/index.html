@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terrain Hike — PromptMint preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{margin:0;height:100%;overflow:hidden;background:#0a1410}
+canvas{display:block}
+.tag{position:fixed;left:18px;top:16px;color:#a9d97f;font-size:12px;font-family:system-ui,sans-serif;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="tag">PROMPTMINT · TERRAIN HIKE</div>
+<script src="../../js/vendor/three.min.js"></script>
+<script>
+(function(){
+  var W=window.innerWidth,H=window.innerHeight;
+  var scene=new THREE.Scene();
+  var SKY=new THREE.Color(0x9fc6a8);
+  scene.background=SKY;
+  scene.fog=new THREE.FogExp2(0x9fc6a8,0.022);
+  var camera=new THREE.PerspectiveCamera(62,W/H,0.1,300);
+  var renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xbcd6c0,0.65));
+  var sun=new THREE.DirectionalLight(0xfff2d0,1.0);sun.position.set(30,40,10);scene.add(sun);
+
+  // --- value-noise terrain, displaced once at init ---
+  function hash(x,y){var n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);}
+  function vnoise(x,y){
+    var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+    var u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+    var a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);
+    return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;
+  }
+  function height(x,z){
+    var h=0,amp=1,freq=0.04,tot=0;
+    for(var o=0;o<3;o++){h+=vnoise(x*freq,z*freq)*amp;tot+=amp;amp*=0.5;freq*=2.1;}
+    return (h/tot)*10-2;
+  }
+  var SEG=200,SIZE=260;
+  var geo=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG);
+  geo.rotateX(-Math.PI/2);
+  var pos=geo.attributes.position;
+  var colors=new Float32Array(pos.count*3);
+  var cLow=new THREE.Color(0x1f5d4a),cMid=new THREE.Color(0x5b9b4f),cHigh=new THREE.Color(0xd8e6c0);
+  for(var i=0;i<pos.count;i++){
+    var x=pos.getX(i),z=pos.getZ(i);
+    var y=height(x,z);
+    pos.setY(i,y);
+    var t=THREE.MathUtils.clamp((y+2)/10,0,1);
+    var c=t<0.5?cLow.clone().lerp(cMid,t*2):cMid.clone().lerp(cHigh,(t-0.5)*2);
+    colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;
+  }
+  geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  geo.computeVertexNormals();
+  var terrain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:1}));
+  scene.add(terrain);
+
+  // --- first-person hike along +Z ---
+  var camZ=SIZE*0.4, bob=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    camZ-=0.09; if(camZ<-SIZE*0.4)camZ=SIZE*0.4;
+    bob+=0.06;
+    var h=height(0,camZ);
+    camera.position.set(0,h+2.2+Math.sin(bob)*0.08,camZ);
+    camera.lookAt(0,height(0,camZ-8)+2.0,camZ-8);
+    renderer.render(scene,camera);
+  }
+  animate();
+  window.addEventListener('resize',function(){
+    W=window.innerWidth;H=window.innerHeight;
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+  });
+})();
+</script>
+</body>
+</html>
