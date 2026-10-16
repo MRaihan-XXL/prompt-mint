@@ -16,3 +16,4 @@ wrangler.jsonc
 .DS_Store
 Thumbs.db
 *.log
+.dev.vars
