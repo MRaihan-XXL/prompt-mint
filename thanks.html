@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.paypal.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://www.paypal.com https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'self' https://www.paypal.com; object-src 'none'; base-uri 'self'; form-action 'self' https://www.paypal.com; upgrade-insecure-requests">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Payment received — DepthGlow</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://depthglow.dev/thanks.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="nav solid" id="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="/"><span class="mark"></span>DepthGlow</a>
+    <nav class="nav-links">
+      <a href="/#library">Library</a>
+      <a href="/#pricing">Pricing</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="legal">
+    <span class="badge tier-pro" id="tBadge" style="display:none"></span>
+    <h1>Thank you — you're in. ✨</h1>
+    <p class="meta" id="tMeta">Confirming your subscription…</p>
+    <p>Your payment is being processed by PayPal. Premium prompts unlock automatically once the subscription is active — usually within seconds, up to a few minutes.</p>
+    <p id="tStatus" style="font-weight:600"></p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+      <a class="btn btn-primary" href="/#library">Unlock the library</a>
+      <a class="btn btn-ghost" href="/#pricing">Back to pricing</a>
+    </div>
+    <p class="meta" style="margin-top:28px">Didn't get access? Email support with your PayPal subscription ID and we'll fix it fast.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <div class="logo" style="font-size:16px"><span class="mark"></span>DepthGlow</div>
+    <div class="foot-links">
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="refund.html">Refund Policy</a>
+      <a href="contact.html">Contact</a>
+      <a href="/#library">Library</a>
+    </div>
+    <div>© 2026 DepthGlow. All prompts original.</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var p = new URLSearchParams(location.search);
+  var subId = p.get("sub_id") || "";
+  var tier = p.get("tier") || "";
+  var meta = document.getElementById("tMeta");
+  var status = document.getElementById("tStatus");
+  var badge = document.getElementById("tBadge");
+
+  if (tier) {
+    badge.style.display = "inline-block";
+    badge.textContent = tier.toUpperCase();
+    badge.className = "badge tier-" + tier;
+  }
+  meta.textContent = subId
+    ? "PayPal subscription: " + subId
+    : "We couldn't read your subscription ID. If you were charged, contact support with your PayPal receipt.";
+
+  // Poll server status (wired to /api/status in Stage 1b). Falls back gracefully.
+  if (subId && "fetch" in window) {
+    var tries = 0;
+    var hdrs = {};
+    try {
+      var a = JSON.parse(localStorage.getItem("dg_auth") || "null");
+      if (a && a.access_token && (!a.expires_at || Date.now() < a.expires_at * 1000)) {
+        hdrs.Authorization = "Bearer " + a.access_token;
+      }
+    } catch (e) {}
+    var poll = function () {
+      fetch("/api/status?sub_id=" + encodeURIComponent(subId), { headers: hdrs })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (d && d.active) {
+            status.style.color = "#4ade80";
+            status.textContent = "Subscription active — " + (d.tier || tier).toUpperCase() + " unlocked. Enjoy!";
+          } else if (++tries < 8) {
+            status.textContent = "Still confirming… (this usually takes under a minute)";
+            setTimeout(poll, 3000);
+          } else {
+            status.textContent = "Still pending. If this persists a few minutes, refresh or contact support.";
+          }
+        })
+        .catch(function () { status.textContent = "We'll confirm by email shortly."; });
+    };
+    poll();
+  }
+})();
+</script>
+</body>
+</html>

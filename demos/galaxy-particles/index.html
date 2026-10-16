@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Galaxy Particles — PromptMint preview</title>
+<title>Galaxy Particles — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{margin:0;height:100%;overflow:hidden;background:#04030a}
@@ -16,7 +16,7 @@ canvas{display:block}
 </style>
 </head>
 <body>
-<div class="tag">PROMPTMINT · GALAXY PARTICLES</div>
+<div class="tag">DEPTHGLOW · GALAXY PARTICLES</div>
 <div class="cap">Drag to spin the galaxy</div>
 <script src="../../js/vendor/three.min.js"></script>
 <script>
@@ -28,6 +28,8 @@ canvas{display:block}
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
 
   var COUNT=100000,ARMS=5,SPIN=1.1,RAND=4.2,INNER=1.6,VERT=0.55;
   var pos=new Float32Array(COUNT*3),col=new Float32Array(COUNT*3);
@@ -57,6 +59,19 @@ canvas{display:block}
     blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
   var galaxy=new THREE.Points(geo,mat);
   scene.add(galaxy);
+
+  // soft additive core glow (faux bloom, core-three only)
+  var gc=document.createElement("canvas");gc.width=gc.height=128;
+  var gg=gc.getContext("2d");
+  var grd=gg.createRadialGradient(64,64,0,64,64,64);
+  grd.addColorStop(0,"rgba(240,220,255,0.9)");
+  grd.addColorStop(0.4,"rgba(236,72,153,0.35)");
+  grd.addColorStop(1,"rgba(236,72,153,0)");
+  gg.fillStyle=grd;gg.fillRect(0,0,128,128);
+  var gtex=new THREE.CanvasTexture(gc);gtex.colorSpace=THREE.SRGBColorSpace;
+  var glow=new THREE.Sprite(new THREE.SpriteMaterial({map:gtex,
+    blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
+  glow.scale.set(7,7,1);scene.add(glow);
 
   // drag spin with inertia
   var dragging=false,lastX=0,spinVel=0.18;

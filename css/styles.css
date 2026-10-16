@@ -162,3 +162,11 @@ footer{border-top:1px solid var(--line);margin-top:60px;padding:44px 0;color:var
   background:var(--panel-2);border:1px solid var(--line-2);color:var(--txt);padding:12px 20px;
   border-radius:12px;font-size:14px;z-index:300;opacity:0;transition:.3s;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* paypal subscribe buttons */
+.paypal-btn{min-height:48px;display:flex;align-items:center;justify-content:center}
+.pay-fallback{font-size:13px;color:var(--dim);text-align:center;line-height:1.5}
+
+/* keyboard accessibility: visible focus ring on all interactive elements */
+.card:focus-visible,.chip:focus-visible,.btn:focus-visible,button:focus-visible,a:focus-visible{
+  outline:2px solid var(--brand);outline-offset:2px}

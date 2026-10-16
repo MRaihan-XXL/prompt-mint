@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mesh Waves — PromptMint preview</title>
+<title>Mesh Waves — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{margin:0;height:100%;overflow:hidden;background:#05070d}
@@ -16,7 +16,7 @@ canvas{display:block}
 </style>
 </head>
 <body>
-<div class="tag">PROMPTMINT · MESH WAVES</div>
+<div class="tag">DEPTHGLOW · MESH WAVES</div>
 <div class="hint">Move your pointer across the mesh</div>
 <script src="../../js/vendor/three.min.js"></script>
 <script>
@@ -29,6 +29,8 @@ canvas{display:block}
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
 
   var GX=120,GY=120,SEP=0.16;
   var count=GX*GY;

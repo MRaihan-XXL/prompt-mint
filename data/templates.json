@@ -1,8 +1,9 @@
 {
   "site": {
-    "name": "PromptMint",
-    "tagline": "Cinematic AI sites, mint fresh. Copy a prompt, paste it into your AI, launch a site that doesn't look AI-made.",
-    "version": "1.0.0"
+    "name": "DepthGlow",
+    "tagline": "Cinematic AI sites that glow. Copy a prompt, paste it into your AI, launch a site that doesn't look AI-made.",
+    "domain": "https://depthglow.dev",
+    "version": "2.0.0"
   },
   "plans": {
     "free": { "id": null, "price": 0, "label": "Free" },
@@ -13,6 +14,7 @@
   "templates": [
     {
       "id": "aurora-hero",
+      "date": "2026-09-22",
       "title": "Aurora Hero",
       "category": "Hero",
       "tier": "free",
@@ -24,6 +26,7 @@
     },
     {
       "id": "glass-saas",
+      "date": "2026-09-24",
       "title": "Glass SaaS",
       "category": "SaaS",
       "tier": "free",
@@ -35,6 +38,7 @@
     },
     {
       "id": "kinetic-type",
+      "date": "2026-09-26",
       "title": "Kinetic Type",
       "category": "Creative",
       "tier": "free",
@@ -46,6 +50,7 @@
     },
     {
       "id": "editorial-portfolio",
+      "date": "2026-09-28",
       "title": "Editorial Portfolio",
       "category": "Portfolio",
       "tier": "free",
@@ -57,6 +62,7 @@
     },
     {
       "id": "mesh-waves",
+      "date": "2026-09-30",
       "title": "Mesh Waves",
       "category": "3D",
       "tier": "pro",
@@ -67,6 +73,7 @@
     },
     {
       "id": "prism-orbit",
+      "date": "2026-10-02",
       "title": "Prism Orbit",
       "category": "3D",
       "tier": "pro",
@@ -77,6 +84,7 @@
     },
     {
       "id": "scroll-reveal",
+      "date": "2026-10-04",
       "title": "Scroll Reveal",
       "category": "Landing Page",
       "tier": "pro",
@@ -87,6 +95,7 @@
     },
     {
       "id": "pricing-glow",
+      "date": "2026-10-06",
       "title": "Pricing Glow",
       "category": "SaaS",
       "tier": "pro",
@@ -97,6 +106,7 @@
     },
     {
       "id": "galaxy-particles",
+      "date": "2026-10-08",
       "title": "Galaxy Particles",
       "category": "3D",
       "tier": "max",
@@ -107,6 +117,7 @@
     },
     {
       "id": "liquid-metal",
+      "date": "2026-10-10",
       "title": "Liquid Metal",
       "category": "Interactive",
       "tier": "max",
@@ -117,6 +128,7 @@
     },
     {
       "id": "city-flyover",
+      "date": "2026-10-12",
       "title": "City Flyover",
       "category": "3D",
       "tier": "max",
@@ -127,6 +139,7 @@
     },
     {
       "id": "terrain-hike",
+      "date": "2026-10-14",
       "title": "Terrain Hike",
       "category": "3D",
       "tier": "max",

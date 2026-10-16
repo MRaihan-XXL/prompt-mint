@@ -2,19 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.paypal.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://www.paypal.com https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'self' https://www.paypal.com; object-src 'none'; base-uri 'self'; form-action 'self' https://www.paypal.com; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PromptMint — Cinematic AI site prompts, mint fresh</title>
-<meta name="description" content="Copy a prompt, paste it into your AI, launch a site that doesn't look AI-made. Original 2D and real 3D scene prompts for Claude, Cursor, v0, Bolt and more.">
-<link rel="canonical" href="https://prompt-mint.pages.dev/">
-<meta property="og:title" content="PromptMint — Cinematic AI site prompts">
-<meta property="og:description" content="Copy a prompt, paste it into your AI, launch a site that doesn't look AI-made.">
+<title>DepthGlow — Cinematic 3D site prompts that glow</title>
+<meta name="description" content="Copy a prompt, paste it into your AI, launch a site that glows. Original 2D and real-time 3D scene prompts for Lovable, Bolt, Cursor, v0 and Claude.">
+<link rel="canonical" href="https://depthglow.dev/">
+<meta property="og:title" content="DepthGlow — Cinematic 3D site prompts that glow">
+<meta property="og:description" content="Copy a prompt, paste it into your AI, launch a site that glows. Original 2D and real-time 3D scene prompts for Lovable, Bolt, Cursor, v0 and Claude.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://depthglow.dev/">
+<meta property="og:image" content="https://depthglow.dev/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DepthGlow — Cinematic 3D site prompts that glow">
+<meta name="twitter:description" content="Copy a prompt, paste it into your AI, launch a site that glows. Real-time 3D scene prompts included.">
+<meta name="twitter:image" content="https://depthglow.dev/og.png">
 <meta name="theme-color" content="#07070b">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebSite","name":"PromptMint","url":"https://prompt-mint.pages.dev/"}
+{"@context":"https://schema.org","@type":"WebSite","name":"DepthGlow","url":"https://depthglow.dev/","description":"Cinematic 3D site prompts that glow. Copy a prompt, paste it into your AI."}
 </script>
 </head>
 <body>
@@ -22,11 +28,12 @@
 
 <header class="nav" id="nav">
   <div class="wrap nav-in">
-    <a class="logo" href="#top"><span class="mark"></span>PromptMint</a>
+    <a class="logo" href="#top"><span class="mark"></span>DepthGlow</a>
     <nav class="nav-links">
       <a href="#library">Library</a>
       <a href="#how">How it works</a>
       <a href="#pricing">Pricing</a>
+      <button class="btn btn-ghost btn-sm" id="authBtn" type="button">Sign in</button>
       <a class="btn btn-primary btn-sm" href="#pricing">Get access</a>
     </nav>
   </div>
@@ -37,7 +44,7 @@
     <div class="hero-bg"></div>
     <div class="wrap">
       <p class="eyebrow">Fresh drops every week</p>
-      <h1>Cinematic AI sites, <em>mint fresh</em>.</h1>
+      <h1>Cinematic AI sites, <em>made to glow</em>.</h1>
       <p class="sub">Copy a prompt, paste it into your AI, and launch a site that doesn't look AI-made. Original 2D and real-time 3D scene prompts for Claude, Cursor, v0, Bolt and more.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="#library">Browse the library</a>
@@ -88,7 +95,7 @@
           <li><span class="ck">✓</span> New drops every week</li>
           <li class="off"><span class="ck">✗</span> Premium high-detail 3D</li>
         </ul>
-        <a class="btn btn-primary" href="https://www.paypal.com/checkoutnow?plan_id=P-11T043662M944992ANLIMV2Y" target="_blank" rel="noopener">Subscribe Pro</a>
+        <div id="paypal-button-pro" class="paypal-btn" data-plan="pro"></div>
       </div>
 
       <div class="plan">
@@ -102,10 +109,10 @@
           <li><span class="ck">✓</span> Priority new drops</li>
           <li><span class="ck">✓</span> Commercial use</li>
         </ul>
-        <a class="btn btn-primary" href="https://www.paypal.com/checkoutnow?plan_id=P-1HB67148EX8070019NLIMWIY" target="_blank" rel="noopener">Subscribe Max</a>
+        <div id="paypal-button-max" class="paypal-btn" data-plan="max"></div>
       </div>
     </div>
-    <p class="hero-note">Payments are processed securely by PayPal. Cancel anytime.</p>
+    <p class="hero-note">Payments are processed securely by PayPal. <a href="https://www.paypal.com/myaccount/autopay/" target="_blank" rel="noopener">Manage or cancel anytime in PayPal.</a></p>
   </section>
 
   <section class="how wrap" id="how">
@@ -120,15 +127,16 @@
 
 <footer>
   <div class="wrap foot-in">
-    <div class="logo" style="font-size:16px"><span class="mark"></span>PromptMint</div>
+    <div class="logo" style="font-size:16px"><span class="mark"></span>DepthGlow</div>
     <div class="foot-links">
       <a href="terms.html">Terms</a>
       <a href="privacy.html">Privacy</a>
       <a href="refund.html">Refund Policy</a>
+      <a href="contact.html">Contact</a>
       <a href="#library">Library</a>
       <a href="#pricing">Pricing</a>
     </div>
-    <div>© 2026 PromptMint. All prompts original.</div>
+    <div>© 2026 DepthGlow. All prompts original.</div>
   </div>
 </footer>
 
@@ -152,6 +160,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="js/config.js"></script>
 <script src="js/app.js" defer></script>
 </body>
 </html>

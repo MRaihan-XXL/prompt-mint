@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>City Flyover — PromptMint preview</title>
+<title>City Flyover — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{margin:0;height:100%;overflow:hidden;background:#05070f}
@@ -13,7 +13,7 @@ canvas{display:block}
 </style>
 </head>
 <body>
-<div class="tag">PROMPTMINT · CITY FLYOVER</div>
+<div class="tag">DEPTHGLOW · CITY FLYOVER</div>
 <script src="../../js/vendor/three.min.js"></script>
 <script>
 (function(){
@@ -25,6 +25,8 @@ canvas{display:block}
   var renderer=new THREE.WebGLRenderer({antialias:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
 
   scene.add(new THREE.AmbientLight(0x33406a,0.7));
   var moon=new THREE.DirectionalLight(0x9fb4ff,0.9);moon.position.set(-40,60,20);scene.add(moon);
@@ -50,10 +52,10 @@ canvas{display:block}
     var b=new THREE.Mesh(boxGeo,bodyMat);
     b.scale.set(BOX,h,BOX);b.position.set(x,h/2,z);
     group.add(b);buildings.push(b);
-    if(n>0.5){ // window strip on taller buildings
+    if(n>0.5){ // emissive window band on taller buildings (slightly proud of the facade so it shows)
       var w=new THREE.Mesh(boxGeo,winMat);
-      w.scale.set(BOX*1.02,h*0.5,BOX*1.02);w.position.set(x,h*0.55,z);
-      w.scale.x=BOX*0.999;w.scale.z=BOX*0.999;w.scale.y=0.35;w.position.y=h*0.62;
+      w.scale.set(BOX*1.01,0.35,BOX*1.01);
+      w.position.set(x,h*0.62,z);
       group.add(w);
     }
   }

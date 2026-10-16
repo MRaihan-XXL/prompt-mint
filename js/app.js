@@ -11,7 +11,6 @@
     mBadge: document.getElementById("mBadge"),
     mBlurb: document.getElementById("mBlurb"),
     mPeek: document.getElementById("mPeek"),
-    mAction: document.getElementById("mAction"),
     mClose: document.getElementById("mClose"),
     mFootAction: document.getElementById("mFootAction"),
     progress: document.getElementById("progress"),
@@ -58,11 +57,18 @@
   }
 
   function visible() {
-    return DATA.templates.filter(function (t) {
-      if (activeCat === "All") return true;
-      if (activeCat === "Recent") return true; // all recent for now; newest first already
-      return t.category === activeCat || (t.tags || []).indexOf(activeCat.toLowerCase()) > -1;
+    var list = DATA.templates.filter(function (t) {
+      if (activeCat === "All" || activeCat === "Recent") return true;
+      if (t.category === activeCat) return true;
+      var tags = (t.tags || []).map(function (x) { return String(x).toLowerCase(); });
+      return tags.indexOf(String(activeCat).toLowerCase()) > -1;
     });
+    if (activeCat === "Recent") {
+      list = list.slice().sort(function (a, b) {
+        return String(b.date || "").localeCompare(String(a.date || ""));
+      });
+    }
+    return list;
   }
 
   function renderGrid() {
@@ -71,7 +77,7 @@
       var card = document.createElement("article");
       card.className = "card";
       card.innerHTML =
-        '<div class="thumb" style="background:' + t.accent + '">' +
+        '<div class="thumb" style="background:' + esc(t.accent) + '">' +
           '<span class="glyph">' + glyphFor(t.category, t.id) + "</span>" +
           '<span class="badge ' + tierClass(t.tier) + '">' + t.tier.toUpperCase() + "</span>" +
         "</div>" +
@@ -81,6 +87,13 @@
           '<div class="row"><span class="cat">' + esc(t.category) + '</span><span class="open">Open →</span></div>' +
         "</div>";
       card.onclick = function () { openModal(t); };
+      // keyboard accessibility: cards are interactive, so they must be focusable
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-label", "Open " + t.title + " preview");
+      card.onkeydown = function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(t); }
+      };
       els.grid.appendChild(card);
     });
     if (!els.grid.children.length) {
@@ -107,19 +120,15 @@
       copyBtn.onclick = function () { copyPrompt(t.prompt, copyBtn); };
       els.mFootAction.appendChild(copyBtn);
     } else {
-      els.mPeek.classList.add("locked");
-      els.mPeek.textContent =
-        "This is a " + t.tier.toUpperCase() + " template.\n" +
-        "The full production prompt is included with your " + t.tier.toUpperCase() +
-        " subscription.\nSubscribe below, then unlock every " + t.tier.toUpperCase() + " prompt in one click.";
       els.mPeek.style.display = "block";
-      els.mFootAction.innerHTML = "";
-      var upBtn = document.createElement("a");
-      upBtn.className = "btn btn-primary";
-      upBtn.href = "#pricing";
-      upBtn.textContent = t.tier === "max" ? "Unlock with Max — $15/mo" : "Unlock with Pro — $7/mo";
-      upBtn.onclick = function () { closeModal(); };
-      els.mFootAction.appendChild(upBtn);
+      if (getToken()) {
+        els.mPeek.classList.add("locked");
+        els.mPeek.textContent = "Checking your access…";
+        els.mFootAction.innerHTML = "";
+        fetchGatedPrompt(t, els.mPeek, els.mFootAction);
+      } else {
+        showSignInState(t, els.mPeek, els.mFootAction);
+      }
     }
     els.modal.classList.add("open");
     document.body.style.overflow = "hidden";
@@ -149,8 +158,203 @@
     document.body.removeChild(ta);
   }
 
-  // expose for free-tier quick copy on cards via keyboard etc.
-  window.__pm = { copyPrompt: copyPrompt };
+  // ---- PayPal SDK: loaded on demand from config (swap live/sandbox without touching HTML) ----
+  var _ppLoading = false, _ppFailed = false;
+  function ensurePaypal(cb) {
+    if (typeof paypal !== "undefined" && paypal.Buttons) { cb(); return; }
+    var id = (window.DG && window.DG.PAYPAL_CLIENT_ID) || "";
+    if (!id || _ppFailed) { cb(); return; } // cb() renders the fallback/retry UI
+    if (_ppLoading) return;
+    _ppLoading = true;
+    var s = document.createElement("script");
+    s.src = "https://www.paypal.com/sdk/js?client-id=" + encodeURIComponent(id) +
+      "&vault=true&intent=subscription";
+    s.async = true;
+    var settle = function (ok) {
+      _ppLoading = false;
+      if (!ok) _ppFailed = true;
+      cb();
+    };
+    s.onload = function () { settle(typeof paypal !== "undefined"); };
+    s.onerror = function () { settle(false); };
+    document.head.appendChild(s);
+    setTimeout(function () { if (_ppLoading) settle(typeof paypal !== "undefined"); }, 9000);
+  }
+  function renderPaypalButtons() {
+    var map = [["paypal-button-pro", "pro"], ["paypal-button-max", "max"]];
+    map.forEach(function (pair) {
+      var el = document.getElementById(pair[0]);
+      var plan = DATA.plans[pair[1]];
+      if (!el || !plan || !plan.id) return;
+      el.innerHTML = "";
+      if (typeof paypal === "undefined" || !paypal.Buttons) {
+        if (_ppFailed) {
+          el.innerHTML = '<span class="pay-fallback">Payment buttons failed to load.</span>';
+          var rb = document.createElement("button");
+          rb.type = "button";
+          rb.className = "btn btn-ghost btn-sm";
+          rb.textContent = "Retry";
+          rb.onclick = function () { _ppFailed = false; ensurePaypal(renderPaypalButtons); };
+          el.appendChild(rb);
+        } else {
+          el.innerHTML = '<span class="pay-fallback">Loading payment buttons…</span>';
+        }
+        return;
+      }
+      paypal.Buttons({
+        style: { shape: "rect", color: "gold", layout: "vertical", label: "subscribe", height: 46 },
+        createSubscription: function (data, actions) {
+          return actions.subscription.create({ plan_id: plan.id });
+        },
+        onApprove: function (data) {
+          window.location.href = "thanks.html?sub_id=" + encodeURIComponent(data.subscriptionID || "") +
+            "&tier=" + encodeURIComponent(pair[1]);
+        },
+        onError: function (err) {
+          console.error("PayPal error", err);
+          toast("Payment error — please try again or contact support.");
+        }
+      }).render(el);
+    });
+  }
+
+  // ---- Supabase Google auth (client only talks to same-origin /api/*) ----
+  var AUTH_KEY = "dg_auth";
+  function cfg() { return window.DG || {}; }
+  function loadAuth() { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch (e) { return null; } }
+  function saveAuth(a) { try { localStorage.setItem(AUTH_KEY, JSON.stringify(a)); } catch (e) {} }
+  function clearAuth() { try { localStorage.removeItem(AUTH_KEY); } catch (e) {} }
+  function getToken() {
+    var a = loadAuth();
+    if (!a || !a.access_token) return null;
+    if (a.expires_at && Date.now() > a.expires_at * 1000) return null; // MVP: re-sign-in on expiry
+    return a.access_token;
+  }
+  function signIn() {
+    var c = cfg();
+    if (!c.SUPABASE_URL) { toast("Sign-in not configured yet — add Supabase keys in js/config.js"); return; }
+    // Hosted Supabase auth page: shows email sign-in (enabled by default) and any
+    // extra providers we turn on later (Google) — no provider lock-in here.
+    var url = c.SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/authorize" +
+      "?redirect_to=" + encodeURIComponent(c.REDIRECT || location.href);
+    if (c.SUPABASE_ANON_KEY) url += "&apikey=" + encodeURIComponent(c.SUPABASE_ANON_KEY);
+    location.href = url;
+  }
+  function signOut() { clearAuth(); updateAuthBtn(); toast("Signed out"); }
+  // Proactive refresh: implicit-grant tokens last ~1h; refresh_token is rotated
+  // and stored, so an active reader never has to re-sign-in mid session.
+  function refreshAuth() {
+    var a = loadAuth();
+    if (!a || !a.refresh_token) return;
+    if (!a.expires_at || Date.now() < (a.expires_at - 60) * 1000) return; // still fresh
+    var c = cfg();
+    if (!c.SUPABASE_URL) return;
+    fetch(c.SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: c.SUPABASE_ANON_KEY || "" },
+      body: JSON.stringify({ refresh_token: a.refresh_token })
+    })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        saveAuth({
+          access_token: d.access_token,
+          refresh_token: d.refresh_token || a.refresh_token,
+          token_type: d.token_type || "bearer",
+          expires_at: Math.floor(Date.now() / 1000) + (d.expires_in || 3600)
+        });
+        updateAuthBtn();
+      })
+      .catch(function () { clearAuth(); updateAuthBtn(); });
+  }
+  function consumeHash() {
+    var h = location.hash.replace(/^#/, "");
+    if (h.indexOf("access_token=") === -1) return;
+    var p = new URLSearchParams(h);
+    var at = p.get("access_token");
+    if (at) {
+      var exp = parseInt(p.get("expires_in") || "3600", 10);
+      saveAuth({
+        access_token: at,
+        refresh_token: p.get("refresh_token") || "",
+        token_type: p.get("token_type") || "bearer",
+        expires_at: Math.floor(Date.now() / 1000) + (isNaN(exp) ? 3600 : exp)
+      });
+      history.replaceState(null, "", location.pathname + location.search);
+      updateAuthBtn();
+      toast("Signed in");
+    }
+  }
+  function updateAuthBtn() {
+    var b = document.getElementById("authBtn");
+    if (b) b.textContent = getToken() ? "Sign out" : "Sign in";
+  }
+
+  function showSignInState(t, peek, foot) {
+    peek.classList.add("locked");
+    peek.textContent = "Sign in with the email you used at checkout to unlock your " + t.tier.toUpperCase() + " prompts. Subscribed but not signed in? Sign in first.";
+    foot.innerHTML = "";
+    var si = document.createElement("button");
+    si.className = "btn btn-primary";
+    si.textContent = "Sign in to unlock";
+    si.onclick = function () { signIn(); };
+    foot.appendChild(si);
+    var pr = document.createElement("a");
+    pr.className = "btn btn-ghost";
+    pr.href = "#pricing";
+    pr.textContent = "See pricing";
+    pr.onclick = function () { closeModal(); };
+    foot.appendChild(pr);
+  }
+  function showUpgradeState(t, peek, foot) {
+    peek.classList.remove("locked");
+    peek.textContent = "Signed in, but this " + t.tier.toUpperCase() + " prompt needs an active " + t.tier.toUpperCase() + " subscription. Subscribe below, then return here.";
+    foot.innerHTML = "";
+    var up = document.createElement("a");
+    up.className = "btn btn-primary";
+    up.href = "#pricing";
+    up.textContent = "Unlock with " + t.tier.toUpperCase() + " — $" + DATA.plans[t.tier].price + "/mo";
+    up.onclick = function () { closeModal(); };
+    foot.appendChild(up);
+    // user may have just subscribed in another tab — let them re-check without reloading
+    var rc = document.createElement("button");
+    rc.className = "btn btn-ghost";
+    rc.textContent = "I just subscribed — check access";
+    rc.onclick = function () {
+      peek.classList.add("locked");
+      peek.textContent = "Checking your access…";
+      fetchGatedPrompt(t, peek, foot);
+    };
+    foot.appendChild(rc);
+  }
+  async function fetchGatedPrompt(t, peek, foot) {
+    try {
+      var r = await fetch("/api/prompt/" + encodeURIComponent(t.id), {
+        headers: { Authorization: "Bearer " + getToken() }
+      });
+      if (r.status === 401) { clearAuth(); updateAuthBtn(); showSignInState(t, peek, foot); return; }
+      if (r.status === 402) { showUpgradeState(t, peek, foot); return; }
+      if (r.status === 404) {
+        peek.classList.remove("locked");
+        peek.textContent = "This prompt isn't published yet — it's landing in the next drop.";
+        foot.innerHTML = "";
+        return;
+      }
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      var d = await r.json();
+      if (!d.prompt) throw new Error("empty prompt");
+      peek.classList.remove("locked");
+      peek.textContent = d.prompt;
+      foot.innerHTML = "";
+      var cb = document.createElement("button");
+      cb.className = "btn btn-primary";
+      cb.textContent = "Copy prompt";
+      cb.onclick = function () { copyPrompt(d.prompt, cb); };
+      foot.appendChild(cb);
+    } catch (e) {
+      peek.classList.remove("locked");
+      peek.textContent = "Couldn't load the prompt (" + ((e && e.message) || e) + "). Refresh or contact support.";
+    }
+  }
 
   // nav + progress on scroll
   window.addEventListener("scroll", function () {
@@ -164,6 +368,27 @@
   els.modal.addEventListener("click", function (e) { if (e.target === els.modal || e.target.classList.contains("modal-bg")) closeModal(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
 
+  var freeCta = document.getElementById("free-cta");
+  if (freeCta) freeCta.onclick = function () {
+    var lib = document.getElementById("library");
+    if (lib) lib.scrollIntoView({ behavior: "smooth" });
+  };
+
+  consumeHash();
+  refreshAuth();
+  updateAuthBtn();
+
+  // capture client errors for support diagnostics (shown via contact page flow)
+  window.addEventListener("error", function (e) {
+    try {
+      var arr = JSON.parse(localStorage.getItem("dg_errors") || "[]");
+      arr.push({ m: e.message, f: (e.filename || "").split("/").pop(), l: e.lineno, t: Date.now() });
+      localStorage.setItem("dg_errors", JSON.stringify(arr.slice(-10)));
+    } catch (_) {}
+  });
+  var authBtn = document.getElementById("authBtn");
+  if (authBtn) authBtn.onclick = function () { if (getToken()) signOut(); else signIn(); };
+
   fetch("data/templates.json", { cache: "no-cache" })
     .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then(function (d) {
@@ -171,6 +396,7 @@
       document.querySelectorAll("[data-count]").forEach(function (n) { n.textContent = d.templates.length; });
       renderChips();
       renderGrid();
+      ensurePaypal(renderPaypalButtons);
     })
     .catch(function (err) {
       els.grid.innerHTML = '<p style="color:#f87171;grid-column:1/-1;padding:40px 0">Failed to load templates: ' + esc(err.message) + "</p>";

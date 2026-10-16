@@ -1,4 +1,4 @@
-# PromptMint — AI website design prompts
+# DepthGlow — AI website design prompts
 
 Static gallery of original AI website design prompts with live previews. Free tier copies instantly; Pro and Max unlock the premium vault.
 

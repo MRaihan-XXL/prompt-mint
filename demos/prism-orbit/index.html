@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prism Orbit — PromptMint preview</title>
+<title>Prism Orbit — DepthGlow preview</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{margin:0;height:100%;overflow:hidden;
@@ -14,7 +14,7 @@ canvas{display:block}
 </style>
 </head>
 <body>
-<div class="tag">PROMPTMINT · PRISM ORBIT</div>
+<div class="tag">DEPTHGLOW · PRISM ORBIT</div>
 <script src="../../js/vendor/three.min.js"></script>
 <script>
 (function(){
@@ -25,6 +25,8 @@ canvas{display:block}
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
 
   scene.add(new THREE.AmbientLight(0x6b5b95,0.6));
   var rim=new THREE.DirectionalLight(0xffffff,1.1);rim.position.set(4,6,5);scene.add(rim);
@@ -35,6 +37,11 @@ canvas{display:block}
     new THREE.MeshStandardMaterial({color:0xff7ab6,emissive:0xff2e88,emissiveIntensity:0.9,flatShading:true,roughness:0.35})
   );
   scene.add(core);
+  // faux-bloom halo around the core (additive shell, core-three only)
+  var halo=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15,0),
+    new THREE.MeshBasicMaterial({color:0xff5ea8,transparent:true,opacity:0.12,
+      blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.BackSide}));
+  halo.scale.setScalar(1.7);scene.add(halo);
 
   var colors=[0xa78bfa,0x7dd3fc,0xf472b6,0xfbbf24,0x34d399,0x60a5fa,0xf87171];
   var prisms=[];
@@ -49,9 +56,16 @@ canvas{display:block}
   }
 
   var clock=new THREE.Clock(),t=0;
+  var start=9,end=7.2,introT=0,dur=1.2,introDone=false;
   function animate(){
     requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),0.05);t+=dt;
+    if(!introDone){
+      introT+=dt;
+      var k=Math.min(introT/dur,1),e=1-Math.pow(1-k,3);
+      camera.position.z=start+(end-start)*e;
+      if(k>=1)introDone=true;
+    }
     core.rotation.y+=dt*0.4;core.rotation.x+=dt*0.2;
     prisms.forEach(function(p){
       var a=p.phase+t*p.speed;
@@ -62,20 +76,9 @@ canvas{display:block}
       );
       p.mesh.rotation.x+=dt*0.8;p.mesh.rotation.y+=dt*0.6;
     });
-    var d=1-Math.pow(0.001,dt);
-    camera.position.z+= (9-3*0 - (camera.position.z-(9-  0)))*0; // no-op keep
     renderer.render(scene,camera);
   }
-  // gentle dolly-in on load
-  var start=9,end=7.2,elapsed=0,dur=1.2;
-  function intro(){
-    requestAnimationFrame(intro);
-    elapsed+=Math.min(clock.getDelta(),0.05);
-    var k=Math.min(elapsed/dur,1);var e=1-Math.pow(1-k,3);
-    camera.position.z=start+(end-start)*e;
-    if(k<1)renderer.render(scene,camera);
-  }
-  animate();intro();
+  animate();
   window.addEventListener('resize',function(){
     W=window.innerWidth;H=window.innerHeight;
     camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
