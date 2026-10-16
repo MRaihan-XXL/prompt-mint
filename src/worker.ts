@@ -16,15 +16,20 @@ export default {
     const { pathname } = new URL(request.url);
     const method = request.method.toUpperCase();
 
-    if (pathname === "/api/status" && method === "GET") {
-      return statusGet({ request, env });
-    }
-    if (pathname === "/api/paypal/webhook" && method === "POST") {
-      return webhookPost({ request, env });
-    }
-    const m = pathname.match(/^\/api\/prompt\/([^/]+)\/?$/);
-    if (m && method === "GET") {
-      return promptGet({ request, env, params: { id: decodeURIComponent(m[1]) } });
+    // API routes — never let a handler exception become a CF HTML 500; return JSON.
+    try {
+      if (pathname === "/api/status" && method === "GET") {
+        return statusGet({ request, env });
+      }
+      if (pathname === "/api/paypal/webhook" && method === "POST") {
+        return webhookPost({ request, env });
+      }
+      const m = pathname.match(/^\/api\/prompt\/([^/]+)\/?$/);
+      if (m && method === "GET") {
+        return promptGet({ request, env, params: { id: decodeURIComponent(m[1]) } });
+      }
+    } catch (e) {
+      return json({ error: "internal", detail: String((e as Error)?.message || e) }, 500);
     }
     if (pathname.startsWith("/api/")) {
       return json({ error: "not_found" }, 404);
