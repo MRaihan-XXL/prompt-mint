@@ -112,28 +112,50 @@ export interface Access {
 }
 
 // Return the active subscription for a user, or null.
-// Matches by linked user_id OR by lowercase email (PayPal payer email == Google login email).
+//
+// Implementation note: we deliberately do NOT filter by email inside the query
+// string. Filtering on values that contain "@" behaved inconsistently from the
+// workerd runtime (identical URLs returned rows via one code path and empty via
+// another). So we fetch recent ACTIVE rows (plain status filter only — no
+// special characters) and match email / user_id in code. Fine for a payment
+// table of this size; revisit if subscriptions ever approach the limit.
+const ACTIVE_SUB_SCAN_LIMIT = "200";
+
 export async function activeTier(
   env: Env,
   userId: string,
   email: string
 ): Promise<Access | null> {
   const em = (email || "").trim().toLowerCase();
-  const or =
-    `or=(user_id.eq.${encodeURIComponent(userId)},email.eq.${encodeURIComponent(em)})`;
-  const res = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/subscriptions?select=status,plan,paypal_sub_id,user_id&status=eq.ACTIVE&${or}&order=updated_at.desc&limit=1`,
-    {
-      headers: {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-      },
-    }
-  );
-  if (!res.ok) return null;
-  const rows: any[] = await res.json();
-  if (!rows || !rows.length) return null;
-  const row = rows[0];
+  const url =
+    `${env.SUPABASE_URL}/rest/v1/subscriptions?` +
+    new URLSearchParams({
+      select: "status,plan,paypal_sub_id,user_id,email",
+      status: "eq.ACTIVE",
+      order: "updated_at.desc",
+      limit: ACTIVE_SUB_SCAN_LIMIT,
+    }).toString();
+  const res = await fetch(url, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+  });
+  if (!res.ok) {
+    console.error("activeTier query failed:", res.status, await res.text());
+    return null;
+  }
+  const rows: any[] = (await res.json()) || [];
+  const row =
+    rows.find(
+      (r) =>
+        (em && ((r.email || "").trim().toLowerCase() === em)) ||
+        (userId && r.user_id === userId)
+    ) || null;
+  if (!row) {
+    console.error("activeTier miss:", JSON.stringify({ email: em, userId }));
+    return null;
+  }
   const tier = planTier(env, row.plan);
   if (tier !== "pro" && tier !== "max") return null;
   return { tier, subId: row.paypal_sub_id || "", rowUserId: row.user_id || null };
