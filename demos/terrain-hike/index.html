@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Terrain Hike — DepthGlow preview</title>
 <style>
@@ -14,8 +13,15 @@ canvas{display:block}
 </head>
 <body>
 <div class="tag">DEPTHGLOW · TERRAIN HIKE</div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 (function(){
   var W=window.innerWidth,H=window.innerHeight;
   var scene=new THREE.Scene();
@@ -28,9 +34,27 @@ canvas{display:block}
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.1;
+  var composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  var bloom=new UnrealBloomPass(new THREE.Vector2(W,H),0.3,0.55,0.65);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  scene.add(new THREE.AmbientLight(0xbcd6c0,0.65));
-  var sun=new THREE.DirectionalLight(0xfff2d0,1.0);sun.position.set(30,40,10);scene.add(sun);
+  scene.add(new THREE.AmbientLight(0xbcd6c0,0.45));
+  var amb=scene.children[scene.children.length-1];
+  var sun=new THREE.DirectionalLight(0xfff2d0,1.7);sun.position.set(-18,36,-40);scene.add(sun);
+  // visible sun glow in the sky ahead
+  var sunCv=document.createElement("canvas");sunCv.width=sunCv.height=128;
+  var sg=sunCv.getContext("2d");
+  var sgrd=sg.createRadialGradient(64,64,0,64,64,64);
+  sgrd.addColorStop(0,"rgba(255,246,214,0.95)");
+  sgrd.addColorStop(0.35,"rgba(255,230,170,0.45)");
+  sgrd.addColorStop(1,"rgba(255,230,170,0)");
+  sg.fillStyle=sgrd;sg.fillRect(0,0,128,128);
+  var sunTex=new THREE.CanvasTexture(sunCv);sunTex.colorSpace=THREE.SRGBColorSpace;
+  var sunSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:sunTex,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,fog:false}));
+  sunSprite.scale.set(46,46,1);sunSprite.position.set(-26,30,-110);scene.add(sunSprite);
 
   // --- value-noise terrain, displaced once at init ---
   function hash(x,y){var n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);}
@@ -50,7 +74,7 @@ canvas{display:block}
   geo.rotateX(-Math.PI/2);
   var pos=geo.attributes.position;
   var colors=new Float32Array(pos.count*3);
-  var cLow=new THREE.Color(0x1f5d4a),cMid=new THREE.Color(0x5b9b4f),cHigh=new THREE.Color(0xd8e6c0);
+  var cLow=new THREE.Color(0x174a35),cMid=new THREE.Color(0x4f9440),cHigh=new THREE.Color(0xf0f7d8);
   for(var i=0;i<pos.count;i++){
     var x=pos.getX(i),z=pos.getZ(i);
     var y=height(x,z);
@@ -66,19 +90,40 @@ canvas{display:block}
 
   // --- first-person hike along +Z ---
   var camZ=SIZE*0.4, bob=0;
+  // mouse look (gentle yaw), click = sprint + dusk shift
+  var mx=0,smx=0,sprint=0,duskT=0,duskOn=0;
+  document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);},{passive:true});
+  document.addEventListener('click',function(){sprint=1;duskOn=1-duskOn;});
+  var daySky=new THREE.Color(0x9fc6a8),duskSky=new THREE.Color(0x4a3550);
+  var daySun=new THREE.Color(0xfff2d0),duskSun=new THREE.Color(0xff8a4a);
+  var dayAmb=new THREE.Color(0xbcd6c0),duskAmb=new THREE.Color(0x6a5580);
+  var tmpC=new THREE.Color();
+  var clock=new THREE.Clock();
+  var intro=0;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
   function animate(){
     requestAnimationFrame(animate);
-    camZ-=0.09; if(camZ<-SIZE*0.4)camZ=SIZE*0.4;
-    bob+=0.06;
+    var dt=Math.min(clock.getDelta(),0.05);
+    intro=Math.min(intro+dt/1.6,1);
+    sprint=Math.max(sprint-dt*0.7,0);
+    duskT+=((duskOn?1:0)-duskT)*0.03;
+    camZ-=(0.09+sprint*0.16)*easeOutCubic(intro)*60*dt; if(camZ<-SIZE*0.4)camZ=SIZE*0.4;
+    bob+=0.06+sprint*0.05;
+    smx+=(mx-smx)*0.05;
     var h=height(0,camZ);
-    camera.position.set(0,h+2.2+Math.sin(bob)*0.08,camZ);
-    camera.lookAt(0,height(0,camZ-8)+2.0,camZ-8);
-    renderer.render(scene,camera);
+    camera.position.set(0,h+2.8+Math.sin(bob)*0.08,camZ);
+    camera.lookAt(Math.sin(smx*1.2)*6,height(0,camZ-8)+1.5,camZ-8);
+    scene.background=tmpC.copy(daySky).lerp(duskSky,duskT);
+    scene.fog.color.copy(scene.background);
+    sun.color.copy(daySun).lerp(duskSun,duskT);
+    amb.color.copy(dayAmb).lerp(duskAmb,duskT);
+    bloom.strength=0.3+duskT*0.25+sprint*0.1;
+    composer.render();
   }
-  animate();
+  if(RM){composer.render();}else{animate();}
   window.addEventListener('resize',function(){
     W=window.innerWidth;H=window.innerHeight;
-    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);
   });
 })();
 </script>

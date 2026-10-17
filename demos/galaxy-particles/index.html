@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Galaxy Particles — DepthGlow preview</title>
 <style>
@@ -18,18 +17,31 @@ canvas{display:block}
 <body>
 <div class="tag">DEPTHGLOW · GALAXY PARTICLES</div>
 <div class="cap">Drag to spin the galaxy</div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 (function(){
   var W=window.innerWidth,H=window.innerHeight;
   var scene=new THREE.Scene();
   var camera=new THREE.PerspectiveCamera(58,W/H,0.1,200);
-  camera.position.set(0,10,26);camera.lookAt(0,0,0);
+  camera.position.set(0,18,44);camera.lookAt(0,0,0);
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.1;
+  var composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  var bloom=new UnrealBloomPass(new THREE.Vector2(W,H),0.55,0.7,0.15);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var COUNT=100000,ARMS=5,SPIN=1.1,RAND=4.2,INNER=1.6,VERT=0.55;
   var pos=new Float32Array(COUNT*3),col=new Float32Array(COUNT*3);
@@ -73,32 +85,44 @@ canvas{display:block}
     blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
   glow.scale.set(7,7,1);scene.add(glow);
 
-  // drag spin with inertia
-  var dragging=false,lastX=0,spinVel=0.18;
-  function down(x){dragging=true;lastX=x}
-  function move(x){if(!dragging)return;spinVel+=(x-lastX)*0.0004;lastX=x}
+  // drag spin with inertia; plain click (no drag) = supernova pulse
+  var dragging=false,moved=false,lastX=0,spinVel=0.18,nova=0;
+  function down(x){dragging=true;moved=false;lastX=x}
+  function move(x){if(!dragging)return;if(Math.abs(x-lastX)>3)moved=true;spinVel+=(x-lastX)*0.0004;lastX=x}
   function up(){dragging=false}
   renderer.domElement.addEventListener('mousedown',function(e){down(e.clientX)});
   window.addEventListener('mousemove',function(e){move(e.clientX)});
-  window.addEventListener('mouseup',up);
+  window.addEventListener('mouseup',function(){up();});
+  renderer.domElement.addEventListener('click',function(){
+    if(moved)return;
+    nova=1;spinVel+=0.5;
+  });
   renderer.domElement.addEventListener('touchstart',function(e){down(e.touches[0].clientX)},{passive:true});
   window.addEventListener('touchmove',function(e){move(e.touches[0].clientX)},{passive:true});
   window.addEventListener('touchend',up);
 
-  var clock=new THREE.Clock();
+  var clock=new THREE.Clock(),intro=0;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
   function animate(){
     requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),0.05);
     if(!dragging)spinVel+=(0.18-spinVel)*dt*0.5;
     galaxy.rotation.y+=spinVel*dt;
+    nova=Math.max(nova-dt*1.1,0);
+    bloom.strength=0.55+nova*0.9;
+    glow.scale.setScalar(7+nova*3);
+    intro=Math.min(intro+dt/2.2,1);
+    var e=easeOutCubic(intro);
+    camera.position.y=18+(10-18)*e;
+    camera.position.z=44+(26-44)*e;
     camera.position.x=Math.sin(clock.elapsedTime*0.05)*2;
     camera.lookAt(0,0,0);
-    renderer.render(scene,camera);
+    composer.render();
   }
-  animate();
+  if(RM){composer.render();}else{animate();}
   window.addEventListener('resize',function(){
     W=window.innerWidth;H=window.innerHeight;
-    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);
   });
 })();
 </script>

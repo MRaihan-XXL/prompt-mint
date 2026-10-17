@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ki Aura Burst — DepthGlow preview</title>
 <style>
@@ -15,36 +14,76 @@ canvas{display:block}
 .r{display:block;overflow:hidden}
 .r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
 @keyframes up{to{transform:translateY(0)}}
-h1{position:absolute;left:30px;bottom:18%;font-family:system-ui,sans-serif;
+.copy{position:absolute;left:30px;bottom:16%;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:min(460px,86vw)}
+h1{font-family:system-ui,sans-serif;
   font-size:clamp(1.7rem,4.2vw,3.1rem);letter-spacing:.03em;text-transform:uppercase;color:#fde68a;
   text-shadow:0 0 40px rgba(250,204,21,.55);font-weight:900;margin:0}
-p{position:absolute;left:30px;bottom:12%;font-family:system-ui,sans-serif;color:#b5a36a;
+p{font-family:system-ui,sans-serif;color:#b5a36a;
   font-size:clamp(.8rem,1.6vw,1rem);max-width:400px;line-height:1.6;margin:0;text-shadow:0 2px 12px #000}
-.tag{position:absolute;left:30px;bottom:calc(18% + 4em);font-family:system-ui,sans-serif;font-size:11px;
+.tag{font-family:system-ui,sans-serif;font-size:11px;
   letter-spacing:.16em;color:#fbbf24;border:1px solid rgba(251,191,36,.45);padding:5px 12px;border-radius:999px;
   display:inline-block;background:rgba(4,2,8,.5);backdrop-filter:blur(6px);text-transform:uppercase}
 .hint{position:absolute;right:30px;bottom:24px;font-family:system-ui,sans-serif;color:#6b5e3a;font-size:12px}
+@media(max-width:600px){.copy{left:20px;right:20px;bottom:14%}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important}}
 </style>
 </head>
 <body>
 <div class="ui">
 <div class="grain"></div>
+<div class="copy">
 <span class="r tag"><span>Max · three.js particles</span></span>
 <h1><span class="r"><span>Ki aura</span></span><br><span class="r"><span>burst</span></span></h1>
 <p><span class="r"><span>2000 GPU particles erupting into a rising energy column — pure anime energy.</span></span></p>
+</div>
 <div class="hint">Move to bend the aura · click to detonate</div>
 </div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 (function(){
   var W=innerWidth,H=innerHeight;
   var scene=new THREE.Scene();
   scene.fog=new THREE.FogExp2(0x040208,.05);
-  var camera=new THREE.PerspectiveCamera(50,W/H,.1,100);camera.position.set(0,2.4,7.5);
+  var camera=new THREE.PerspectiveCamera(50,W/H,.1,100);camera.position.set(0,2.4,10);
   var renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+  var composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  var bloom=new UnrealBloomPass(new THREE.Vector2(W,H),.8,.7,.35);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // aura-field backdrop: GLSL wisps rising behind the particles
+  var auraU={uT:{value:0},uRes:{value:new THREE.Vector2(W,H)}};
+  var aura=new THREE.Mesh(new THREE.PlaneGeometry(46,26),
+    new THREE.ShaderMaterial({uniforms:auraU,depthWrite:false,blending:THREE.AdditiveBlending,
+      vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+      fragmentShader:[
+        "uniform float uT;varying vec2 vUv;",
+        "float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}",
+        "float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);",
+        " return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}",
+        "float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*n(p);p*=2.1;a*=.5;}return v;}",
+        "void main(){",
+        " vec2 p=vec2(vUv.x*3.2,vUv.y*2.1-uT*.22);",
+        "float w=fbm(p)*.65+fbm(p*2.3+7.)*.35;",
+        " float wisp=smoothstep(.52,.9,w);",
+        " float colGrad=smoothstep(0.,.45,vUv.y);",
+        " vec3 col=mix(vec3(.04,.015,.07),vec3(.5,.3,.07),wisp*colGrad);",
+        " col+=vec3(.9,.62,.18)*pow(wisp,3.)*.35*colGrad;",
+        " col*=.22+.5*smoothstep(1.,.3,length(vUv-vec2(.5,.3)));",
+        " gl_FragColor=vec4(col,1.0);}"
+      ].join("\n")}));
+  aura.position.set(0,4.5,-11);scene.add(aura);
 
   // ground disc
   var disc=new THREE.Mesh(new THREE.CircleGeometry(3.2,48),
@@ -87,15 +126,20 @@ p{position:absolute;left:30px;bottom:12%;font-family:system-ui,sans-serif;color:
   // mouse bend
   var mx=0,my=0;
   document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);my=(e.clientY/H-.5);},{passive:true});
+  var det=0;
   document.addEventListener('click',function(){
     for(var i=0;i<N;i++)spawn(i,true);
     halo.scale.setScalar(2.6);
+    det=1;
   });
 
-  var clock=new THREE.Clock(),t=0;
+  var clock=new THREE.Clock(),t=0,intro=0;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
   function animate(){
     requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),.05);t+=dt;
+    intro=Math.min(intro+dt/1.8,1);
+    auraU.uT.value+=dt;
     var pa=geo.attributes.position.array, ca=geo.attributes.color.array;
     for(var i=0;i<N;i++){
       life[i]-=dt;
@@ -111,13 +155,17 @@ p{position:absolute;left:30px;bottom:12%;font-family:system-ui,sans-serif;color:
     core.scale.setScalar(1+Math.sin(t*6)*.08); halo.scale.multiplyScalar(.94);
     ring.scale.setScalar(1+Math.sin(t*2)*.03);
     ring.material.opacity=.4+Math.sin(t*4)*.15;
+    det=Math.max(det-dt*1.2,0);
+    bloom.strength=.8+det*.9;
+    var z=10+(7.5-10)*easeOutCubic(intro);
     camera.position.x+=((mx*2)-camera.position.x)*.04;
     camera.position.y+=((2.4-my*1.2)-camera.position.y)*.04;
+    camera.position.z+=((z)-camera.position.z)*.06;
     camera.lookAt(0,1.4,0);
-    renderer.render(scene,camera);
+    composer.render();
   }
-  animate();
-  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);});
+  if(RM){composer.render();}else{animate();}
+  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);auraU.uRes.value.set(W,H);});
 })();
 </script>
 </body>

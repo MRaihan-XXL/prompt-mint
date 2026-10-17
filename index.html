@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DepthGlow — Cinematic 3D site prompts that glow</title>
 <meta name="description" content="Copy a prompt, paste it into your AI, launch a site that glows. Original 2D and real-time 3D scene prompts for Lovable, Bolt, Cursor, v0 and Claude.">
-<link rel="canonical" href="https://depthglow.dev/">
+<link rel="canonical" href="https://depthglow.m-raihan-izudin.workers.dev/">
 <meta property="og:title" content="DepthGlow — Cinematic 3D site prompts that glow">
 <meta property="og:description" content="Copy a prompt, paste it into your AI, launch a site that glows. Original 2D and real-time 3D scene prompts for Lovable, Bolt, Cursor, v0 and Claude.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://depthglow.dev/">
-<meta property="og:image" content="https://depthglow.dev/og.png">
+<meta property="og:url" content="https://depthglow.m-raihan-izudin.workers.dev/">
+<meta property="og:image" content="https://depthglow.m-raihan-izudin.workers.dev/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DepthGlow — Cinematic 3D site prompts that glow">
 <meta name="twitter:description" content="Copy a prompt, paste it into your AI, launch a site that glows. Real-time 3D scene prompts included.">
-<meta name="twitter:image" content="https://depthglow.dev/og.png">
+<meta name="twitter:image" content="https://depthglow.m-raihan-izudin.workers.dev/og.png">
 <meta name="theme-color" content="#07070b">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
@@ -22,7 +22,7 @@
 {
   "@context":"https://schema.org",
   "@graph":[
-    {"@type":"WebSite","name":"DepthGlow","url":"https://depthglow.dev/","description":"Cinematic 3D site prompts that glow. Copy a prompt, paste it into your AI."},
+    {"@type":"WebSite","name":"DepthGlow","url":"https://depthglow.m-raihan-izudin.workers.dev/","description":"Cinematic 3D site prompts that glow. Copy a prompt, paste it into your AI."},
     {"@type":"FAQPage","mainEntity":[
       {"@type":"Question","name":"What is DepthGlow?","acceptedAnswer":{"@type":"Answer","text":"DepthGlow is a library of copy-paste prompts that make AI tools (Claude, Cursor, v0, Bolt, Lovable) generate cinematic 2D and real-time 3D hero sections, landing pages and full sites — without the generic AI look."}},
       {"@type":"Question","name":"Which AI tools do these prompts work with?","acceptedAnswer":{"@type":"Answer","text":"Any text-to-site or text-to-code AI that accepts a long-form prompt. Tested with Claude, Cursor, v0, Bolt, Lovable and GPT-4o."}},
@@ -185,7 +185,10 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/config.js"></script>
-<script src="js/hero3d.js" defer></script>
+<script type="importmap">
+{"imports":{"three":"./js/vendor/three.module.min.js","three/addons/":"./js/vendor/jsm/"}}
+</script>
+<script type="module" src="js/hero3d.js"></script>
 <script src="js/app.js" defer></script>
 </body>
 </html>

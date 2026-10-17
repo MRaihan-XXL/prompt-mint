@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prism Orbit — DepthGlow preview</title>
 <style>
@@ -15,8 +14,11 @@ canvas{display:block}
 </head>
 <body>
 <div class="tag">DEPTHGLOW · PRISM ORBIT</div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
 (function(){
   var W=window.innerWidth,H=window.innerHeight;
   var scene=new THREE.Scene();
@@ -43,7 +45,13 @@ canvas{display:block}
       blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.BackSide}));
   halo.scale.setScalar(1.7);scene.add(halo);
 
-  var colors=[0xa78bfa,0x7dd3fc,0xf472b6,0xfbbf24,0x34d399,0x60a5fa,0xf87171];
+  var palettes=[
+    [0xa78bfa,0x7dd3fc,0xf472b6,0xfbbf24,0x34d399,0x60a5fa,0xf87171],
+    [0xf97316,0xfacc15,0xf43f5e,0xa3e635,0x2dd4bf,0xfda4af,0xfb7185],
+    [0x38bdf8,0x818cf8,0xc084fc,0x22d3ee,0xa5b4fc,0x67e8f9,0x93c5fd]
+  ];
+  var palIdx=0;
+  var colors=palettes[0];
   var prisms=[];
   for(var i=0;i<7;i++){
     var g=(i%2===0)?new THREE.OctahedronGeometry(0.55,0):new THREE.TetrahedronGeometry(0.62,0);
@@ -55,16 +63,38 @@ canvas{display:block}
     scene.add(mesh);
   }
 
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
+  var pulse=0;
+  window.addEventListener('pointerdown',function(){
+    palIdx=(palIdx+1)%3;
+    prisms.forEach(function(p,i){p.mesh.material.color.setHex(palettes[palIdx][i]);});
+    pulse=0.5;
+  });
+  var camX=0,camY=0,tcx=0,tcy=0;
+  window.addEventListener('pointermove',function(e){
+    tcx=(e.clientX/innerWidth-.5)*0.8;
+    tcy=-(e.clientY/innerHeight-.5)*0.8;
+  });
+
   var clock=new THREE.Clock(),t=0;
-  var start=9,end=7.2,introT=0,dur=1.2,introDone=false;
+  var start=7.2*1.6,end=7.2,introT=0,dur=1.8,introDone=RM;
+  if(RM)camera.position.z=end;
   function animate(){
-    requestAnimationFrame(animate);
+    if(!RM)requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),0.05);t+=dt;
     if(!introDone){
       introT+=dt;
-      var k=Math.min(introT/dur,1),e=1-Math.pow(1-k,3);
+      var k=Math.min(introT/dur,1),e=easeOutCubic(k);
       camera.position.z=start+(end-start)*e;
       if(k>=1)introDone=true;
+    }
+    camX+=(tcx-camX)*0.05;camY+=(tcy-camY)*0.05;
+    camera.position.x=camX;camera.position.y=camY;
+    if(pulse>0){
+      pulse=Math.max(0,pulse-dt);
+      var s=1+0.12*Math.sin((1-pulse/0.5)*Math.PI);
+      core.scale.setScalar(s);halo.scale.setScalar(1.7*s);
     }
     core.rotation.y+=dt*0.4;core.rotation.x+=dt*0.2;
     prisms.forEach(function(p){

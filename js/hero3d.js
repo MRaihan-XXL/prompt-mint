@@ -1,6 +1,8 @@
-// DepthGlow hero: real-time glowing particle field (three.js, lazy-loaded).
+// DepthGlow hero: real-time glowing particle field (three.js r170 ESM module).
 // Additive blending gives the bloom look without postprocessing passes.
 // Degrades gracefully: no WebGL / reduced-motion => static CSS glow stays visible.
+import * as THREE from "three";
+
 (function () {
   "use strict";
   var host = document.querySelector(".hero-bg");
@@ -8,15 +10,6 @@
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) return; // keep phones light
 
-  var s = document.createElement("script");
-  s.src = "js/vendor/three.min.js";
-  s.async = true;
-  s.onload = init;
-  s.onerror = function () { /* CSS glow remains */ };
-  document.head.appendChild(s);
-
-  function init() {
-    if (typeof THREE === "undefined") return;
     var w = host.clientWidth || window.innerWidth;
     var h = host.clientHeight || window.innerHeight;
     var renderer;
@@ -105,5 +98,4 @@
         renderer.setSize(nw, nh);
       }, 150);
     });
-  }
 })();

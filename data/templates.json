@@ -2,7 +2,7 @@
   "site": {
     "name": "DepthGlow",
     "tagline": "Cinematic AI sites that glow. Copy a prompt, paste it into your AI, launch a site that doesn't look AI-made.",
-    "domain": "https://depthglow.dev",
+    "domain": "https://depthglow.m-raihan-izudin.workers.dev",
     "version": "2.0.0"
   },
   "plans": {
@@ -188,7 +188,7 @@
     {
       "id": "liquid-metal",
       "date": "2026-10-10",
-      "title": "Liquid Metal",
+      "title": "Liquid Iridescence",
       "category": "Interactive",
       "tier": "max",
       "tags": [
@@ -371,3 +371,4 @@
     }
   ]
 }
+

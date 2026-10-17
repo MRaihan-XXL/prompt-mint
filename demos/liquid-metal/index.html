@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Liquid Metal — DepthGlow preview</title>
 <style>
@@ -14,8 +13,11 @@ canvas{display:block}
 </head>
 <body>
 <div class="tag">DEPTHGLOW · LIQUID METAL</div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
 (function(){
   var W=window.innerWidth,H=window.innerHeight;
   var scene=new THREE.Scene();
@@ -27,12 +29,13 @@ canvas{display:block}
   var uniforms={
     uTime:{value:0},
     uMouse:{value:new THREE.Vector2(0.5,0.5)},
-    uRes:{value:new THREE.Vector2(W,H)}
+    uRes:{value:new THREE.Vector2(W,H)},
+    uMode:{value:0} // 0 = oil-slick rainbow, 1 = liquid mercury
   };
 
   var frag=[
     "precision highp float;",
-    "uniform float uTime;uniform vec2 uMouse;uniform vec2 uRes;",
+    "uniform float uTime;uniform vec2 uMouse;uniform vec2 uRes;uniform float uMode;",
     "varying vec2 vUv;",
     // 2D hash + value noise
     "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}",
@@ -44,10 +47,10 @@ canvas{display:block}
     " float m=1e9;",
     " for(int i=0;i<5;i++){",
     "   float fi=float(i);",
-    "   vec2 c=vec2(0.35*sin(t*0.7+fi*1.9),0.35*cos(t*0.6+fi*2.3));",
+    "   vec2 c=vec2(0.52*sin(t*0.7+fi*1.9),0.42*cos(t*0.6+fi*2.3));",
     "   c=mix(c,uMouse*2.0-1.0,0.25*sin(fi+t*0.3));",
     "   float d=length(uv-c);",
-    "   m=smin(m,d,0.45);",
+    "   m=smin(m,d,0.22);",
     " }",
     " return m;",
     "}",
@@ -64,9 +67,15 @@ canvas{display:block}
     " float fres=pow(1.0-max(dot(n,v),0.0),2.5);",
     // thin-film / oil-slick rainbow driven by angle + time + field
     " float h=fres*1.4 + f0*1.8 + t*0.05 + dot(n,vec3(0.3,0.5,0.7));",
-    " vec3 chrome=mix(vec3(0.06,0.09,0.16),hue(h),0.75);",
-    " chrome+=fres*vec3(0.7,0.85,1.0)*0.9;",
-    " chrome*=smoothstep(0.85,0.15,f0);", // blob mask (inside is low distance)
+    " vec3 chrome=mix(vec3(0.05,0.08,0.15),hue(h),0.30*(1.0-uMode)+0.03);",
+    " chrome=mix(chrome,vec3(dot(chrome,vec3(0.33)))*vec3(0.85,0.92,1.05),uMode*0.85);",
+    " chrome+=fres*vec3(0.7,0.85,1.0)*(1.1+uMode*0.5);",
+    " vec3 L=normalize(vec3(-0.45,0.7,0.55));",
+    " float spec=pow(max(dot(n,L),0.0),30.0);",
+    " chrome+=vec3(0.92,0.96,1.0)*spec*0.85;",
+    " chrome+=vec3(0.10,0.13,0.22)*(1.0-smoothstep(0.0,0.10,f0));", // inner glow
+    " chrome*=1.0-smoothstep(0.18,0.24,f0);", // crisp blob mask (inside is low distance)
+    " chrome*=1.55;",
     " chrome*=1.0-0.35*length(uv)*0.5;", // vignette
     " chrome+=vec3(0.02,0.03,0.06);",
     " gl_FragColor=vec4(chrome,1.0);",
@@ -87,14 +96,19 @@ canvas{display:block}
   window.addEventListener('pointermove',function(e){
     uniforms.uMouse.value.set(e.clientX/W,1.0-e.clientY/H);
   });
+  // click = toggle mercury <-> oil-slick
+  var modeTarget=0;
+  document.addEventListener('click',function(){modeTarget=1-modeTarget;});
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var clock=new THREE.Clock();
   function animate(){
     requestAnimationFrame(animate);
     uniforms.uTime.value+=Math.min(clock.getDelta(),0.05);
+    uniforms.uMode.value+=(modeTarget-uniforms.uMode.value)*0.04;
     renderer.render(scene,camera);
   }
-  animate();
+  if(RM){renderer.render(scene,camera);}else{animate();}
   window.addEventListener('resize',function(){
     W=window.innerWidth;H=window.innerHeight;
     renderer.setSize(W,H);uniforms.uRes.value.set(W,H);

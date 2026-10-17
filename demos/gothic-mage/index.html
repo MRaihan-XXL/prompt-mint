@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gothic Mage Circle — DepthGlow preview</title>
 <style>
@@ -16,13 +15,14 @@ canvas{display:block}
 .r{display:block;overflow:hidden}
 .r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
 @keyframes up{to{transform:translateY(0)}}
-h1{position:absolute;left:0;right:0;top:12%;text-align:center;font-family:system-ui,sans-serif;
+.copy{position:absolute;left:50%;transform:translateX(-50%);top:9%;display:flex;flex-direction:column;align-items:center;gap:12px;width:min(560px,90vw);text-align:center}
+h1{font-family:system-ui,sans-serif;
   font-size:clamp(1.6rem,4vw,2.9rem);letter-spacing:.08em;text-transform:uppercase;color:#c4b5fd;
   text-shadow:0 0 40px rgba(139,92,246,.6);font-weight:800;margin:0}
-p{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 3.8em);font-family:system-ui,sans-serif;
-  color:#8b7fb0;font-size:clamp(.78rem,1.5vw,.95rem);max-width:420px;line-height:1.6;text-align:center;
-  padding:0 20px;text-shadow:0 2px 12px #000}
-.tag{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 2.4em);font-family:system-ui,sans-serif;
+p{font-family:system-ui,sans-serif;
+  color:#8b7fb0;font-size:clamp(.78rem,1.5vw,.95rem);max-width:420px;line-height:1.6;
+  text-shadow:0 2px 12px #000;margin:0}
+.tag{font-family:system-ui,sans-serif;
   font-size:11px;letter-spacing:.16em;color:#a78bfa;border:1px solid rgba(167,139,250,.45);padding:5px 12px;
   border-radius:999px;display:inline-block;background:rgba(7,5,12,.5);backdrop-filter:blur(6px);text-transform:uppercase}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important}}
@@ -30,19 +30,34 @@ p{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 3.8em);fo
 </head>
 <body>
 <div class="ui"><div class="vig"></div><div class="grain"></div>
+<div class="copy">
 <span class="r tag"><span>Max · three.js shaders</span></span>
 <h1><span class="r"><span>Gothic mage</span></span><br><span class="r"><span>circle</span></span></h1>
 <p><span class="r"><span>A rotating arcane seal drawn with procedural canvas textures — runes, rings, glyphs.</span></span></p>
 </div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+</div>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 (function(){
   var W=innerWidth,H=innerHeight;
   var scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x07050c,.07);
-  var camera=new THREE.PerspectiveCamera(50,W/H,.1,80);camera.position.set(0,4.6,6.4);
+  var camera=new THREE.PerspectiveCamera(50,W/H,.1,80);camera.position.set(0,7,9.2);
   var renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+  var composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  var bloom=new UnrealBloomPass(new THREE.Vector2(W,H),.75,.65,.4);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   scene.add(new THREE.AmbientLight(0x3b2d5c,.6));
   var moon=new THREE.DirectionalLight(0xc4b5fd,.9);moon.position.set(3,8,2);scene.add(moon);
@@ -52,6 +67,26 @@ p{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 3.8em);fo
   var floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),
     new THREE.MeshStandardMaterial({color:0x0b0812,roughness:.7}));
   floor.rotation.x=-Math.PI/2;scene.add(floor);
+  // arcane ground mist (GLSL fbm, drifts slowly)
+  var mistU={uT:{value:0}};
+  var mist=new THREE.Mesh(new THREE.PlaneGeometry(34,34),
+    new THREE.ShaderMaterial({uniforms:mistU,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+      vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+      fragmentShader:[
+        "uniform float uT;varying vec2 vUv;",
+        "float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}",
+        "float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);",
+        " return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}",
+        "float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*n(p);p*=2.05;a*=.5;}return v;}",
+        "void main(){",
+        " vec2 p=vUv*3.4;",
+        " float m=fbm(p+vec2(uT*.05,uT*.03))*fbm(p*1.7-vec2(uT*.04,0.));",
+        " float a=smoothstep(.18,.55,m)*.5;",
+        " a*=smoothstep(.52,.18,length(vUv-.5));",
+        " vec3 col=mix(vec3(.14,.08,.28),vec3(.42,.26,.75),m);",
+        " gl_FragColor=vec4(col*a,a);}"
+      ].join("\n")}));
+  mist.rotation.x=-Math.PI/2;mist.position.y=.12;scene.add(mist);
   // gothic pillars
   var pilMat=new THREE.MeshStandardMaterial({color:0x171226,roughness:.6});
   [-1,1].forEach(function(s){
@@ -119,26 +154,43 @@ p{position:absolute;left:50%;transform:translateX(-50%);top:calc(12% + 3.8em);fo
 
   var mx=0,my=0;
   document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);my=(e.clientY/H-.5);},{passive:true});
+  // click = cast: seals overdrive + violet flare
+  var cast=0;
+  document.addEventListener('click',function(){
+    cast=1;
+    for(var i=0;i<N;i++){pa0[i*3+1]=Math.random()*.4;}
+  });
 
-  var clock=new THREE.Clock(),t=0;
+  var clock=new THREE.Clock(),t=0,intro=0;
+  var pa0=pg.attributes.position.array;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
   function animate(){
     requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),.05);t+=dt;
-    seals.forEach(function(s){s.m.rotation.z+=dt*.4*s.dir;});
+    intro=Math.min(intro+dt/1.8,1);
+    mistU.uT.value+=dt;
+    cast=Math.max(cast-dt*.9,0);
+    var spinBoost=1+cast*3.2;
+    seals.forEach(function(s){s.m.rotation.z+=dt*.4*s.dir*spinBoost;});
     var pa=pg.attributes.position.array;
-    for(var i=0;i<N;i++){pa[i*3+1]+=dt*(.5+(i%7)*.08);if(pa[i*3+1]>4.4)pa[i*3+1]=0;}
+    var rise=1+cast*2.5;
+    for(var i=0;i<N;i++){pa[i*3+1]+=dt*(.5+(i%7)*.08)*rise;if(pa[i*3+1]>4.4)pa[i*3+1]=0;}
     pg.attributes.position.needsUpdate=true;
     book.position.y=2.1+Math.sin(t*1.6)*.12;book.rotation.y=Math.sin(t*.7)*.18;
     book.rotation.z=Math.sin(t*1.1)*.04;
-    bookGlow.intensity=1.4+Math.sin(t*4)*.5;
-    violet.intensity=2.2+Math.sin(t*2.2)*.6;
+    bookGlow.intensity=1.4+Math.sin(t*4)*.5+cast*1.8;
+    violet.intensity=2.2+Math.sin(t*2.2)*.6+cast*2.4;
+    bloom.strength=.75+cast*.6;
+    var e=easeOutCubic(intro);
+    var cy=7+(4.6-7)*e, cz=9.2+(6.4-9.2)*e;
     camera.position.x+=((mx*2.2)-camera.position.x)*.045;
-    camera.position.y+=((4.6-my*1.4)-camera.position.y)*.045;
+    camera.position.y+=((cy-my*1.4)-camera.position.y)*.045;
+    camera.position.z+=((cz)-camera.position.z)*.06;
     camera.lookAt(0,1.2,0);
-    renderer.render(scene,camera);
+    composer.render();
   }
-  animate();
-  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);});
+  if(RM){composer.render();}else{animate();}
+  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);});
 })();
 </script>
 </body>

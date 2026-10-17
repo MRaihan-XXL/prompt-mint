@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>City Flyover — DepthGlow preview</title>
 <style>
@@ -14,8 +13,15 @@ canvas{display:block}
 </head>
 <body>
 <div class="tag">DEPTHGLOW · CITY FLYOVER</div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 (function(){
   var W=window.innerWidth,H=window.innerHeight;
   var scene=new THREE.Scene();
@@ -27,9 +33,15 @@ canvas{display:block}
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.1;
+  var composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  var bloom=new UnrealBloomPass(new THREE.Vector2(W,H),0.6,0.6,0.35);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  scene.add(new THREE.AmbientLight(0x33406a,0.7));
-  var moon=new THREE.DirectionalLight(0x9fb4ff,0.9);moon.position.set(-40,60,20);scene.add(moon);
+  scene.add(new THREE.AmbientLight(0x33406a,1.0));
+  var moon=new THREE.DirectionalLight(0x9fb4ff,1.5);moon.position.set(-40,60,20);scene.add(moon);
 
   // --- procedural low-poly city (value noise for heights) ---
   function hash(x,y){var n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);}
@@ -41,7 +53,7 @@ canvas{display:block}
   }
   var GRID=24,SP=2.4,BOX=1.5;
   var boxGeo=new THREE.BoxGeometry(1,1,1);
-  var bodyMat=new THREE.MeshStandardMaterial({color:0x2a3350,roughness:0.85,metalness:0.1,flatShading:true});
+  var bodyMat=new THREE.MeshStandardMaterial({color:0x39456b,roughness:0.85,metalness:0.1,flatShading:true});
   var winMat=new THREE.MeshStandardMaterial({color:0x0d1020,emissive:0x66e0c0,emissiveIntensity:1.4,roughness:0.6});
   var group=new THREE.Group();
   var buildings=[];
@@ -52,7 +64,7 @@ canvas{display:block}
     var b=new THREE.Mesh(boxGeo,bodyMat);
     b.scale.set(BOX,h,BOX);b.position.set(x,h/2,z);
     group.add(b);buildings.push(b);
-    if(n>0.5){ // emissive window band on taller buildings (slightly proud of the facade so it shows)
+    if(n>0.42){ // emissive window band on taller buildings (slightly proud of the facade so it shows)
       var w=new THREE.Mesh(boxGeo,winMat);
       w.scale.set(BOX*1.01,0.35,BOX*1.01);
       w.position.set(x,h*0.62,z);
@@ -65,31 +77,39 @@ canvas{display:block}
     new THREE.MeshStandardMaterial({color:0x0a0e1c,roughness:1}));
   ground.rotation.x=-Math.PI/2;ground.position.y=0;scene.add(ground);
 
-  // --- cinematic camera path ---
+  // --- cinematic camera path (above the rooftops, looking down into the city) ---
   var curve=new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-24,3.2,24),new THREE.Vector3(-8,2.4,8),
-    new THREE.Vector3(6,4.5,-6),new THREE.Vector3(20,3.0,-22),
-    new THREE.Vector3(24,6.0,10),new THREE.Vector3(4,2.8,22),
-    new THREE.Vector3(-24,3.2,24)
+    new THREE.Vector3(-28,11,28),new THREE.Vector3(-10,8,11),
+    new THREE.Vector3(8,13,-8),new THREE.Vector3(26,10,-26),
+    new THREE.Vector3(28,15,12),new THREE.Vector3(6,9,27),
+    new THREE.Vector3(-28,11,28)
   ],true,'catmullrom',0.5);
 
-  var clock=new THREE.Clock(),u=0;
+  // click = boost: fly faster + windows flare
+  var boost=0;
+  document.addEventListener('click',function(){boost=1;});
+  var clock=new THREE.Clock(),u=0.12,intro=0;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
   var pos=new THREE.Vector3(),ahead=new THREE.Vector3(),look=new THREE.Vector3();
   function animate(){
     requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),0.05);
-    u=(u+dt*0.02)%1;
+    intro=Math.min(intro+dt/1.6,1);
+    boost=Math.max(boost-dt*0.8,0);
+    u=(u+dt*0.02*(0.25+0.75*easeOutCubic(intro))*(1+boost*2.2))%1;
+    winMat.emissiveIntensity=1.4+boost*1.6+Math.sin(clock.elapsedTime*2.0)*0.12;
+    bloom.strength=0.6+boost*0.5;
     curve.getPointAt(u,pos);
-    curve.getPointAt((u+0.02)%1,ahead);
+    curve.getPointAt((u+0.03)%1,ahead);
     camera.position.copy(pos);
-    look.copy(ahead);look.y=Math.max(ahead.y-0.5,1.2);
+    look.copy(ahead);look.y=Math.max(ahead.y-3.5,1.5);
     camera.lookAt(look);
-    renderer.render(scene,camera);
+    composer.render();
   }
-  animate();
+  if(RM){composer.render();}else{animate();}
   window.addEventListener('resize',function(){
     W=window.innerWidth;H=window.innerHeight;
-    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);
+    camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);
   });
 })();
 </script>

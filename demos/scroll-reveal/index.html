@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Scroll Reveal — DepthGlow preview</title>
 <style>
@@ -31,9 +30,10 @@ nav .logo i{width:20px;height:20px;border-radius:6px;background:linear-gradient(
 nav .links{margin-left:auto;display:flex;gap:22px;font-size:14px;color:#a9b0c4}
 nav .links a{color:inherit;text-decoration:none}
 nav .cta{background:linear-gradient(135deg,#22d3ee,#4ade80);color:#052e16;padding:9px 16px;border-radius:999px;font-weight:700;font-size:13px;text-decoration:none}
-section{opacity:0;transform:translateY(40px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1);
-  padding:96px 32px;max-width:1080px;margin:0 auto}
-section.in{opacity:1;transform:none}
+section{padding:96px 32px;max-width:1080px;margin:0 auto}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
 .hero{text-align:center;padding-top:150px}
 h1{font-size:clamp(2.4rem,6vw,4.2rem);letter-spacing:-.035em;line-height:1.03;font-weight:800}
 .hero p{color:#9aa3ba;max-width:52ch;margin:22px auto 0;font-size:1.15rem}
@@ -61,31 +61,33 @@ h1{font-size:clamp(2.4rem,6vw,4.2rem);letter-spacing:-.035em;line-height:1.03;fo
   <div class="links"><a href="#">Product</a><a href="#">Pricing</a><a href="#">Docs</a></div>
   <a class="cta" href="#">Get started</a></nav>
 
-<section class="hero"><h1>Move work forward, effortlessly.</h1>
+<section class="hero reveal"><h1>Move work forward, effortlessly.</h1>
   <p>Driftline keeps every project, doc and decision in one calm, fast place your team actually enjoys using.</p>
   <a class="btn" href="#">Start free</a></section>
 
-<div class="trusted">Powering teams at</div>
-<div class="logos"><span>Northwind</span><span>Cascade</span><span>Lumen</span><span>Vertex</span><span>Orbit</span></div>
+<div class="trusted" data-par="0.5">Powering teams at</div>
+<div class="logos" data-par="0.35"><span>Northwind</span><span>Cascade</span><span>Lumen</span><span>Vertex</span><span>Orbit</span></div>
 
-<section><div class="split">
+<section class="reveal"><div class="split">
   <div class="img" style="background:linear-gradient(135deg,#22d3ee,#0ea5e9)"></div>
   <div><h2>Everything in one thread</h2><p>Comments, tasks and files stay attached to the work itself, so context never gets lost across a dozen tools.</p></div>
 </div></section>
 
-<section><div class="split rev">
+<section class="reveal"><div class="split rev">
   <div class="img" style="background:linear-gradient(135deg,#4ade80,#22c55e)"></div>
   <div><h2>Fast where it counts</h2><p>Instant search, instant sync, instant everything. Driftline is engineered to stay out of your way.</p></div>
 </div></section>
 
-<section class="quote"><blockquote>“We cut tool-switching in half. Driftline just gets out of the way and lets the team ship.”</blockquote>
-  <div class="who">— Priya N., Head of Product at Cascade</div></section>
+<section class="quote reveal"><blockquote>“We cut tool-switching in half. Driftline just gets out of the way and lets the team ship.”</blockquote>
+  <div class="who" data-par="0.7">— Priya N., Head of Product at Cascade</div></section>
 
-<section class="cta-final"><h2>Ready to drift into flow?</h2>
+<section class="cta-final reveal"><h2>Ready to drift into flow?</h2>
   <p style="color:#9aa3ba;max-width:46ch;margin:14px auto 0">Start free, invite your team, and feel the difference in a week.</p>
   <a class="btn" href="#">Start your free trial</a></section>
 
+<script src="../../js/vendor/lenis.min.js"></script>
 <script>
+var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 var nav=document.getElementById('nav'),bar=document.getElementById('bar');
 window.addEventListener('scroll',function(){
   var h=document.documentElement,st=h.scrollTop;
@@ -101,6 +103,20 @@ document.addEventListener('mousemove',function(e){
   var x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
   bgmesh.style.transform='translate('+(x*-20)+'px,'+(y*-14)+'px)';
 },{passive:true});
+// smooth scroll + velocity micro-motion on decorative layers
+if(!RM){
+  var lenis=new Lenis({duration:1.1,smoothWheel:true});
+  var parEls=[].slice.call(document.querySelectorAll('[data-par]'));
+  var vSmooth=0;
+  function raf(t){
+    lenis.raf(t);
+    var v=Math.max(-18,Math.min(18,lenis.velocity||0));
+    vSmooth+=(v-vSmooth)*0.08;
+    parEls.forEach(function(el){el.style.transform='translateY('+(vSmooth*parseFloat(el.dataset.par||1))+'px)'});
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+}
 // grain overlay
 var g=document.createElement('div');g.className='grain';document.body.appendChild(g);
 </script>

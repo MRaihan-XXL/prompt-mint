@@ -260,8 +260,36 @@
   function getToken() {
     var a = loadAuth();
     if (!a || !a.access_token) return null;
-    if (a.expires_at && Date.now() > a.expires_at * 1000) return null; // MVP: re-sign-in on expiry
+    if (a.expires_at && Date.now() > a.expires_at * 1000) return null; // stale — use ensureFreshToken()
     return a.access_token;
+  }
+  // Returns a valid access token, transparently refreshing ~55s before expiry.
+  // Falls back to clearAuth (null) only when the refresh itself fails.
+  function ensureFreshToken() {
+    var a = loadAuth();
+    if (!a || !a.access_token) return Promise.resolve(null);
+    if (!a.expires_at || Date.now() < (a.expires_at - 55) * 1000) {
+      return Promise.resolve(a.access_token);
+    }
+    if (!a.refresh_token) return Promise.resolve(null);
+    var c = cfg();
+    return fetch(c.SUPABASE_URL.replace(/\/$/, "") + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: c.SUPABASE_ANON_KEY || "" },
+      body: JSON.stringify({ refresh_token: a.refresh_token })
+    })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        saveAuth({
+          access_token: d.access_token,
+          refresh_token: d.refresh_token || a.refresh_token,
+          token_type: d.token_type || "bearer",
+          expires_at: Math.floor(Date.now() / 1000) + (d.expires_in || 3600)
+        });
+        updateAuthBtn();
+        return d.access_token;
+      })
+      .catch(function () { clearAuth(); updateAuthBtn(); return null; });
   }
   function b64UrlEncode(buf) {
     var str = "";
@@ -407,8 +435,10 @@
   }
   async function fetchGatedPrompt(t, peek, foot) {
     try {
+      var token = await ensureFreshToken();
+      if (!token) { clearAuth(); updateAuthBtn(); showSignInState(t, peek, foot); return; }
       var r = await fetch("/api/prompt/" + encodeURIComponent(t.id), {
-        headers: { Authorization: "Bearer " + getToken() }
+        headers: { Authorization: "Bearer " + token }
       });
       if (r.status === 401) { clearAuth(); updateAuthBtn(); showSignInState(t, peek, foot); return; }
       if (r.status === 402) { showUpgradeState(t, peek, foot); return; }

@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Editorial Portfolio — DepthGlow free preview</title>
 <style>
@@ -16,8 +15,8 @@ body{background:#f4f2ee;color:#141414;font-family:Georgia,"Times New Roman",seri
 .section-title{font-family:system-ui,sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8a8a80;padding:44px 34px 10px}
 .list{border-top:1px solid #14141422}
 .row{display:flex;align-items:center;gap:22px;padding:26px 34px;border-bottom:1px solid #14141422;
-  position:relative;cursor:pointer;transition:padding .35s cubic-bezier(.16,1,.3,1),background .3s}
-.row:hover{padding-left:56px;background:rgba(20,20,20,.025)}
+  position:relative;cursor:pointer;transition:padding .35s cubic-bezier(.16,1,.3,1),background .3s,transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s,opacity .55s cubic-bezier(.16,1,.3,1)}
+.list .row:hover{padding-left:56px;background:rgba(20,20,20,.025);transform:translateY(-6px);box-shadow:0 14px 30px rgba(20,20,20,.10)}
 .row .idx{font-family:system-ui,sans-serif;font-size:13px;color:#b6b2a8;width:30px;transition:opacity .3s;font-variant-numeric:tabular-nums}
 .row:hover .idx{opacity:0}
 .row .title{font-size:clamp(1.4rem,3.6vw,2.4rem);letter-spacing:-.02em;flex:1;transition:transform .35s cubic-bezier(.16,1,.3,1)}
@@ -31,8 +30,9 @@ body{background:#f4f2ee;color:#141414;font-family:Georgia,"Times New Roman",seri
 .row:hover .arrow{opacity:1;transform:none}
 .row .swatch{position:absolute;right:64px;width:0;height:52px;border-radius:8px;transition:width .35s cubic-bezier(.16,1,.3,1),opacity .3s;opacity:0}
 .row:hover .swatch{width:80px;opacity:1}
-.reveal{opacity:0;transform:translateY(18px);animation:in .65s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes in{to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .55s cubic-bezier(.16,1,.3,1),transform .55s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none}}
 .progress{position:fixed;top:0;left:0;height:2px;background:#141414;z-index:50;width:0}
 .about{padding:56px 34px;max-width:60ch;font-size:1.15rem;line-height:1.7;color:#333}
 .about em{font-style:italic}
@@ -50,17 +50,24 @@ footer a:hover::after{width:100%}
 <div class="masthead"><h1>Mara Vance</h1><div class="role">Designer · Art Director</div></div>
 <div class="section-title">Selected Work</div>
 <div class="list">
-  <div class="row reveal" style="animation-delay:.05s"><span class="idx">01</span><span class="title">Atlas Type Foundry</span><span class="year">2026</span><span class="tag">Identity</span><span class="swatch" style="background:linear-gradient(135deg,#10b981,#3b82f6)"></span><span class="arrow">→</span></div>
-  <div class="row reveal" style="animation-delay:.12s"><span class="idx">02</span><span class="title">Harbor Coffee Roasters</span><span class="year">2026</span><span class="tag">Packaging</span><span class="swatch" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></span><span class="arrow">→</span></div>
-  <div class="row reveal" style="animation-delay:.19s"><span class="idx">03</span><span class="title">Meridian Architecture</span><span class="year">2025</span><span class="tag">Web</span><span class="swatch" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)"></span><span class="arrow">→</span></div>
-  <div class="row reveal" style="animation-delay:.26s"><span class="idx">04</span><span class="title">Field Notes Journal</span><span class="year">2025</span><span class="tag">Editorial</span><span class="swatch" style="background:linear-gradient(135deg,#14b8a6,#22d3ee)"></span><span class="arrow">→</span></div>
-  <div class="row reveal" style="animation-delay:.33s"><span class="idx">05</span><span class="title">Solstice Music Fest</span><span class="year">2024</span><span class="tag">Campaign</span><span class="swatch" style="background:linear-gradient(135deg,#f472b6,#a78bfa)"></span><span class="arrow">→</span></div>
-  <div class="row reveal" style="animation-delay:.4s"><span class="idx">06</span><span class="title">Northbound Skincare</span><span class="year">2024</span><span class="tag">Brand</span><span class="swatch" style="background:linear-gradient(135deg,#34d399,#a3e635)"></span><span class="arrow">→</span></div>
+  <div class="row reveal" style="transition-delay:.04s"><span class="idx">01</span><span class="title">Atlas Type Foundry</span><span class="year">2026</span><span class="tag">Identity</span><span class="swatch" style="background:linear-gradient(135deg,#10b981,#3b82f6)"></span><span class="arrow">→</span></div>
+  <div class="row reveal" style="transition-delay:.11s"><span class="idx">02</span><span class="title">Harbor Coffee Roasters</span><span class="year">2026</span><span class="tag">Packaging</span><span class="swatch" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></span><span class="arrow">→</span></div>
+  <div class="row reveal" style="transition-delay:.18s"><span class="idx">03</span><span class="title">Meridian Architecture</span><span class="year">2025</span><span class="tag">Web</span><span class="swatch" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)"></span><span class="arrow">→</span></div>
+  <div class="row reveal" style="transition-delay:.25s"><span class="idx">04</span><span class="title">Field Notes Journal</span><span class="year">2025</span><span class="tag">Editorial</span><span class="swatch" style="background:linear-gradient(135deg,#14b8a6,#22d3ee)"></span><span class="arrow">→</span></div>
+  <div class="row reveal" style="transition-delay:.32s"><span class="idx">05</span><span class="title">Solstice Music Fest</span><span class="year">2024</span><span class="tag">Campaign</span><span class="swatch" style="background:linear-gradient(135deg,#f472b6,#a78bfa)"></span><span class="arrow">→</span></div>
+  <div class="row reveal" style="transition-delay:.39s"><span class="idx">06</span><span class="title">Northbound Skincare</span><span class="year">2024</span><span class="tag">Brand</span><span class="swatch" style="background:linear-gradient(135deg,#34d399,#a3e635)"></span><span class="arrow">→</span></div>
 </div>
 <div class="about">I build brands and interfaces with a bias toward clarity, restraint and <em>a little bit of warmth</em>. Currently taking on select projects.</div>
 <footer><a href="#">Email</a><a href="#">Instagram</a><a href="#">LinkedIn</a><a href="#">Are.na</a></footer>
 <script>
 (function(){
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var revs=[].slice.call(document.querySelectorAll('.reveal'));
+  if(RM){revs.forEach(function(el){el.classList.add('in')});}
+  else{
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:0.15});
+    revs.forEach(function(el){io.observe(el)});
+  }
   var pg=document.getElementById('pg');
   window.addEventListener('scroll',function(){
     var h=document.documentElement;

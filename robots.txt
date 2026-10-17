@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /demos/
-Sitemap: https://depthglow.dev/sitemap.xml
+Sitemap: https://depthglow.m-raihan-izudin.workers.dev/sitemap.xml

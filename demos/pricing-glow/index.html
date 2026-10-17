@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pricing Glow — DepthGlow preview</title>
 <style>
@@ -17,12 +16,11 @@ body{background:#08060f;color:#f3f1f7;font-family:system-ui,-apple-system,"Segoe
   background:radial-gradient(circle,rgba(244,114,182,.07),transparent 65%);transform:translate(-50%,-50%);
   opacity:0;transition:opacity .4s;will-change:left,top}
 .head,.plans{position:relative;z-index:2}
-.card{opacity:0;transform:translateY(28px);animation:cin .7s cubic-bezier(.16,1,.3,1) forwards}
-.plans .card:nth-child(1){animation-delay:.1s}.pop-wrap .card{animation-delay:.25s}.plans .card:nth-child(3){animation-delay:.4s}
-@keyframes cin{to{opacity:1;transform:translateY(0)}}
-.pop-wrap .card.pop{transform:translateY(28px) scale(1.05)}
-@keyframes cinpop{to{opacity:1;transform:translateY(0) scale(1.05)}}
-.pop-wrap .card.pop{animation-name:cinpop}
+.card{opacity:0;transform:translateY(20px);position:relative;
+  transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .18s ease-out}
+.card::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(244,114,182,.13),transparent 62%)}
+.card:hover::after{opacity:1}
 .grain{position:fixed;inset:0;z-index:50;opacity:.04;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .head{text-align:center;max-width:640px;margin:0 auto}
@@ -33,8 +31,7 @@ body{background:#08060f;color:#f3f1f7;font-family:system-ui,-apple-system,"Segoe
 .toggle button{background:transparent;border:none;color:#a29fb3;padding:8px 18px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit}
 .toggle button.on{background:linear-gradient(135deg,#fbbf24,#f472b6);color:#1a1024}
 .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:44px auto 0;align-items:center}
-.card{background:#0f0b1a;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px 24px;transition:transform .3s}
-.card:hover{transform:translateY(-6px)}
+.card{background:#0f0b1a;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:28px 24px}
 .pop-wrap{padding:1.5px;border-radius:22px;background:conic-gradient(from 140deg,#fbbf24,#f472b6,#a78bfa,#fbbf24);
   box-shadow:0 0 44px rgba(244,114,182,.28)}
 .pop{position:relative;border-radius:20.5px;transform:scale(1.05)}
@@ -81,6 +78,7 @@ li.off{color:#6b6880}li.off .ck{color:#6b6880}
     <a class="cta" href="#">Contact sales</a></div>
 </div>
 <script>
+var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 var m=document.getElementById('m'),y=document.getElementById('y');
 function set(annual){
   m.classList.toggle('on',!annual);y.classList.toggle('on',annual);
@@ -90,6 +88,29 @@ function set(annual){
   });
 }
 m.onclick=function(){set(false)};y.onclick=function(){set(true)};
+// staggered entrance + 3D tilt + cursor glow
+var cards=[].slice.call(document.querySelectorAll('.card'));
+var popScale=matchMedia("(max-width:820px)").matches?1:1.05;
+cards.forEach(function(card,i){
+  var isPop=card.classList.contains('pop');
+  var baseScale=isPop?popScale:1;
+  if(RM){card.style.opacity='1';card.style.transform=isPop&&popScale>1?'scale(1.05)':'none';return;}
+  setTimeout(function(){
+    card.style.opacity='1';
+    card.style.transform=isPop&&baseScale>1?'translateY(0) scale(1.05)':'translateY(0)';
+  },i*90+60);
+  card.addEventListener('mousemove',function(e){
+    var r=card.getBoundingClientRect();
+    var px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+    card.style.setProperty('--mx',(px*100)+'%');
+    card.style.setProperty('--my',(py*100)+'%');
+    var rx=(0.5-py)*14,ry=(px-0.5)*14;
+    card.style.transform='perspective(900px) translateX(0) translateY(-4px) rotateX('+rx+'deg) rotateY('+ry+'deg) scale('+baseScale+')';
+  });
+  card.addEventListener('mouseleave',function(){
+    card.style.transform=isPop?'translateY(0) scale(1.05)':'translateY(0)';
+  });
+});
 // 2.5D: cursor glow + mesh parallax + grain
 var cglow=document.getElementById('cglow'),bgmesh=document.getElementById('bgmesh');
 document.addEventListener('mousemove',function(e){

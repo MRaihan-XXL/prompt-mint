@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Glass SaaS — DepthGlow free preview</title>
 <style>
@@ -58,8 +57,13 @@ h1 .grad{background:linear-gradient(120deg,#60a5fa,#a78bfa);-webkit-background-c
 .logos span{font-weight:700;font-size:16px;color:#9090a8;opacity:.55;transition:opacity .3s,color .3s;cursor:default}
 .logos span:hover{opacity:1;color:#c7d2fe}
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:56px 0}
-.card{padding:26px;transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .3s,box-shadow .3s;will-change:transform}
-.card:hover{transform:translateY(-8px);border-color:rgba(255,255,255,.3);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.card{padding:26px;position:relative;overflow:hidden;opacity:0;transform:translateY(20px);
+  transition:transform .35s cubic-bezier(.16,1,.3,1),border-color .3s,box-shadow .3s,opacity .7s cubic-bezier(.16,1,.3,1);will-change:transform}
+.card::after{content:'';position:absolute;inset:-40%;pointer-events:none;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.09) 50%,transparent 60%);
+  background-size:250% 250%;animation:sheen 3s ease-in-out infinite}
+@keyframes sheen{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.card:hover{border-color:rgba(255,255,255,.3);box-shadow:0 20px 50px rgba(0,0,0,.4)}
 .card .ic{width:42px;height:42px;border-radius:12px;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;
   box-shadow:inset 0 0 0 1px rgba(139,92,246,.35)}
 .card h3{font-size:18px;margin-bottom:8px}
@@ -101,12 +105,33 @@ h1 .grad{background:linear-gradient(120deg,#60a5fa,#a78bfa);-webkit-background-c
 </div>
 <script>
 (function(){
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
   var b1=document.getElementById('bl1'),b2=document.getElementById('bl2');
+  var tb1x=0,tb1y=0,tb2x=0,tb2y=0,cb1x=0,cb1y=0,cb2x=0,cb2y=0;
   document.addEventListener('mousemove',function(e){
     var x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
-    b1.style.marginLeft=(x*-34)+'px';b1.style.marginTop=(y*-24)+'px';
-    b2.style.marginLeft=(x*28)+'px';b2.style.marginTop=(y*20)+'px';
+    tb1x=x*-34;tb1y=y*-24;tb2x=x*28;tb2y=y*20;
   },{passive:true});
+  if(!RM)(function loop(){
+    cb1x+=(tb1x-cb1x)*0.05;cb1y+=(tb1y-cb1y)*0.05;
+    cb2x+=(tb2x-cb2x)*0.05;cb2y+=(tb2y-cb2y)*0.05;
+    b1.style.marginLeft=cb1x+'px';b1.style.marginTop=cb1y+'px';
+    b2.style.marginLeft=cb2x+'px';b2.style.marginTop=cb2y+'px';
+    requestAnimationFrame(loop);
+  })();
+  // staggered entrance + 3D tilt on feature cards (max 5deg)
+  var fcards=[].slice.call(document.querySelectorAll('.card'));
+  fcards.forEach(function(card,i){
+    if(RM){card.style.opacity='1';card.style.transform='none';return;}
+    setTimeout(function(){card.style.opacity='1';card.style.transform='none';},i*90+60);
+    card.addEventListener('mousemove',function(e){
+      var r=card.getBoundingClientRect();
+      var px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+      var rx=(0.5-py)*10,ry=(px-0.5)*10;
+      card.style.transform='perspective(900px) translateY(-8px) rotateX('+rx+'deg) rotateY('+ry+'deg)';
+    });
+    card.addEventListener('mouseleave',function(){card.style.transform='none';});
+  });
   // count-up stats
   var done=false;
   function countUp(){

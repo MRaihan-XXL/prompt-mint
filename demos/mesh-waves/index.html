@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mesh Waves — DepthGlow preview</title>
 <style>
@@ -18,8 +17,11 @@ canvas{display:block}
 <body>
 <div class="tag">DEPTHGLOW · MESH WAVES</div>
 <div class="hint">Move your pointer across the mesh</div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
 (function(){
   var W=window.innerWidth,H=window.innerHeight;
   var scene=new THREE.Scene();
@@ -48,20 +50,38 @@ canvas{display:block}
   var pts=new THREE.Points(geo,mat);
   scene.add(pts);
 
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
+
   var pointer={x:0,z:0,active:0};
   var ripple={x:0,z:0,amp:0};
+  var amp=RM?1:0,imp=0,it=0;
+  var tX=0,tZ=0,ttX=0,ttZ=0;
   window.addEventListener('pointermove',function(e){
     pointer.x=(e.clientX/W-0.5)*GX*SEP;
     pointer.z=-(e.clientY/H-0.5)*GY*SEP;
     pointer.active=1;
     ripple.x=pointer.x;ripple.z=pointer.z;ripple.amp=1;
+    ttX=Math.max(-0.08,Math.min(0.08,(e.clientY/H-0.5)*0.16));
+    ttZ=Math.max(-0.08,Math.min(0.08,-(e.clientX/W-0.5)*0.16));
+  });
+  window.addEventListener('pointerdown',function(e){
+    pointer.x=(e.clientX/W-0.5)*GX*SEP;
+    pointer.z=-(e.clientY/H-0.5)*GY*SEP;
+    ripple.x=pointer.x;ripple.z=pointer.z;
+    ripple.amp=Math.min(ripple.amp+0.6,1.6);
+    imp=Math.min(imp+0.6,1.2);
   });
 
   var clock=new THREE.Clock(),t=0;
   function animate(){
-    requestAnimationFrame(animate);
+    if(!RM)requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),0.05);t+=dt;
+    it+=dt;amp=easeOutCubic(Math.min(it/1.6,1));
+    if(imp>0)imp=Math.max(0,imp-dt);
     if(ripple.amp>0)ripple.amp=Math.max(0,ripple.amp-dt/1.5);
+    tX+=(ttX-tX)*0.05;tZ+=(ttZ-tZ)*0.05;
+    pts.rotation.x=tX;pts.rotation.z=tZ;
     var pos=geo.attributes.position.array;
     for(var j=0,k=0;j<count;j++,k+=3){
       var px=pos[k],pz=pos[k+2];
@@ -69,7 +89,7 @@ canvas{display:block}
       var dx=px-ripple.x,dz=pz-ripple.z;
       var d=Math.sqrt(dx*dx+dz*dz);
       var rip=Math.sin(d*1.6-t*7)*Math.exp(-d*0.35)*ripple.amp*0.9;
-      pos[k+1]=wave+rip;
+      pos[k+1]=wave*(amp+imp)+rip;
     }
     geo.attributes.position.needsUpdate=true;
     camera.position.x=Math.sin(t*0.15)*0.9;

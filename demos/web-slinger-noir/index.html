@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Web Slinger Noir — DepthGlow preview</title>
 <style>
@@ -67,6 +66,7 @@ p.sub{color:#94a3b8;font-size:clamp(.92rem,2vw,1.12rem);margin-top:14px;line-hei
 </div>
 <script>
 (function(){
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
   // layered skyline
   function build(el,n,color,hMin,hMax,winRate){
     for(var i=0;i<n;i++){
@@ -92,28 +92,55 @@ p.sub{color:#94a3b8;font-size:clamp(.92rem,2vw,1.12rem);margin-top:14px;line-hei
     var s=document.createElement('div');s.className='neon';s.textContent=nn[0];
     s.style.cssText+=';color:'+nn[1]+';left:'+nn[2]+';top:'+nn[3]+';font-size:'+nn[4]+';z-index:5';near.appendChild(s);
   });
-  // parallax
+  // parallax (lerped) + cursor-reactive web strand drift
   var L=[document.getElementById('l1'),document.getElementById('l2'),document.getElementById('l3'),document.getElementById('l4')];
   var depths=[8,18,32,52];
+  var swing=document.querySelector('.swing');
+  var tx=0,ty=0,cx=0,cy=0;
   document.addEventListener('mousemove',function(e){
-    var x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
-    L.forEach(function(el,i){el.style.transform='translate('+(x*-depths[i])+'px,'+(y*-depths[i]*.5)+'px)';});
+    tx=(e.clientX/innerWidth-.5);ty=(e.clientY/innerHeight-.5);
   },{passive:true});
+  // thwip pulse
+  var thwip=document.createElement('div');
+  thwip.style.cssText='position:fixed;width:120px;height:120px;border-radius:50%;pointer-events:none;z-index:10;'+
+    'border:2px solid rgba(244,63,94,.7);box-shadow:0 0 26px rgba(244,63,94,.5);opacity:0;transform:translate(-50%,-50%) scale(.2);left:-999px;top:-999px';
+  document.body.appendChild(thwip);
+  window.addEventListener('pointerdown',function(e){
+    if(RM)return;
+    thwip.style.left=e.clientX+'px';thwip.style.top=e.clientY+'px';
+    thwip.animate([{opacity:.9,transform:'translate(-50%,-50%) scale(.2)'},{opacity:0,transform:'translate(-50%,-50%) scale(1.6)'}],
+      {duration:350,easing:'cubic-bezier(.16,1,.3,1)'});
+  });
+  if(!RM)(function loop(){
+    cx+=(tx-cx)*0.06;cy+=(ty-cy)*0.06;
+    L.forEach(function(el,i){el.style.transform='translate('+(cx*-depths[i])+'px,'+(cy*-depths[i]*.5)+'px)';});
+    // web strand (SVG layer) drifts toward cursor, max 8px
+    if(swing)swing.style.marginLeft=(cx*16)+'px',swing.style.marginTop=(cy*12)+'px';
+    requestAnimationFrame(loop);
+  })();
   // rain canvas
-  var cv=document.getElementById('rain'),cx=cv.getContext('2d');
+  var cv=document.getElementById('rain'),cx2=cv.getContext('2d');
   function size(){cv.width=innerWidth;cv.height=innerHeight}
   size();addEventListener('resize',size);
   var drops=[];
   for(var i=0;i<70;i++)drops.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,v:9+Math.random()*7,l:12+Math.random()*10});
-  (function loop(){
-    cx.clearRect(0,0,cv.width,cv.height);
-    cx.strokeStyle='rgba(148,163,184,.4)';cx.lineWidth=1;
+  function drawRain(){
+    cx2.clearRect(0,0,cv.width,cv.height);
+    cx2.strokeStyle='rgba(148,163,184,.4)';cx2.lineWidth=1;
     drops.forEach(function(d){
-      cx.beginPath();cx.moveTo(d.x,d.y);cx.lineTo(d.x-2,d.y+d.l);cx.stroke();
+      cx2.beginPath();cx2.moveTo(d.x,d.y);cx2.lineTo(d.x-2,d.y+d.l);cx2.stroke();
+    });
+  }
+  if(RM){drawRain();}
+  else{(function loop(){
+    cx2.clearRect(0,0,cv.width,cv.height);
+    cx2.strokeStyle='rgba(148,163,184,.4)';cx2.lineWidth=1;
+    drops.forEach(function(d){
+      cx2.beginPath();cx2.moveTo(d.x,d.y);cx2.lineTo(d.x-2,d.y+d.l);cx2.stroke();
       d.y+=d.v;if(d.y>cv.height){d.y=-20;d.x=Math.random()*cv.width;}
     });
     requestAnimationFrame(loop);
-  })();
+  })();}
 })();
 </script>
 </body>

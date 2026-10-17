@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mecha Hangar — DepthGlow preview</title>
 <style>
@@ -15,30 +14,38 @@ canvas{display:block}
 .r{display:block;overflow:hidden}
 .r>*{display:inline-block;transform:translateY(110%);animation:up .8s cubic-bezier(.16,1,.3,1) forwards}
 @keyframes up{to{transform:translateY(0)}}
-h1{position:absolute;right:30px;top:26%;text-align:right;font-family:system-ui,sans-serif;
+.copy{position:absolute;right:30px;top:22%;display:flex;flex-direction:column;align-items:flex-end;gap:14px;text-align:right;max-width:min(520px,86vw)}
+h1{font-family:system-ui,sans-serif;
   font-size:clamp(1.6rem,4vw,3rem);letter-spacing:.04em;text-transform:uppercase;color:#f1f5f9;
-  text-shadow:0 0 30px rgba(244,63,94,.4);font-weight:900}
+  text-shadow:0 0 30px rgba(244,63,94,.4);font-weight:900;margin:0}
 h1 .hot{color:#f43f5e}
-p{position:absolute;right:30px;top:calc(26% + 5.4em);text-align:right;font-family:system-ui,sans-serif;
-  color:#7c869c;font-size:clamp(.8rem,1.6vw,1rem);max-width:380px;line-height:1.6}
-.tag{position:absolute;right:30px;top:calc(26% + 3.6em);font-family:system-ui,sans-serif;font-size:11px;
+p{font-family:system-ui,sans-serif;
+  color:#7c869c;font-size:clamp(.8rem,1.6vw,1rem);max-width:380px;line-height:1.6;margin:0}
+.tag{font-family:system-ui,sans-serif;font-size:11px;
   letter-spacing:.16em;color:#f43f5e;border:1px solid rgba(244,63,94,.4);padding:5px 12px;border-radius:999px;
   display:inline-block;background:rgba(5,6,12,.5);backdrop-filter:blur(6px);text-transform:uppercase}
-@media(max-width:600px){h1{top:16%;left:20px;right:20px;text-align:center}
-  .tag,p{left:20px;right:20px;text-align:center;top:auto}
-  .tag{top:12%}p{top:calc(16% + 9em);margin:0 auto}}
+@media(max-width:600px){.copy{top:12%;left:20px;right:20px;align-items:center;text-align:center}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important}}
 </style>
 </head>
 <body>
 <div class="ui">
 <div class="grain"></div>
+<div class="copy">
 <span class="r tag"><span>Max · three.js 3D</span></span>
 <h1><span class="r"><span>Mecha in the</span></span><br><span class="r"><span class="hot">hangar</span></span></h1>
 <p><span class="r"><span>Walk-around hangar — a hand-built mech with glowing joints and a turntable camera.</span></span></p>
 </div>
-<script src="../../js/vendor/three.min.js"></script>
-<script>
+</div>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 (function(){
   var W=innerWidth,H=innerHeight;
   var scene=new THREE.Scene();
@@ -48,10 +55,16 @@ p{position:absolute;right:30px;top:calc(26% + 5.4em);text-align:right;font-famil
   var renderer=new THREE.WebGLRenderer({antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(W,H);document.body.appendChild(renderer.domElement);
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
+  var composer=new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  var bloom=new UnrealBloomPass(new THREE.Vector2(W,H),0.55,0.6,0.55);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  var RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  scene.add(new THREE.AmbientLight(0x2a3040,0.7));
-  var key=new THREE.DirectionalLight(0xffffff,0.9);key.position.set(5,8,4);scene.add(key);
+  scene.add(new THREE.AmbientLight(0x2a3040,1.2));
+  var key=new THREE.DirectionalLight(0xffffff,1.5);key.position.set(5,8,4);scene.add(key);
   var red=new THREE.PointLight(0xf43f5e,2.4,24);red.position.set(0,1.4,2.5);scene.add(red);
   var fill=new THREE.PointLight(0x38bdf8,1.4,18);fill.position.set(-5,3,-3);scene.add(fill);
 
@@ -70,8 +83,8 @@ p{position:absolute;right:30px;top:calc(26% + 5.4em);text-align:right;font-famil
 
   // mecha (procedural boxes, joints glow)
   var mecha=new THREE.Group();
-  var armor=new THREE.MeshStandardMaterial({color:0x9aa3b5,roughness:.35,metalness:.6});
-  var armorD=new THREE.MeshStandardMaterial({color:0x4b5568,roughness:.4,metalness:.55});
+  var armor=new THREE.MeshStandardMaterial({color:0xb9c2d4,roughness:.35,metalness:.6});
+  var armorD=new THREE.MeshStandardMaterial({color:0x5f6b85,roughness:.4,metalness:.55});
   var joint=new THREE.MeshStandardMaterial({color:0xf43f5e,emissive:0xf43f5e,emissiveIntensity:1.6,roughness:.3});
   function box(w,h,d,x,y,z,m){var mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m||armor);mesh.position.set(x,y,z);return mesh;}
   // torso
@@ -110,23 +123,37 @@ p{position:absolute;right:30px;top:calc(26% + 5.4em);text-align:right;font-famil
   dustG.setAttribute('position',new THREE.BufferAttribute(dustP,3));
   scene.add(new THREE.Points(dustG,new THREE.PointsMaterial({color:0xf43f5e,size:.035,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false})));
 
-  // turntable camera + mouse tilt
-  var mx=0,my=0;
+  // turntable camera + smooth mouse tilt
+  var mx=0,my=0,smx=0,smy=0;
   document.addEventListener('mousemove',function(e){mx=(e.clientX/W-.5);my=(e.clientY/H-.5);},{passive:true});
-  var clock=new THREE.Clock(),t=0;
+  // click = power surge: rose <-> cyan energy swap
+  var surge=0,hot=false;
+  document.addEventListener('click',function(){
+    hot=!hot;surge=1;
+    var cHot=0xf43f5e,cCool=0x38bdf8,c=hot?cCool:cHot;
+    stripMat.color.setHex(c);joint.emissive.setHex(c);
+    red.color.setHex(c);red.position.x=hot?-2.5:0;fill.color.setHex(hot?cHot:cCool);
+  });
+  var clock=new THREE.Clock(),t=0,intro=0;
+  function easeOutCubic(x){return 1-Math.pow(1-x,3);}
   function animate(){
     requestAnimationFrame(animate);
     var dt=Math.min(clock.getDelta(),.05);t+=dt;
-    var ang=t*.28+mx*1.2;
-    camera.position.x=Math.sin(ang)*8.5;
-    camera.position.z=Math.cos(ang)*8.5;
-    camera.position.y=2.6+my*1.4+Math.sin(t*.4)*.25;
+    smx+=(mx-smx)*.06;smy+=(my-smy)*.06;
+    intro=Math.min(intro+dt/1.8,1);
+    var radius=13+(8.5-13)*easeOutCubic(intro);
+    var ang=t*.28+smx*1.2;
+    camera.position.x=Math.sin(ang)*radius;
+    camera.position.z=Math.cos(ang)*radius;
+    camera.position.y=2.6+smy*1.4+Math.sin(t*.4)*.25;
     camera.lookAt(0,2.6,0);
-    red.intensity=2.2+Math.sin(t*3)*.5;
-    renderer.render(scene,camera);
+    surge=Math.max(surge-dt*1.4,0);
+    red.intensity=(2.2+Math.sin(t*(hot?5:3))*.5)+surge*2.2;
+    bloom.strength=0.55+surge*0.45;
+    composer.render();
   }
-  animate();
-  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);});
+  if(RM){composer.render();}else{animate();}
+  addEventListener('resize',function(){W=innerWidth;H=innerHeight;camera.aspect=W/H;camera.updateProjectionMatrix();renderer.setSize(W,H);composer.setSize(W,H);});
 })();
 </script>
 </body>
