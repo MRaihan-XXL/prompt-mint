@@ -18,6 +18,7 @@
 <meta name="theme-color" content="#07070b">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="js/kit/kit.css">
 <script type="application/ld+json">
 {
   "@context":"https://schema.org",
@@ -58,7 +59,7 @@
     <div class="hero-bg"></div>
     <div class="wrap">
       <p class="eyebrow">Fresh drops every week</p>
-      <h1>Cinematic AI sites, <em>made to glow</em>.</h1>
+      <h1>Cinematic AI sites, <em>made to glow.</em></h1>
       <p class="sub">Copy a prompt, paste it into your AI, and launch a site that doesn't look AI-made. Original 2D and real-time 3D scene prompts for Claude, Cursor, v0, Bolt and more.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="#library">Browse the library</a>
@@ -69,20 +70,29 @@
   </section>
 
   <section class="wrap" id="library">
-    <div class="section-head">
+    <div class="section-head" data-idx="01 /" data-reveal>
       <h2>The library</h2>
       <p>Every prompt ships with a live preview rendered right here. Free prompts copy instantly; Pro and Max unlock with a subscription.</p>
     </div>
     <div class="filters" id="chips"></div>
-    <div class="grid" id="grid"></div>
+    <div class="grid" id="grid" data-reveal></div>
+  </section>
+
+  <section class="how wrap" id="how">
+    <div class="section-head" data-idx="02 /" data-reveal><h2>How it works</h2><p>Three steps from idea to a live, good-looking site.</p></div>
+    <div class="how-grid" data-reveal>
+      <div class="step"><div class="n">1</div><h4>Find it</h4><p>Browse the library by category — Hero, SaaS, Portfolio, 3D and more. Every prompt has a live preview.</p></div>
+      <div class="step"><div class="n">2</div><h4>Copy it</h4><p>Hit copy on any free prompt, or unlock Pro/Max for the full vault including real-time 3D scenes.</p></div>
+      <div class="step"><div class="n">3</div><h4>Paste &amp; ship</h4><p>Paste into Claude, Cursor, v0 or Bolt. Swap in your own brand, copy and colors. Ship it.</p></div>
+    </div>
   </section>
 
   <section class="pricing wrap" id="pricing">
-    <div class="section-head">
+    <div class="section-head" data-idx="03 /" data-reveal>
       <h2>Simple pricing</h2>
       <p>Start free. Upgrade when you want the full vault — including every real-time 3D scene prompt.</p>
     </div>
-    <div class="plans">
+    <div class="plans" data-reveal>
       <div class="plan">
         <h3>Free</h3>
         <div class="price">$0<span>/mo</span></div>
@@ -129,17 +139,8 @@
     <p class="hero-note">Payments are processed securely by PayPal. <a href="https://www.paypal.com/myaccount/autopay/" target="_blank" rel="noopener">Manage or cancel anytime in PayPal.</a></p>
   </section>
 
-  <section class="how wrap" id="how">
-    <div class="section-head"><h2>How it works</h2><p>Three steps from idea to a live, good-looking site.</p></div>
-    <div class="how-grid">
-      <div class="step"><div class="n">1</div><h4>Find it</h4><p>Browse the library by category — Hero, SaaS, Portfolio, 3D and more. Every prompt has a live preview.</p></div>
-      <div class="step"><div class="n">2</div><h4>Copy it</h4><p>Hit copy on any free prompt, or unlock Pro/Max for the full vault including real-time 3D scenes.</p></div>
-      <div class="step"><div class="n">3</div><h4>Paste &amp; ship</h4><p>Paste into Claude, Cursor, v0 or Bolt. Swap in your own brand, copy and colors. Ship it.</p></div>
-    </div>
-  </section>
-
   <section class="wrap faq" id="faq">
-    <div class="section-head"><h2>FAQ</h2><p>Everything you need to know before subscribing.</p></div>
+    <div class="section-head" data-idx="04 /" data-reveal><h2>FAQ</h2><p>Everything you need to know before subscribing.</p></div>
     <details class="faq-item"><summary>What is DepthGlow?</summary><p>DepthGlow is a library of copy-paste prompts that make AI tools (Claude, Cursor, v0, Bolt, Lovable) generate cinematic 2D and real-time 3D hero sections, landing pages and full sites — without the generic AI look.</p></details>
     <details class="faq-item"><summary>Which AI tools do these prompts work with?</summary><p>Any text-to-site or text-to-code AI that accepts a long-form prompt. Tested with Claude, Cursor, v0, Bolt, Lovable and GPT-4o. The prompts are tool-agnostic — paste wherever you work.</p></details>
     <details class="faq-item"><summary>Can I use the prompts for client or commercial projects?</summary><p>Yes. Every paid plan (Pro and Max) includes a commercial license. You can use the generated sites for your own products, client work, or anything you sell. Free prompts are for personal / evaluation use only.</p></details>
@@ -173,7 +174,7 @@
       <h3 id="mTitle"></h3>
       <button class="modal-close" id="mClose" aria-label="Close">✕</button>
     </div>
-    <div class="preview"><iframe id="mFrame" title="Template preview" loading="lazy" sandbox="allow-scripts"></iframe></div>
+    <div class="preview"><iframe id="mFrame" title="Template preview" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe></div>
     <div class="prompt-peek" id="mPeek"></div>
     <div class="modal-foot">
       <p class="blurb" id="mBlurb"></p>
@@ -190,5 +191,6 @@
 </script>
 <script type="module" src="js/hero3d.js"></script>
 <script src="js/app.js" defer></script>
+<script src="js/kit/motion.js" defer></script>
 </body>
 </html>
