@@ -1,146 +1,499 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>PulseOps — live observability for modern stacks</title>
-<meta name="description" content="PulseOps — a template for SaaS, DevOps and infrastructure brands: a live streaming dashboard hero, honest numbers, and one clear call to action.">
-<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PulseOps — See every signal. Fix it before users notice.</title>
+<meta name="description" content="PulseOps is observability for metrics, traces and logs. The hero is a live dashboard: 8 streaming lanes, honest numbers, one clear action.">
+<link rel="stylesheet" href="../../js/kit/kit.css">
 <style>
-*{box-sizing:border-box;margin:0}
-html,body{background:#070b14;color:#e6edf7;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%}
-canvas#dash{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.9}
-.ui{--acc:#4cc9f0;--acc-ink:#031018;position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;pointer-events:none}
-.ui a,.ui button{pointer-events:auto}
-.nav{display:flex;align-items:center;gap:12px;padding:16px 22px}
-.brand{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
-.brand i{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc)}
-.navr{margin-left:auto;display:flex;gap:10px;align-items:center}
-.btn{border:0;border-radius:9px;padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
-.btn.primary{background:var(--acc);color:var(--acc-ink)}
-.btn.ghost{background:rgba(10,12,18,.4);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
-.hero{padding:48px 22px 0;max-width:720px}
-.eyebrow{margin:0 0 14px;font-size:10.5px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
-h1{margin:0 0 16px;font-size:clamp(32px,5vw,58px);line-height:1.04;font-weight:850;letter-spacing:-.015em}
+/* ---- fonts (vendored, zero CDN) ---- */
+@font-face{font-family:"Clash Display";font-weight:600;font-display:swap;src:url(../../fonts/ClashDisplay-600.woff2) format("woff2")}
+@font-face{font-family:"Clash Display";font-weight:700;font-display:swap;src:url(../../fonts/ClashDisplay-700.woff2) format("woff2")}
+@font-face{font-family:"Satoshi";font-weight:400;font-display:swap;src:url(../../fonts/Satoshi-400.woff2) format("woff2")}
+@font-face{font-family:"Satoshi";font-weight:500;font-display:swap;src:url(../../fonts/Satoshi-500.woff2) format("woff2")}
+@font-face{font-family:"Satoshi";font-weight:700;font-display:swap;src:url(../../fonts/Satoshi-700.woff2) format("woff2")}
+
+/* ---- tokens (GLOBAL scope: --acc must resolve everywhere) ---- */
+:root{
+  --bg:#070b14;--acc:#4cc9f0;--acc-ink:#031018;--amb:#ffb347;
+  --ink:#e8f1f7;--mut:#9bb0c0;--line:rgba(76,201,240,.2);
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --display:"Clash Display","Satoshi",system-ui,sans-serif;
+  --pad:clamp(16px,4vw,56px);
+}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:auto}
+html.lenis,html.lenis body{height:auto}
+html.noscroll{overflow:hidden}
+body{margin:0;font:400 var(--step-0)/1.6 "Satoshi",system-ui,sans-serif;color:var(--ink);background:transparent;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;display:block;pointer-events:none}
+.nogl #bg{display:none}
+.nogl body{background:radial-gradient(900px 500px at 70% 10%,rgba(76,201,240,.16),transparent 70%),linear-gradient(180deg,#0a1222,#070b14)}
+#fallback{display:none;position:fixed;left:var(--pad);bottom:16px;z-index:5;font:500 .75rem var(--mono);color:var(--mut)}
+.nogl #fallback{display:block}
+.mono{font-family:var(--mono)}
+
+/* ---- nav ---- */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--pad);background:linear-gradient(180deg,rgba(7,11,20,.92),rgba(7,11,20,0));backdrop-filter:blur(6px)}
+.brand{display:flex;align-items:center;gap:10px;font:700 1.05rem var(--display);letter-spacing:.16em;color:var(--ink);text-decoration:none}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 rgba(76,201,240,.6);animation:ping 2s var(--ease-out) infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(76,201,240,.55)}80%,100%{box-shadow:0 0 0 12px rgba(76,201,240,0)}}
+.links{display:flex;gap:clamp(18px,3vw,36px)}
+.links a{position:relative;padding:6px 0;font:500 var(--step--1) var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-decoration:none;transition:color .25s}
+.links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--acc);transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease-out)}
+.links a:hover,.links a:focus-visible{color:var(--ink)}
+.links a:hover::after,.links a:focus-visible::after{transform:scaleX(1)}
+
+/* ---- button treatments (one per placement) ---- */
+/* nav: terminal [ bracket caps ], fills cyan on hover */
+.btn.brk{border-radius:0;padding:10px 14px;background:transparent;color:var(--acc);box-shadow:none;font:700 .78rem var(--mono);letter-spacing:.14em;text-transform:uppercase;gap:.7em}
+.btn.brk .b{display:inline-block;transition:transform .3s var(--ease-out)}
+.btn.brk:hover{background:var(--acc);color:var(--acc-ink)}
+.btn.brk:hover .b:first-child{transform:translateX(-3px)}
+.btn.brk:hover .b:last-child{transform:translateX(3px)}
+/* hero: notched solid slab with terminal prompt + caret */
+.btn.primary.notch{border-radius:0;padding:17px 28px;font:700 .9rem var(--mono);letter-spacing:.1em;text-transform:uppercase;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);box-shadow:none}
+.btn.primary.notch .pr{opacity:.6}
+.btn.primary.notch .caret{animation:blink 1s steps(1) infinite}
+.btn.primary.notch:hover{filter:brightness(1.12)}
+.btn.primary.notch:hover .caret{animation-duration:.4s}
+@keyframes blink{50%{opacity:0}}
+/* band: pill with inner glow + trailing arrow chip */
+.btn.primary.pill{border-radius:999px;padding:12px 12px 12px 30px;font:700 1rem "Satoshi",sans-serif;letter-spacing:.01em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),inset 0 -10px 20px rgba(3,16,24,.22),0 12px 44px -10px var(--acc)}
+.btn.primary.pill .chip-arrow{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--acc-ink);color:var(--acc);transition:transform .4s var(--spring)}
+.btn.primary.pill:hover .chip-arrow{transform:translateX(4px) rotate(-45deg)}
+/* secondary: underline-with-arrow text link */
+.lnk{display:inline-flex;align-items:center;gap:.6em;padding:6px 0;font:500 var(--step-0) "Satoshi",sans-serif;color:var(--ink);text-decoration:none;background:linear-gradient(var(--acc),var(--acc)) 0 100%/100% 1px no-repeat;transition:background-size .4s var(--ease-out),color .25s}
+.lnk svg{transition:transform .35s var(--ease-out)}
+.lnk:hover{background-size:0 1px;background-position:100% 100%;color:var(--acc)}
+.lnk:hover svg{transform:translateY(3px)}
+.lnk:focus-visible{outline:2px solid var(--acc);outline-offset:4px}
+.btn svg,.lnk svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- hero ---- */
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-start;padding:calc(64px + 14vh) var(--pad) 12vh}
+.hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(270deg,rgba(7,11,20,.9) 0,rgba(7,11,20,.78) 36%,rgba(7,11,20,0) 78%)}
+.hero-in{position:relative;z-index:1;margin-left:auto;width:min(660px,100%);text-align:right}
+.chip{display:inline-flex;align-items:center;gap:10px;padding:6px 12px;border:1px solid var(--line);background:rgba(7,11,20,.6);font:500 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.chip i{width:6px;height:6px;border-radius:50%;background:var(--acc);animation:blink 1.4s steps(1) infinite}
+.eyebrow{display:block;margin:22px 0 18px;font:500 var(--step--1) var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+h1{font:700 var(--step-4)/1.02 var(--display);letter-spacing:-.02em;text-wrap:balance}
 h1 em{font-style:normal;color:var(--acc)}
-.sub{margin:0 0 22px;font-size:15px;line-height:1.6;opacity:.85;max-width:480px}
-.btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px}
-.feats{display:flex;gap:10px;flex-wrap:wrap;margin:0 22px 28px}
-.f{background:rgba(8,10,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px);flex:1;min-width:160px}
-.f b{display:block;font-size:12.5px;letter-spacing:.03em}
-.f span{display:block;margin-top:4px;font-size:11px;line-height:1.45;opacity:.62}
-.foot{margin-top:auto;padding:14px 22px;display:flex;justify-content:space-between;gap:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55}
-.panel{position:fixed;right:22px;top:64px;width:min(320px,86vw);background:rgba(8,10,15,.8);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:18px;backdrop-filter:blur(12px);z-index:10;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.panel h2{margin:0 0 8px;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
-.panel p{margin:0 0 10px;font-size:12px;line-height:1.6;opacity:.8}
-.panel .pbtns{display:flex;gap:8px;margin-top:12px}
-.panel .x{position:absolute;top:10px;right:12px;background:none;border:0;color:#fff;opacity:.6;font-size:16px;cursor:pointer;font-family:inherit}
-@media (max-width:700px){.feats .f:nth-child(n+3){display:none}.foot span:last-child{display:none}}
-@media (max-width:700px){.nav{padding:14px 16px;gap:8px}.brand{font-size:11px;letter-spacing:.08em;white-space:nowrap}.btn{padding:9px 11px;font-size:11.5px;white-space:nowrap}}
+.sub{margin-top:24px;font-size:var(--step-1);line-height:1.5;color:#c4d4e0;max-width:46ch;margin-left:auto}
+.sub b{color:var(--ink);font-weight:700;font-family:var(--mono);font-size:.92em}
+.actions{display:flex;flex-wrap:wrap;gap:22px 30px;align-items:center;justify-content:flex-end;margin-top:36px}
+.par1{translate:calc(var(--px,0)*-8px) calc(var(--py,0)*-5px);transition:translate .6s var(--ease-out)}
+.par2{translate:calc(var(--px,0)*-16px) calc(var(--py,0)*-9px);transition:translate .6s var(--ease-out)}
+
+/* ---- sections ---- */
+.sec{position:relative;padding:clamp(72px,12vw,140px) var(--pad);background:linear-gradient(180deg,rgba(7,11,20,.8),rgba(7,11,20,.9))}
+.wrap{max-width:1180px;margin:0 auto}
+.kick{display:block;margin-bottom:14px;font:500 var(--step--1) var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+h2{font:700 var(--step-3)/1.08 var(--display);letter-spacing:-.015em;max-width:20ch;text-wrap:balance}
+.lead{margin-top:16px;max-width:52ch;color:var(--mut);font-size:var(--step-1);line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,24px);margin-top:clamp(36px,5vw,64px)}
+.card{position:relative;padding:clamp(22px,2.4vw,32px);background:rgba(9,14,26,.8);border:1px solid var(--line);backdrop-filter:blur(10px);overflow:hidden}
+.card[data-reveal]{transition:opacity .7s var(--ease-out),transform .7s var(--ease-out),border-color .3s}
+.card:nth-child(2){transition-delay:.1s,.1s,0s}
+.card:nth-child(3){transition-delay:.2s,.2s,0s}
+.card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(320px 220px at var(--cx,50%) var(--cy,0%),rgba(76,201,240,.16),transparent 70%)}
+.card::after{content:"";position:absolute;top:-1px;left:-1px;width:16px;height:16px;border-top:2px solid var(--acc);border-left:2px solid var(--acc)}
+.card:hover{border-color:rgba(76,201,240,.5)}
+.card:hover::before{opacity:1}
+.card>*{position:relative}
+.card .k{display:block;font:500 .75rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.num{margin:26px 0 4px;font:700 var(--step-4)/1 var(--display);letter-spacing:-.03em}
+.num small{font:500 var(--step--1) var(--mono);letter-spacing:.04em;color:var(--acc);margin-left:.5ch}
+.card p{margin-top:14px;color:var(--mut);font-size:var(--step-0);line-height:1.55}
+.steps{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,3vw,48px);margin-top:clamp(36px,5vw,64px);padding-top:34px}
+.track{position:absolute;left:0;right:0;top:0;height:1px;background:var(--line)}
+.track i{display:block;height:100%;background:var(--acc);transform-origin:left;box-shadow:0 0 12px var(--acc)}
+.step .idx{font:700 var(--step-2) var(--mono);color:var(--acc);letter-spacing:.04em}
+.step h3{margin-top:10px;font:600 var(--step-2)/1.1 var(--display)}
+.step p{margin-top:10px;color:var(--mut)}
+.step code{display:block;margin-top:14px;padding:10px 12px;border-left:2px solid var(--acc);background:rgba(76,201,240,.06);font:400 .8rem var(--mono);color:#bfe9f7;overflow-wrap:anywhere}
+.band{text-align:center}
+.band h2{margin:0 auto;max-width:18ch}
+.band .lead{margin-left:auto;margin-right:auto}
+.band .btn{margin-top:34px}
+.fine{display:block;margin-top:22px;font:400 .78rem var(--mono);color:var(--mut)}
+footer{display:flex;flex-wrap:wrap;gap:14px 32px;align-items:center;justify-content:space-between;padding:28px var(--pad);border-top:1px solid var(--line);background:rgba(7,11,20,.94);font:400 .8rem var(--mono);color:var(--mut)}
+
+/* ---- brief panel ---- */
+#briefScrim{position:fixed;inset:0;z-index:90;background:rgba(3,6,12,.6);opacity:0;pointer-events:none;transition:opacity .35s}
+#briefScrim.open{opacity:1;pointer-events:auto}
+#brief{position:fixed;top:0;right:0;bottom:0;z-index:100;width:min(440px,100%);padding:28px;overflow:auto;background:#0a111f;border-left:1px solid var(--line);transform:translateX(102%);transition:transform .5s var(--ease-out),visibility 0s .5s;visibility:hidden}
+#brief.open{transform:none;visibility:visible;transition:transform .5s var(--ease-out)}
+#brief h2{font-size:var(--step-2);max-width:none}
+#brief p,#brief li{color:var(--mut);font-size:var(--step--1);line-height:1.6}
+#brief p{margin-top:12px}
+#brief ul{margin:14px 0 0;padding-left:18px;display:grid;gap:6px}
+#brief li b{color:var(--ink);font-family:var(--mono);font-weight:500}
+#briefClose{position:absolute;top:16px;right:16px;width:40px;height:40px;padding:0;justify-content:center;border-radius:0;background:transparent;border:1px solid var(--line);color:var(--ink)}
+#briefClose:hover{border-color:var(--acc);color:var(--acc)}
+
+/* ---- responsive ---- */
+@media (max-width:860px){
+  .grid,.steps{grid-template-columns:1fr}
+  .links{display:none}
+}
+@media (max-width:760px){
+  .hero{padding-top:calc(64px + 10vh)}
+  .hero::before{background:linear-gradient(180deg,rgba(7,11,20,.88) 0,rgba(7,11,20,.8) 70%,rgba(7,11,20,.5) 100%)}
+  .hero-in{margin-left:0;text-align:left}
+  .sub{margin-left:0}
+  .actions{justify-content:flex-start}
+  .btn.primary.notch{padding:15px 22px}
+}
+@media (prefers-reduced-motion:reduce){
+  .par1,.par2{translate:none;transition:none}
+  .dot,.chip i,.btn.primary.notch .caret{animation:none}
+  *{scroll-behavior:auto!important}
+}
 </style>
-  <link rel="stylesheet" href="../../js/kit/kit.css">
 </head>
 <body>
-<canvas id="dash" role="img" aria-label="Live streaming observability dashboard background: moving sparklines, metrics and status dots"></canvas>
-<div class="ui">
-  <div class="nav">
-    <a class="brand" href="#"><i></i>PulseOps</a>
-    <div class="navr">
-      <button class="btn ghost" type="button" data-brief>The brief</button>
-      <button class="btn primary" type="button" data-brief>Get a demo</button>
-    </div>
-  </div>
-  <div class="hero">
-    <p class="eyebrow">Observability · Metrics · Traces · Logs</p>
-    <h1>See every signal.<br><em>Fix it before users notice.</em></h1>
-    <p class="sub">PulseOps streams metrics, traces and logs into one live dashboard — so your team spots the regression in seconds, not after the Slack thread starts.</p>
-    <div class="btns">
-      <button class="btn primary" type="button" data-brief>Get a demo</button>
-      <button class="btn ghost" type="button" data-brief>Read the brief</button>
-    </div>
-  </div>
-  <div class="feats">
-    <div class="f"><b>1.2M events/sec</b><span>Ingest without sampling loss</span></div>
-    <div class="f"><b>&lt;400ms p99 query</b><span>Across a 30-day window</span></div>
-    <div class="f"><b>One-line agent</b><span>Drop-in, auto-discovers services</span></div>
-    <div class="f"><b>Alert routing</b><span>PagerDuty, Slack, webhooks</span></div>
-  </div>
-  <aside class="panel" id="brief" hidden aria-label="About this template">
-    <button class="x" id="briefClose" type="button" aria-label="Close">×</button>
-    <h2>The brief</h2>
-    <p>A template for SaaS, DevOps and infrastructure brands: a live streaming dashboard as the hero, honest numbers as proof, and one obvious next step — request a demo.</p>
-    <p>The background canvas draws real moving sparklines and status pulses; swap the copy for your own and the proof stays alive.</p>
-    <div class="pbtns"><button class="btn primary" type="button" data-copy="hello@pulseops.dev">Copy email</button></div>
-  </aside>
-  <div class="foot"><span>Live streaming demo background · no data collected</span><span>PulseOps — a DepthGlow template</span></div>
-</div>
-<script>
-(function(){var p=document.getElementById('brief');document.querySelectorAll('[data-brief]').forEach(function(b){b.addEventListener('click',function(){p.hidden=!p.hidden;});});document.getElementById('briefClose').addEventListener('click',function(){p.hidden=true;});
-document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){var t=b.getAttribute('data-copy'),o=b.textContent;
-function ok(){b.textContent='Copied ✓';setTimeout(function(){b.textContent=o;},1400);}
-function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}ta.remove();}
-if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb);}else fb();});});})();
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="fallback">Live dashboard needs Canvas 2D — showing a static poster.</div>
 
-// ---- live dashboard background (canvas 2D, no deps) ----
-(function(){
-  var c=document.getElementById('dash'),x=c.getContext('2d'),W,H,t=0;
-  var series=[],cards=[];
-  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;build();}
-  var pool=[
-    {l:'p99 latency',v:'382ms',d:'-12%',ok:true,up:true},
-    {l:'error rate',v:'0.03%',d:'-0.4%',ok:true,up:true},
-    {l:'ingest',v:'1.2M/s',d:'+8%',ok:true,up:true},
-    {l:'uptime',v:'99.98%',d:'+0.01',ok:true,up:true},
-    {l:'queue depth',v:'14',d:'+3',ok:false,up:false},
-    {l:'cpu sat.',v:'61%',d:'-4%',ok:true,up:true}
-  ];
-  function build(){
-    series=[];var n=6;
-    for(var i=0;i<n;i++){var pts=[],v=Math.random();for(var j=0;j<80;j++){v+=(0.5-v)*.05+(Math.random()-.5)*.16;pts.push(v);}series.push({pts:pts,acc:.14+Math.random()*.1,sp:.002+Math.random()*.004});}
-    cards=[];var narrow=W<700;
-    var cols=narrow?[.055,.53]:[.555,.785],rows=narrow?[.60,.75]:[.10,.255,.41];
-    var cw=narrow?.41:.2,ch=narrow?.13:.135;
-    var order=narrow?[0,1,4,5]:[0,1,2,3,4,5];
-    for(var k=0;k<order.length;k++){var p=pool[order[k]];cards.push({x:cols[k%2],y:rows[(k/2)|0],w:cw,h:ch,ph:k*1.1,ok:p.ok,up:p.up,l:p.l,v:p.v,d:p.d});}
-  }
-  function draw(){
-    t+=.016;x.clearRect(0,0,W,H);
-    // deep gradient base
-    var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0f1c');g.addColorStop(1,'#05070d');x.fillStyle=g;x.fillRect(0,0,W,H);
-    // faint grid
-    x.strokeStyle='rgba(76,201,240,.05)';x.lineWidth=1;
-    for(var gx=0;gx<W;gx+=48){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke();}
-    for(var gy=0;gy<H;gy+=48){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
-    // metric cards (right column)
-    for(var i=0;i<cards.length;i++){var c1=cards[i];var cx=c1.x*W,cy=c1.y*H,cw=c1.w*W,ch=c1.h*H;
-      var pulse=.5+.5*Math.sin(t*2+c1.ph);
-      x.fillStyle='rgba(13,19,33,.72)';roundRect(cx,cy,cw,ch,10);x.fill();
-      x.strokeStyle=c1.ok?'rgba(76,201,240,'+(.18+.28*pulse)+')':'rgba(255,90,90,.4)';x.lineWidth=1.5;x.stroke();
-      x.fillStyle=c1.ok?'rgba(76,201,240,.9)':'rgba(255,90,90,.9)';x.beginPath();x.arc(cx+11,cy+13,3,0,6.28);x.fill();
-      x.font='700 10px ui-sans-serif,system-ui,sans-serif';x.fillStyle='rgba(230,237,247,.6)';x.fillText(c1.l.toUpperCase(),cx+21,cy+17);
-      x.font='800 22px ui-sans-serif,system-ui,sans-serif';x.fillStyle=c1.ok?'rgba(230,237,247,.94)':'rgba(255,150,150,.94)';x.fillText(c1.v,cx+11,cy+ch-24);
-      x.font='700 10px ui-sans-serif,system-ui,sans-serif';x.fillStyle=c1.up?'rgba(76,240,180,.85)':'rgba(255,140,140,.85)';
-      x.fillText(c1.d+' 24h',cx+11,cy+ch-9);
-      // mini bar row under the label
-      x.fillStyle='rgba(230,237,247,.16)';for(var bi=0;bi<14;bi++){var bh=3+((i*7+bi*13)%9);x.fillRect(cx+11+bi*((cw-24)/14),cy+30,4,bh*.9);}
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="#top"><span class="dot"></span>PULSEOPS</a>
+  <div class="links">
+    <a href="#platform">Platform</a>
+    <a href="#cta">Pricing</a>
+    <a href="#how">Docs</a>
+  </div>
+  <button class="btn brk" type="button" data-brief><span class="b" aria-hidden="true">[</span>Get a demo<span class="b" aria-hidden="true">]</span></button>
+</nav>
+
+<main id="top">
+  <header class="hero">
+    <div class="hero-in">
+      <span class="chip fade par1"><i></i>Simulated stream · 8 lanes · 10 Hz</span>
+      <span class="eyebrow fade">Observability · Metrics · Traces · Logs</span>
+      <h1 id="h1" class="par2">See every signal. Fix it before users notice.</h1>
+      <p class="sub fade par1">Ingest <b>1.2M events/sec</b>, query at <b>&lt;400ms p99</b>, and install with one line. The dashboard behind this page is live, and its numbers are real readouts of the stream you see.</p>
+      <div class="actions fade">
+        <button class="btn primary notch" type="button" data-brief><span class="pr" aria-hidden="true">$</span>Get a demo<span class="caret" aria-hidden="true">_</span></button>
+        <a class="lnk" href="#how" data-mag>See how it works <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+      </div>
+    </div>
+  </header>
+
+  <section class="sec" id="platform">
+    <div class="wrap">
+      <div data-reveal>
+        <span class="kick">Platform</span>
+        <h2>Built for the 3 a.m. page.</h2>
+        <p class="lead">Three numbers we hold ourselves to, measured on the same stack you will run.</p>
+      </div>
+      <div class="grid">
+        <article class="card" data-reveal>
+          <span class="k">01 / Ingest</span>
+          <div class="num">1.2M<small>events/sec</small></div>
+          <p>Sustained per cluster with no sampling. Metrics, traces and logs share one pipeline and one clock.</p>
+        </article>
+        <article class="card" data-reveal>
+          <span class="k">02 / Query</span>
+          <div class="num">&lt;400<small>ms p99</small></div>
+          <p>Ask across 30 days of data and get an answer before you finish the sentence. Columnar, not scanned.</p>
+        </article>
+        <article class="card" data-reveal>
+          <span class="k">03 / Agent</span>
+          <div class="num">1<small>line</small></div>
+          <p>One command per host, auto-discovers services. No config files, no sidecars to babysit.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="how">
+    <div class="wrap">
+      <div data-reveal>
+        <span class="kick">How it works</span>
+        <h2>From deploy to root cause in three moves.</h2>
+      </div>
+      <div class="steps">
+        <div class="track" aria-hidden="true"><i></i></div>
+        <div class="step" data-reveal>
+          <span class="idx">01</span>
+          <h3>Ship</h3>
+          <p>Drop the agent on a host. Services appear within seconds.</p>
+          <code>$ curl -sSf pulseops.sh | sh</code>
+        </div>
+        <div class="step" data-reveal>
+          <span class="idx">02</span>
+          <h3>Observe</h3>
+          <p>Every lane streams live. Spikes light up before thresholds trip.</p>
+          <code>p99 → 212ms · errors → 0.4%</code>
+        </div>
+        <div class="step" data-reveal>
+          <span class="idx">03</span>
+          <h3>Resolve</h3>
+          <p>Jump from the alert to the trace to the log line that caused it.</p>
+          <code>alert → trace → line 412</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec band" id="cta">
+    <div class="wrap" data-reveal>
+      <span class="kick">Pricing</span>
+      <h2>Your next incident is already in the stream.</h2>
+      <p class="lead">Start with the demo. We will connect one service and show you the first trace the same day.</p>
+      <button class="btn primary pill" type="button" data-brief>Book a 20-minute demo <span class="chip-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+      <span class="fine">14-day trial · No card · Stream on this page is simulated</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>© PulseOps · Template by DepthGlow · Canvas 2D, zero external requests</span>
+  <button class="btn brk" type="button" id="toTop"><span class="b" aria-hidden="true">[</span>Back to top<span class="b" aria-hidden="true">]</span></button>
+</footer>
+
+<div id="briefScrim"></div>
+<aside id="brief" aria-label="About this template" aria-hidden="true" inert>
+  <button class="btn" type="button" id="briefClose" aria-label="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <span class="kick">Template brief</span>
+  <h2>PulseOps</h2>
+  <p>A SaaS landing page whose hero is a live dashboard. One canvas, eight metric lanes, real readouts, one clear action.</p>
+  <ul>
+    <li><b>Base</b> #070b14 · cyan #4cc9f0 · amber #ffb347</li>
+    <li><b>Lanes</b> 8 × (H/8), 240-sample ring buffer, 1 sample / 100 ms</li>
+    <li><b>Signal</b> clamped walk ±0.06, value-noise knot every 6 samples</li>
+    <li><b>p99</b> value mapped to 80–420 ms, printed at the last sample</li>
+    <li><b>Errors</b> turn amber with halo above 0.75</li>
+    <li><b>Pulse</b> ring 3→14 px, 0.8 s, alpha .4→0 when a sample beats its 20-sample mean</li>
+    <li><b>Scan</b> 1 px line, alpha .08, 4 s top→bottom</li>
+    <li><b>Parallax</b> lane group moves up scrollY × 0.08</li>
+    <li><b>Motion off</b> reduced-motion freezes the stream on a static frame</li>
+  </ul>
+  <p>Swap the brand, lane labels (<span class="mono">LABELS</span>) and the two accent colors in <span class="mono">:root</span>. Everything else follows.</p>
+</aside>
+
+<script src="../../js/vendor/lenis.min.js"></script>
+<script src="../../js/vendor/gsap.min.js"></script>
+<script src="../../js/vendor/ScrollTrigger.min.js"></script>
+<script src="../../js/vendor/SplitText.min.js"></script>
+<script>
+/* ===== Layer 1: live dashboard canvas (Canvas 2D) =====
+   Coordinates: CSS px, ctx scaled by dpr (<=2). Lane l spans y = shift + l*H/8 .. +H/8.
+   Paint order: base -> lane bands -> separators -> area fill -> line -> halo -> node/pulse -> text -> scan. */
+(function () {
+  var cv = document.getElementById("bg"), ctx = cv.getContext("2d");
+  if (!ctx) { document.documentElement.classList.add("nogl"); return; }
+  var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var N = 240, L = 8, STEP = 0.1, PULSE = 0.8, WARN = 0.75;
+  var LABELS = ["ingest", "p99", "errors", "queue", "cpu", "mem", "cache", "net"];
+  var CY = "#4cc9f0", AM = "#ffb347", BASE = "#070b14";
+  var buf = new Float32Array(L * N), w = 0;
+  var S = new Uint32Array(L), K0 = new Float32Array(L), K1 = new Float32Array(L), PH = new Uint8Array(L);
+  var cur = new Float32Array(L), pT = new Float32Array(L), warn = new Float32Array(L), hl = new Float32Array(L);
+  var i, l;
+  for (l = 0; l < L; l++) { S[l] = 0x9e3779b1 * (l + 1) >>> 0; cur[l] = 0.3 + 0.4 * ((l * 0.37) % 1); }
+  function rnd(k) { var t = (S[k] += 0x6D2B79F5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+  for (l = 0; l < L; l++) { K0[l] = rnd(l); K1[l] = rnd(l); }
+  function noise(k) { if (++PH[k] >= 6) { PH[k] = 0; K0[k] = K1[k]; K1[k] = rnd(k); } var t = PH[k] / 6, s = t * t * (3 - 2 * t); return K0[k] + (K1[k] - K0[k]) * s; }
+  function push() {
+    for (var k = 0; k < L; k++) {
+      var v = cur[k] + (noise(k) - 0.5) * 0.12;
+      v = v < 0.05 ? 0.05 : v > 0.95 ? 0.95 : v;
+      if (v !== v) v = 0.5; // NaN guard
+      var sum = 0, o = k * N;
+      for (var j = 1; j <= 20; j++) sum += buf[o + ((w - j + N) % N)];
+      if (v > sum / 20 && pT[k] >= PULSE) pT[k] = 0;
+      cur[k] = v; buf[o + w] = v;
     }
-    // sparklines (right half on desktop, lower band on mobile — hero text zone stays clean)
-    var narrow=W<700;
-    for(var s=0;s<series.length;s++){var S=series[s];
-      var prev=S.pts[S.pts.length-1];var nv=Math.min(.95,Math.max(.05,prev+(0.5-prev)*.04+(Math.random()-.5)*S.acc));
-      S.pts.push(nv);if(S.pts.length>80)S.pts.shift();
-      var y0=narrow?(H*.66+s*(H*.24/series.length)):(H*.12+s*(H*.54/series.length));
-      var amp=narrow?H*.028:H*.045,x0=narrow?W*.04:W*.46,xw=narrow?W*.92:W*.56;
-      x.beginPath();for(var j2=0;j2<S.pts.length;j2++){var px=x0+j2/(S.pts.length-1)*xw,py=y0+(1-S.pts[j2]*2)*amp;j2?x.lineTo(px,py):x.moveTo(px,py);}
-      var lg=x.createLinearGradient(0,y0-amp,0,y0+amp);lg.addColorStop(0,'rgba(76,201,240,.14)');lg.addColorStop(1,'rgba(76,201,240,0)');
-      x.strokeStyle='rgba(76,201,240,.4)';x.lineWidth=1.2;x.stroke();x.lineTo(x0+xw,y0+amp);x.lineTo(x0,y0+amp);x.closePath();x.fillStyle=lg;x.fill();
-    }
-    requestAnimationFrame(draw);
+    w = (w + 1) % N;
   }
-  function roundRect(a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
-  addEventListener('resize',resize);resize();draw();
+  for (i = 0; i < N; i++) push();
+  for (l = 0; l < L; l++) pT[l] = 9;
+
+  // halo sprite (amber), pre-rendered once
+  var halo = document.createElement("canvas"); halo.width = halo.height = 64;
+  var hc = halo.getContext("2d"), hg = hc.createRadialGradient(32, 32, 0, 32, 32, 32);
+  hg.addColorStop(0, "rgba(255,179,71,.9)"); hg.addColorStop(0.35, "rgba(255,179,71,.3)"); hg.addColorStop(1, "rgba(255,179,71,0)");
+  hc.fillStyle = hg; hc.fillRect(0, 0, 64, 64);
+
+  var W, H, dpr, laneH, x0, xe, dx, gC, gA, amp, off, py = -1, shift = 0, lastMs = -1, msTxt = "", fontPx;
+  function resize() {
+    W = innerWidth; H = innerHeight;
+    dpr = Math.min(window.__dpr || devicePixelRatio || 1, 2);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    laneH = H / L; var m = W < 600;
+    x0 = m ? 62 : 96; xe = W - (m ? 54 : 66); dx = (xe - x0) / (N - 1);
+    amp = laneH * 0.62; off = laneH * 0.81; fontPx = m ? 10 : 11;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    gC = ctx.createLinearGradient(0, 0, 0, laneH); gC.addColorStop(0, "rgba(76,201,240,.10)"); gC.addColorStop(1, "rgba(76,201,240,0)");
+    gA = ctx.createLinearGradient(0, 0, 0, laneH); gA.addColorStop(0, "rgba(255,179,71,.10)"); gA.addColorStop(1, "rgba(255,179,71,0)");
+    draw(0, 0, 0);
+  }
+  function trace(k, frac) {
+    var o = k * N;
+    ctx.beginPath();
+    for (var j = 0; j < N; j++) {
+      var x = x0 + (j - frac) * dx, y = off - buf[o + ((w + j) % N)] * amp;
+      if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+  }
+  var MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
+  function draw(dt, frac, T) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalAlpha = 1; ctx.fillStyle = BASE; ctx.fillRect(0, 0, W, H);
+    var target = RM ? 0 : -scrollY * 0.08;
+    shift += (target - shift) * Math.min(1, dt * 10); if (RM || shift !== shift) shift = target;
+    var hover = py < 0 ? -1 : Math.floor((py - shift) / laneH);
+    ctx.font = fontPx + "px " + MONO; ctx.textBaseline = "middle";
+    for (var k = 0; k < L; k++) {
+      var ty = shift + k * laneH;
+      if (ty > H || ty + laneH < 0) continue;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, ty * dpr);
+      hl[k] += ((k === hover ? 1 : 0) - hl[k]) * Math.min(1, dt * 8);
+      if (hl[k] > 0.01) { ctx.fillStyle = "rgba(76,201,240," + (0.04 * hl[k]).toFixed(3) + ")"; ctx.fillRect(0, 0, W, laneH); }
+      ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fillRect(0, laneH - 1, W, 1);
+      ctx.globalAlpha = 0.5 + 0.4 * hl[k]; ctx.fillStyle = "#a4c4d6"; ctx.fillText(LABELS[k], 14, laneH * 0.5);
+      // warn easing (errors lane only)
+      var wt = k === 2 && cur[k] > WARN ? 1 : 0;
+      warn[k] += (wt - warn[k]) * Math.min(1, dt * 6);
+      var wv = warn[k];
+      trace(k, frac);
+      ctx.lineJoin = "round"; ctx.lineWidth = 1.5 + 0.7 * hl[k];
+      ctx.globalAlpha = (0.78 + 0.22 * hl[k]) * (1 - wv); if (ctx.globalAlpha > 0.01) { ctx.strokeStyle = CY; ctx.stroke(); }
+      if (wv > 0.01) { ctx.globalAlpha = 0.78 * wv; ctx.strokeStyle = AM; ctx.stroke(); }
+      var xl = x0 + (N - 1 - frac) * dx, yl = off - cur[k] * amp;
+      ctx.lineTo(xl, laneH); ctx.lineTo(x0 - frac * dx, laneH); ctx.closePath();
+      ctx.globalAlpha = 1; ctx.fillStyle = wv > 0.5 ? gA : gC; ctx.fill();
+      if (wv > 0.01) { ctx.globalAlpha = wv * (0.7 + 0.2 * Math.sin(T * 6)); ctx.drawImage(halo, xl - 30, yl - 30, 60, 60); }
+      // pulse ring
+      if (pT[k] < PULSE) {
+        var p = pT[k] / PULSE, e = 1 - (1 - p) * (1 - p) * (1 - p);
+        ctx.globalAlpha = 0.4 * (1 - p); ctx.strokeStyle = wv > 0.5 ? AM : CY; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(xl, yl, 3 + 11 * e, 0, 6.2832); ctx.stroke();
+        pT[k] += dt;
+      }
+      ctx.globalAlpha = 1; ctx.fillStyle = wv > 0.5 ? AM : CY; ctx.beginPath(); ctx.arc(xl, yl, 2.5, 0, 6.2832); ctx.fill();
+      if (k === 1) {
+        var ms = (80 + cur[k] * 340) | 0;
+        if (ms !== lastMs) { lastMs = ms; msTxt = ms + "ms"; }
+        ctx.fillStyle = "#e8f1f7"; ctx.fillText(msTxt, xl + 9, yl);
+      } else if (k === 2 && wv > 0.3) {
+        ctx.globalAlpha = wv; ctx.fillStyle = AM; ctx.fillText("WARN", xl + 9, yl);
+      }
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1;
+    if (!RM) { ctx.fillStyle = "rgba(76,201,240,.08)"; ctx.fillRect(0, ((T % 4) / 4) * H, W, 1); }
+  }
+
+  addEventListener("pointermove", function (e) { py = e.clientY; }, { passive: true });
+  document.documentElement.addEventListener("mouseleave", function () { py = -1; });
+  var rt; addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(resize, 60); });
+  document.fonts && document.fonts.ready.then(function () { if (RM) draw(0, 0, 0); });
+
+  resize();
+  if (RM) return; // static snapshot frame, stream frozen
+  var last = performance.now(), acc = 0, T = 0, fa = 0, fn = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    var dt = (now - last) / 1000; last = now;
+    if (!(dt > 0)) dt = 0.016; if (dt > 0.1) dt = 0.1;
+    T += dt; acc += dt;
+    var n = 0; while (acc >= STEP && n < 3) { push(); acc -= STEP; n++; }
+    if (acc >= STEP) acc = 0;
+    draw(dt, acc / STEP, T);
+    fa += dt; if (++fn === 90) { // adaptive pixel ratio: <50fps -> drop 0.5
+      if (fa / 90 > 0.02 && dpr > 1) { window.__dpr = Math.max(1, dpr - 0.5); resize(); }
+      fa = 0; fn = 0;
+    }
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ===== Layer 2: page choreography ===== */
+(function () {
+  var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (s) { return document.querySelector(s); };
+  var root = document.documentElement;
+
+  // reveal (also covers touch, where the kit skips itself)
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll("[data-reveal]").forEach(function (el) { io.observe(el); });
+
+  // Lenis + ScrollTrigger
+  var lenis = null, G = window.gsap, ST = window.ScrollTrigger;
+  if (!RM && window.Lenis) {
+    lenis = new Lenis({ smoothWheel: true });
+    if (G && ST) { G.registerPlugin(ST); lenis.on("scroll", ST.update); G.ticker.add(function (t) { lenis.raf(t * 1000); }); G.ticker.lagSmoothing(0); }
+    else { var r = function (t) { lenis.raf(t); requestAnimationFrame(r); }; requestAnimationFrame(r); }
+  }
+  function goTo(target) {
+    if (lenis) lenis.scrollTo(target, { offset: -64 });
+    else if (target === 0) scrollTo({ top: 0, behavior: RM ? "auto" : "smooth" });
+    else target.scrollIntoView({ behavior: RM ? "auto" : "smooth" });
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var id = a.getAttribute("href"), t = id === "#top" ? 0 : $(id);
+      if (t === null) return; e.preventDefault(); goTo(t);
+    });
+  });
+  $("#toTop").addEventListener("click", function () { goTo(0); });
+
+  // hero entrance + scroll-linked transforms
+  if (!RM && G) {
+    try {
+      var plugins = [ST, window.SplitText].filter(Boolean); G.registerPlugin.apply(G, plugins);
+      G.set(["#h1", ".hero .fade"], { autoAlpha: 0 });
+      var go = function () {
+        try {
+          G.set("#h1", { autoAlpha: 1 });
+          if (window.SplitText) { var sp = SplitText.create("#h1", { type: "words,chars" }); G.from(sp.chars, { y: 12, autoAlpha: 0, duration: 0.6, ease: "power3.out", stagger: 0.02 }); }
+          G.to(".hero .fade", { autoAlpha: 1, y: 0, duration: 0.7, ease: "power3.out", stagger: 0.08, delay: 0.3, startAt: { y: 16 } });
+        } catch (e) { G.set(["#h1", ".hero .fade"], { autoAlpha: 1 }); }
+      };
+      Promise.race([document.fonts.ready, new Promise(function (r) { setTimeout(r, 1500); })]).then(go);
+      if (ST) {
+        G.to(".hero-in", { y: -70, opacity: 0.25, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+        G.fromTo(".track i", { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: ".steps", start: "top 80%", end: "bottom 55%", scrub: true } });
+      }
+    } catch (e) { G.set(["#h1", ".hero .fade"], { autoAlpha: 1 }); }
+  }
+
+  // pointer parallax vars + card spotlight
+  addEventListener("pointermove", function (e) {
+    root.style.setProperty("--px", (e.clientX / innerWidth - 0.5).toFixed(3));
+    root.style.setProperty("--py", (e.clientY / innerHeight - 0.5).toFixed(3));
+  }, { passive: true });
+  document.querySelectorAll(".card").forEach(function (c) {
+    c.addEventListener("pointermove", function (e) {
+      var b = c.getBoundingClientRect();
+      c.style.setProperty("--cx", (e.clientX - b.left) + "px"); c.style.setProperty("--cy", (e.clientY - b.top) + "px");
+    });
+  });
+
+  // brief panel
+  var br = $("#brief"), sc = $("#briefScrim"), back = null;
+  function open() {
+    back = document.activeElement; br.inert = false; br.setAttribute("aria-hidden", "false");
+    br.classList.add("open"); sc.classList.add("open"); root.classList.add("noscroll"); if (lenis) lenis.stop();
+    $("#briefClose").focus();
+  }
+  function close() {
+    if (!br.classList.contains("open")) return;
+    br.classList.remove("open"); sc.classList.remove("open"); root.classList.remove("noscroll");
+    br.inert = true; br.setAttribute("aria-hidden", "true"); if (lenis) lenis.start();
+    if (back) back.focus();
+  }
+  document.querySelectorAll("button[data-brief]").forEach(function (b) { b.addEventListener("click", open); });
+  $("#briefClose").addEventListener("click", close); sc.addEventListener("click", close);
+  addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
 })();
 </script>
-  <script src="../../js/kit/motion.js"></script>
+<script src="../../js/kit/motion.js"></script>
 </body>
 </html>

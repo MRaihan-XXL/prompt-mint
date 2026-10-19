@@ -219,11 +219,23 @@ for (const id of ids) {
   try {
     await page.goto(`${base}/demos/${id}/index.html`, { waitUntil: "networkidle", timeout: 30000 });
     await page.waitForTimeout(2500);
-    // native click semua button — 0 pageerror (bug "klik = error" round-4b)
+    // sig hero diukur di POSISI DEFAULT (sebelum sweep klik) — kontrak diversity =
+    // tampilan pertama saat user buka. Post-klick tak deterministik (toggle layout
+    // + focus-scroll bisa menggeser h1 — kasus neon round-9).
+    sigs[id] = await page.evaluate(() => {
+      const h = document.querySelector("h1");
+      if (!h) return null;
+      const r = h.getBoundingClientRect();
+      return { x: +((r.x + r.width / 2) / innerWidth).toFixed(3), y: +((r.y + r.height / 2) / innerHeight).toFixed(3) };
+    });
+    // native click semua button VISIBLE — 0 pageerror (bug "klik = error" round-4b).
+    // Button tersembunyi (fallback #lost/#nogl, panel tertutup) di-skip: user tak bisa meng-kliknya.
     const clickLog = await page.evaluate(() => {
       const log = [];
       for (const b of document.querySelectorAll("button")) {
         if (b.id === "briefClose") continue;
+        if (b.closest("[hidden], #lost, #nogl, aside[aria-hidden='true']")) continue;
+        if (!(b.offsetWidth || b.offsetHeight || b.getClientRects().length)) continue; // tidak visible
         try { b.click(); log.push("ok"); } catch (e) { log.push("throw:" + e.message); }
         const x = document.getElementById("briefClose");
         if (x && document.getElementById("brief") && !document.getElementById("brief").hidden) x.click();
@@ -245,25 +257,25 @@ for (const id of ids) {
     }
     // panel toggle utk chrome (CTA → brief terbuka, close → tertutup)
     if (CHROME7.includes(id)) {
-      const r = await page.evaluate(() => {
+      const r = await page.evaluate(async () => {
         const p = document.getElementById("brief");
         if (!p) return { has: false };
         const cta = [...document.querySelectorAll(".btn.primary, button[data-brief]")].find((b) => b.hasAttribute("data-brief"));
         if (!cta) return { has: true, cta: false };
-        cta.click(); const opened = !p.hidden;
+        cta.click();
+        // Panel boleh diimplementasi dgn .hidden property ATAU class "open" + aria-hidden;
+        // open bisa ASYNC (rAF menambah class) → tunggu 1 frame; close bisa ASYNC juga → 700ms.
+        await new Promise((r) => setTimeout(r, 120));
+        const openNow = () => !p.hidden && p.getAttribute("aria-hidden") !== "true";
+        const opened = openNow();
         const x = document.getElementById("briefClose"); if (x) x.click();
-        return { has: true, cta: true, opened, closed: p.hidden };
+        await new Promise((r) => setTimeout(r, 700));
+        return { has: true, cta: true, opened, closed: !openNow() };
       });
       if (!r.has) fail(`${id}: #brief panel hilang`);
       else if (!r.cta) fail(`${id}: tidak ada button[data-brief] utk buka panel`);
       else if (!r.opened || !r.closed) fail(`${id}: panel toggle gagal (open=${r.opened} close=${r.closed})`);
       else pass(`${id}: CTA→panel toggle ok`);
-      sigs[id] = await page.evaluate(() => {
-        const h = document.querySelector("h1");
-        if (!h) return null;
-        const r = h.getBoundingClientRect();
-        return { x: +((r.x + r.width / 2) / innerWidth).toFixed(3), y: +((r.y + r.height / 2) / innerHeight).toFixed(3) };
-      });
     }
     // contrast WARN (WCAG approx): bg lokal di balik h1 (h1 disembunyikan saat sampel)
     try {

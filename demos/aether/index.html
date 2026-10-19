@@ -3,141 +3,359 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Aether — a scroll-driven product story</title>
-<meta name="description" content="Aether — a template for product brands and editorial landings: a scroll-driven story with live generative gradient orbs, honest numbers, and one clear call to action.">
-<meta name="color-scheme" content="dark">
+<title>Aether — A product story that scrolls like a film</title>
+<meta name="description" content="Aether is a fictional design studio. A three-chapter, scroll-driven product story on a generative gradient canvas.">
+<meta name="theme-color" content="#07070d">
+<link rel="stylesheet" href="../../js/kit/kit.css">
 <style>
+@font-face{font-family:"Clash Display";src:url(../../fonts/ClashDisplay-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Satoshi";src:url(../../fonts/Satoshi-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Satoshi";src:url(../../fonts/Satoshi-500.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Satoshi";src:url(../../fonts/Satoshi-700.woff2) format("woff2");font-weight:700;font-display:swap}
+
+:root{
+  --acc:#b388ff; --acc-ink:#0a0a14;
+  --bg:#07070d; --ink:#f4f2fa; --mute:rgba(244,242,250,.72);
+  --disp:"Clash Display","Satoshi",system-ui,sans-serif;
+  --body:"Satoshi",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --pad:clamp(20px,5vw,64px);
+}
 *{box-sizing:border-box;margin:0}
-html{scroll-behavior:smooth}
-body{background:#0b0714;color:#eee6ff;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-canvas#orbs{position:fixed;inset:0;width:100%;height:100%;z-index:0}
-.ui{--acc:#b388ff;--acc-ink:#120626;position:relative;z-index:1;pointer-events:none}
-.ui a,.ui button{pointer-events:auto}
-.nav{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:12px;padding:16px 22px;background:linear-gradient(#0b0714 20%,transparent)}
-.brand{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
-.brand i{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc)}
-.navr{margin-left:auto;display:flex;gap:10px;align-items:center}
-.btn{border:0;border-radius:9px;padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
-.btn.primary{background:var(--acc);color:var(--acc-ink)}
-.btn.ghost{background:rgba(10,12,18,.4);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
-section{--acc:#b388ff;--acc-ink:#120626;position:relative;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:80px 22px;max-width:720px;margin:0 auto;opacity:.25;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
-section::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 64% 58% at 42% 50%,rgba(7,4,13,.82),rgba(7,4,13,.42) 62%,rgba(7,4,13,0))}
-section.on{opacity:1;transform:none}
-.eyebrow{margin:0 0 14px;font-size:10.5px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
-h1,h2{margin:0 0 16px;font-size:clamp(28px,4.6vw,52px);line-height:1.06;font-weight:850;letter-spacing:-.015em}
-h1 em,h2 em{font-style:normal;color:var(--acc)}
-.sub{margin:0 0 22px;font-size:14.5px;line-height:1.62;opacity:.85;max-width:480px}
-.btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
-.feats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.f{background:rgba(8,10,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px);flex:1;min-width:150px}
-.f b{display:block;font-size:12.5px}
-.f span{display:block;margin-top:4px;font-size:11px;line-height:1.45;opacity:.62}
-.foot{padding:14px 22px;display:flex;justify-content:space-between;gap:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55;max-width:720px;margin:0 auto}
-.panel{position:fixed;right:22px;top:64px;width:min(320px,86vw);background:rgba(8,10,15,.8);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:18px;backdrop-filter:blur(12px);z-index:10;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.panel h2{margin:0 0 8px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#eee6ff}
-.panel p{margin:0 0 10px;font-size:12px;line-height:1.6;opacity:.8}
-.panel .pbtns{display:flex;gap:8px;margin-top:12px}
-.panel .x{position:absolute;top:10px;right:12px;background:none;border:0;color:#fff;opacity:.6;font-size:16px;cursor:pointer;font-family:inherit}
-@media (max-width:700px){.feats .f:nth-child(n+3){display:none}.foot span:last-child{display:none}}
-@media (max-width:700px){.nav{padding:14px 16px;gap:8px}.brand{font-size:11px;letter-spacing:.08em;white-space:nowrap}.btn{padding:9px 11px;font-size:11.5px;white-space:nowrap}}
+html{background:var(--bg);scroll-behavior:smooth}
+body{font-family:var(--body);font-size:var(--step-0);line-height:1.55;color:var(--ink);background:var(--bg);overflow-x:clip;-webkit-font-smoothing:antialiased}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+.ui{position:relative;z-index:1}
+
+/* ---- nav ---- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--pad);background:linear-gradient(to bottom,rgba(7,7,13,.7),transparent)}
+.brand{font-family:var(--disp);font-weight:700;font-size:var(--step-1);letter-spacing:.22em;color:var(--ink);text-decoration:none}
+.links{display:flex;gap:clamp(18px,3vw,38px);margin-left:auto;margin-right:clamp(16px,3vw,40px)}
+.links a{position:relative;color:var(--mute);text-decoration:none;font-size:var(--step--1);font-weight:500;letter-spacing:.06em;padding:6px 0;transition:color .25s}
+.links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--acc);transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease-out)}
+.links a:hover,.links a:focus-visible{color:var(--ink)}
+.links a:hover::after,.links a:focus-visible::after{transform:scaleX(1);transform-origin:left}
+
+/* button treatments (kit .btn base, themed per use) */
+/* 1. nav: editorial underline that thickens + drops an arrow */
+.btn.nav-cta{background:linear-gradient(var(--acc),var(--acc)) left bottom/100% 1px no-repeat;border-radius:0;padding:8px 2px 9px;color:var(--ink);transition:background-size .35s var(--ease-out),transform .3s var(--spring),color .25s}
+.btn.nav-cta::after{display:none}
+.btn.nav-cta:hover,.btn.nav-cta:focus-visible{background-size:100% 4px;color:#fff}
+.btn svg{width:0;opacity:0;height:1em;transition:width .35s var(--ease-out),opacity .25s,transform .35s var(--ease-out);transform:translateX(-6px);flex:none}
+.btn:hover svg,.btn:focus-visible svg{width:1.1em;opacity:1;transform:none}
+/* 2. hero primary: notched corners + inner glow */
+.btn.notch{padding:17px 30px;border-radius:0;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);box-shadow:inset 0 0 22px rgba(255,255,255,.4)}
+.btn.notch:hover{box-shadow:inset 0 0 30px rgba(255,255,255,.7)}
+/* 3. hero ghost: bracketed label, brackets spread on hover */
+.btn.bracket{background:none;border:0;backdrop-filter:none;padding:17px 6px;color:var(--ink);gap:.9em;transition:gap .35s var(--ease-out),color .25s,transform .3s var(--spring)}
+.btn.bracket::after{display:none}
+.btn.bracket i{font-style:normal;font-family:var(--mono);color:var(--acc);font-weight:400;font-size:1.3em;line-height:1}
+.btn.bracket:hover{gap:1.5em;background:none;border:0;color:#fff}
+/* 4. card: ring with plus that rotates */
+.btn.plus{background:none;border:0;backdrop-filter:none;padding:0;color:var(--ink);gap:.8em;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.1em;font-size:var(--step--1)}
+.btn.plus::after{display:none}
+.btn.plus b{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;border:1px solid var(--acc);color:var(--acc);font-size:1.3rem;line-height:1;transition:transform .5s var(--spring),background .25s,color .25s}
+.btn.plus:hover b{transform:rotate(135deg);background:var(--acc);color:var(--acc-ink)}
+/* 5. closing: pill, cursor-tracking inner glow */
+.btn.pill{border-radius:999px;padding:20px 38px;font-size:var(--step-0);box-shadow:inset 0 0 26px rgba(255,255,255,.35),0 10px 40px -10px var(--acc)}
+.btn.pill svg{width:1.1em;opacity:1;transform:none}
+/* 6. footer: tiny underline link-buttons */
+.btn.tiny{background:none;padding:2px 0;border-radius:0;color:var(--mute);font-weight:500;border-bottom:1px solid rgba(255,255,255,.25)}
+.btn.tiny::after{display:none}
+.btn.tiny:hover{color:var(--ink);border-color:var(--acc)}
+
+/* ---- chapters ---- */
+.ch{position:relative;isolation:isolate;min-height:100svh;padding:clamp(110px,16vh,180px) var(--pad) clamp(70px,10vh,120px);display:flex;flex-direction:column;justify-content:center}
+.ch::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+.hero{justify-content:flex-start}
+.hero::before{background:radial-gradient(ellipse 60% 55% at 72% 38%,rgba(7,7,13,.66),transparent 75%)}
+.work::before{background:linear-gradient(to bottom,transparent,rgba(7,7,13,.5) 30%,rgba(7,7,13,.5) 70%,transparent)}
+.proof::before{background:linear-gradient(to bottom,transparent,rgba(7,7,13,.55) 35%)}
+.eyebrow{font-family:var(--mono);font-size:var(--step--1);letter-spacing:.18em;text-transform:uppercase;color:var(--acc);margin-bottom:22px}
+h1,h2{font-family:var(--disp);font-weight:700;line-height:1.02;letter-spacing:-.015em}
+h1{font-size:var(--step-4);max-width:15ch}
+h2{font-size:var(--step-3);max-width:18ch}
+.lede{font-size:var(--step-1);color:var(--mute);max-width:46ch;margin-top:26px}
+.row{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-top:38px}
+.hero-in{margin-left:auto;max-width:min(780px,100%);text-align:right;will-change:transform,opacity}
+.hero-in h1{margin-left:auto}.hero-in .lede{margin-left:auto}.hero-in .row{justify-content:flex-end}
+.w{display:inline-block;opacity:0;transform:translateY(.45em);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out);transition-delay:calc(var(--i)*40ms)}
+.go .w{opacity:1;transform:none}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,26px);margin-top:clamp(36px,6vh,64px)}
+.card{padding:clamp(22px,2.4vw,32px);display:flex;flex-direction:column;gap:14px;transition:transform .5s var(--ease-out),border-color .3s}
+.card:hover{transform:translateY(-6px);border-color:var(--acc)}
+.work .grid .card:nth-child(2){margin-top:34px}
+.k{font-family:var(--mono);font-size:var(--step--1);letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+.card h3{font-family:var(--disp);font-size:var(--step-2);line-height:1.1}
+.card p{color:var(--mute);flex:1}
+.proof .num{font-family:var(--disp);font-weight:700;font-size:clamp(3.4rem,8vw,6.2rem);line-height:.95;color:var(--ink)}
+.proof .k{color:var(--mute)}
+.cta-end{margin-top:clamp(40px,7vh,72px)}
+
+footer{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:14px 28px;justify-content:space-between;align-items:center;padding:28px var(--pad) 34px;border-top:1px solid rgba(255,255,255,.1);font-size:var(--step--1);color:var(--mute);background:rgba(7,7,13,.6)}
+footer div{display:flex;gap:22px}
+
+/* ---- brief panel ---- */
+#brief{position:fixed;top:0;right:0;bottom:0;z-index:50;width:min(420px,100%);padding:30px;display:flex;flex-direction:column;gap:16px;background:rgba(12,12,20,.92);backdrop-filter:blur(18px);border-left:1px solid rgba(255,255,255,.14);transform:translateX(100%);visibility:hidden;transition:transform .55s var(--ease-out),visibility 0s .55s}
+#brief.open{transform:none;visibility:visible;transition:transform .55s var(--ease-out),visibility 0s}
+#brief h2{font-size:var(--step-2)}
+#brief p{color:var(--mute)}
+#brief #briefClose{align-self:flex-end}
+#cpState{font-family:var(--mono);font-size:var(--step--1);color:var(--acc);min-height:1.5em}
+
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr}.work .grid .card:nth-child(2){margin-top:0}
+  .hero::before{background:linear-gradient(rgba(7,7,13,.6),rgba(7,7,13,.45))}
+}
+@media (max-width:640px){
+  .links{display:none}.nav{padding-top:14px}
+  .hero-in,.hero-in h1,.hero-in .lede{text-align:left;margin-left:0}.hero-in .row{justify-content:flex-start}
+  h1{max-width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .w{transform:none;transition:opacity .4s}
+  .hero-in{will-change:auto}
+  #brief{transition:none}
+  .btn.plus b,.card,.btn svg{transition:none}
+}
 </style>
-  <link rel="stylesheet" href="../../js/kit/kit.css">
 </head>
 <body>
-<canvas id="orbs" role="img" aria-label="Living generative gradient orbs that drift and pulse as you scroll"></canvas>
+<canvas id="bg" aria-hidden="true"></canvas>
 <div class="ui">
-  <div class="nav">
-    <a class="brand" href="#"><i></i>Aether</a>
-    <div class="navr">
-      <button class="btn ghost" type="button" data-brief>The brief</button>
-      <button class="btn primary" type="button" data-brief>Start a project</button>
-    </div>
-  </div>
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="#story">AETHER</a>
+    <div class="links"><a href="#story">Story</a><a href="#work">Work</a><a href="#contact">Contact</a></div>
+    <button class="btn nav-cta" type="button" data-brief>Start a project <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </nav>
 
-  <section data-reveal id="s1" class="on" style="--acc:#b388ff;--acc-ink:#120626">
-    <p class="eyebrow">Chapter 01 — The Idea</p>
-    <h1>A product story that<br><em>scrolls like a film.</em></h1>
-    <p class="sub">Aether is a template for brands that want the page itself to be the pitch — one continuous scene, no clicky menus, just a scroll that pulls you forward.</p>
-    <div class="btns">
-      <button class="btn primary" type="button" data-brief>Start a project</button>
-      <button class="btn ghost" type="button" data-brief>Read the brief</button>
-    </div>
-  </section>
+  <main>
+    <section id="story" class="ch hero" data-accent="#b388ff">
+      <div class="hero-in" id="heroIn">
+        <p class="eyebrow" data-reveal>Chapter 01 / The Idea</p>
+        <h1 id="h1">A product story that scrolls like a film.</h1>
+        <p class="lede" data-reveal style="transition-delay:.25s">Aether is a design studio for products that deserve a plot — one file, three chapters, one continuous camera move.</p>
+        <div class="row" data-reveal style="transition-delay:.4s">
+          <button class="btn primary notch" type="button" data-brief>Start a project</button>
+          <a class="btn bracket" href="#work"><i aria-hidden="true">[</i>See the build<i aria-hidden="true">]</i></a>
+        </div>
+      </div>
+    </section>
 
-  <section data-reveal id="s2" style="--acc:#64ffda;--acc-ink:#04231c">
-    <p class="eyebrow">Chapter 02 — The Build</p>
-    <h2>Three moves,<br><em>one scene.</em></h2>
-    <p class="sub">A generative gradient background answers your scroll; chapters fade in and lift; the copy stays short so the motion does the talking.</p>
-    <div class="feats">
-      <div class="f"><b>Scroll-linked</b><span>Orbs drift with scroll depth</span></div>
-      <div class="f"><b>Reveal on enter</b><span>IntersectionObserver fades</span></div>
-      <div class="f"><b>Zero deps</b><span>One HTML file, no build step</span></div>
-    </div>
-  </section>
+    <section id="work" class="ch work" data-accent="#64ffda">
+      <p class="eyebrow" data-reveal>Chapter 02 / The Build</p>
+      <h2 data-reveal>Three moves, no wasted frames.</h2>
+      <div class="grid">
+        <article class="card glass" data-reveal><span class="k">01 / Frame</span><h3>Frame</h3><p>We find the one sentence your product is. Everything else is cut before it is drawn.</p><button class="btn plus" type="button" data-brief><b aria-hidden="true">+</b>Brief us</button></article>
+        <article class="card glass" data-reveal style="transition-delay:.12s"><span class="k">02 / Flow</span><h3>Flow</h3><p>Scroll becomes the timeline. Each beat eases into the next with a spring, never a cut.</p><button class="btn plus" type="button" data-brief><b aria-hidden="true">+</b>Brief us</button></article>
+        <article class="card glass" data-reveal style="transition-delay:.24s"><span class="k">03 / Finish</span><h3>Finish</h3><p>Tuned for 60fps on a modest laptop and a 390px phone. Reduced motion respected.</p><button class="btn plus" type="button" data-brief><b aria-hidden="true">+</b>Brief us</button></article>
+      </div>
+    </section>
 
-  <section data-reveal id="s3" style="--acc:#ff8a65;--acc-ink:#2a0e04">
-    <p class="eyebrow">Chapter 03 — The Proof</p>
-    <h2>Numbers that<br><em>earn the close.</em></h2>
-    <p class="sub">Every claim gets a fact card. Swap the copy for your own; the layout keeps the rhythm.</p>
-    <div class="feats">
-      <div class="f"><b>14 days</b><span>Average time from brief to launch</span></div>
-      <div class="f"><b>+38% dwell</b><span>Measured on scroll-story landings</span></div>
-      <div class="f"><b>1 file</b><span>Everything inline, no assets</span></div>
-    </div>
-    <div class="btns" style="margin-top:22px">
-      <button class="btn primary" type="button" data-brief>Start a project</button>
-    </div>
-  </section>
+    <section id="contact" class="ch proof" data-accent="#ff8a65">
+      <p class="eyebrow" data-reveal>Chapter 03 / The Proof</p>
+      <h2 data-reveal>Numbers from stories we shipped.</h2>
+      <div class="grid">
+        <div class="card glass" data-reveal><span class="num">14</span><span class="k">days median build</span></div>
+        <div class="card glass" data-reveal style="transition-delay:.12s"><span class="num">+38%</span><span class="k">dwell time</span></div>
+        <div class="card glass" data-reveal style="transition-delay:.24s"><span class="num">1</span><span class="k">file, zero deps</span></div>
+      </div>
+      <div class="cta-end" data-reveal>
+        <button class="btn primary pill" type="button" data-brief>Start a project <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+    </section>
+  </main>
 
-  <aside class="panel" id="brief" hidden aria-label="About this template">
-    <button class="x" id="briefClose" type="button" aria-label="Close">×</button>
-    <h2>The brief</h2>
-    <p>A template for product brands and editorial landings: a scroll-driven story where living gradient orbs answer your scroll, chapters fade in, and one action stays in reach the whole way down.</p>
-    <p>Keep copy short — the motion carries the narrative. Swap the chapters for your own product beats.</p>
-    <div class="pbtns"><button class="btn primary" type="button" data-copy="hello@aether.studio">Copy email</button></div>
+  <footer>
+    <span>© Aether Studio — a fictional studio, built as a Canvas 2D demo.</span>
+    <div><button class="btn tiny" type="button" data-brief>Contact</button><a class="btn tiny" href="#story">Back to top</a></div>
+  </footer>
+
+  <aside id="brief" aria-hidden="true" aria-labelledby="briefTitle">
+    <button class="btn ghost" id="briefClose" type="button">Close · Esc</button>
+    <span class="eyebrow">New project</span>
+    <h2 id="briefTitle">Tell us the one sentence.</h2>
+    <p>Send a line about your product and the date you need it. We reply within two working days.</p>
+    <button class="btn primary notch" id="cpMail" type="button">Copy hello@aether.studio</button>
+    <span id="cpState" role="status" aria-live="polite"></span>
   </aside>
-  <div class="foot"><span>Scroll to advance the chapters</span><span>Aether — a DepthGlow template</span></div>
 </div>
+
+<script src="../../js/kit/motion.js"></script>
 <script>
-(function(){var p=document.getElementById('brief');document.querySelectorAll('[data-brief]').forEach(function(b){b.addEventListener('click',function(){p.hidden=!p.hidden;});});document.getElementById('briefClose').addEventListener('click',function(){p.hidden=true;});
-document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){var t=b.getAttribute('data-copy'),o=b.textContent;
-function ok(){b.textContent='Copied ✓';setTimeout(function(){b.textContent=o;},1400);}
-function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}ta.remove();}
-if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb);}else fb();});});})();
+(function () {
+  "use strict";
+  var RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var cv = document.getElementById("bg"), ctx = cv.getContext("2d");
+  var root = document.documentElement;
 
-// reveal on scroll
-(function(){
-  var secs=document.querySelectorAll('section');
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('on');});},{threshold:.35});
-  secs.forEach(function(s){io.observe(s);});
-})();
+  /* ---------- hero headline: word split, 40ms stagger ---------- */
+  var h1 = document.getElementById("h1");
+  h1.innerHTML = h1.textContent.split(" ").map(function (w, i) { return '<span class="w" style="--i:' + i + '">' + w + "</span>"; }).join(" ");
+  requestAnimationFrame(function () { requestAnimationFrame(function () { h1.classList.add("go"); }); });
 
-// living gradient orbs (canvas 2D)
-(function(){
-  var c=document.getElementById('orbs'),x=c.getContext('2d'),W,H,t=0,scroll=0;
-  var orbs=[];
-  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;build();}
-  function build(){orbs=[];var pal=['#b388ff','#64ffda','#ff8a65','#4cc9f0','#f06292'];
-    for(var i=0;i<7;i++)orbs.push({bx:Math.random(),by:Math.random(),r:.18+Math.random()*.22,c:pal[i%pal.length],ph:Math.random()*6.28,sp:.3+Math.random()*.6});}
-  function draw(){
-    t+=.016;scroll+=(window.scrollY-scroll)*.08;
-    var depth=scroll/Math.max(1,document.body.scrollHeight-innerHeight);
-    x.clearRect(0,0,W,H);x.fillStyle='#0b0714';x.fillRect(0,0,W,H);
-    x.globalCompositeOperation='lighter';
-    for(var i=0;i<orbs.length;i++){var o=orbs[i];
-      var ox=(o.bx+.12*Math.sin(t*o.sp+o.ph))*W,oy=(o.by+.10*Math.cos(t*o.sp*.7+o.ph))*H - depth*H*.35;
-      var rr=o.r*Math.min(W,H)*(1+.08*Math.sin(t*1.3+o.ph));
-      var g=x.createRadialGradient(ox,oy,0,ox,oy,rr);g.addColorStop(0,o.c+'cc');g.addColorStop(.5,o.c+'55');g.addColorStop(1,o.c+'00');
-      x.fillStyle=g;x.beginPath();x.arc(ox,oy,rr,0,6.28);x.fill();
-    }
-    x.globalCompositeOperation='source-over';
-    // vignette
-    var vg=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(5,3,10,.75)');x.fillStyle=vg;x.fillRect(0,0,W,H);
-    requestAnimationFrame(draw);
+  /* ---------- reveal fallback (kit skips touch + reduced motion) ---------- */
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll("[data-reveal]").forEach(function (el) { io.observe(el); });
+
+  /* ---------- brief panel ---------- */
+  var brief = document.getElementById("brief"), lastBtn = null;
+  function setBrief(open) {
+    brief.classList.toggle("open", open);
+    brief.setAttribute("aria-hidden", open ? "false" : "true");
+    if (open) document.getElementById("briefClose").focus();
+    else if (lastBtn) lastBtn.focus();
   }
-  addEventListener('resize',resize);resize();draw();
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-brief]");
+    if (b) { lastBtn = b; setBrief(true); }
+  });
+  document.getElementById("briefClose").addEventListener("click", function () { setBrief(false); });
+  addEventListener("keydown", function (e) { if (e.key === "Escape" && brief.classList.contains("open")) setBrief(false); });
+  var cpState = document.getElementById("cpState");
+  document.getElementById("cpMail").addEventListener("click", function () {
+    var mail = "hello@aether.studio", ok = function () { cpState.textContent = "Copied: " + mail; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(mail).then(ok, fallback); else fallback();
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = mail; ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); ok(); } catch (_) { cpState.textContent = mail; }
+      ta.remove();
+    }
+  });
+
+  if (!ctx) return; // no canvas: page still reads on solid --bg
+
+  /* ---------- blueprint constants ---------- */
+  var N = 7, NP = 72, DS = 4;                       // orbs, motes, buffer downscale
+  var HEX = ["#b388ff", "#64ffda", "#ff8a65", "#80d8ff", "#ff8fab", "#c6ff6e", "#ffd54f"];
+  var STIFF = 90, DAMP = 20, DT_MAX = 1 / 30;
+  var accents = [].map.call(document.querySelectorAll("[data-accent]"), function (s) { return s.dataset.accent; });
+  function rgb(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+  function rng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  // preallocated state
+  var sx0 = new Float32Array(N), sy0 = new Float32Array(N), sr = new Float32Array(N), par = new Float32Array(N);
+  var rand = rng(7), seedX = new Float32Array(N), seedY = new Float32Array(N), seedR = new Float32Array(N);
+  for (var k = 0; k < N; k++) { seedX[k] = 0.5 + (rand() - 0.5) * 0.9; seedY[k] = 0.3 + rand() * 0.8; seedR[k] = 0.16 + rand() * 0.14; par[k] = 0.15 + (k / (N - 1)) * 0.25; }
+  var P = new Float32Array(NP * 5);                 // x,y,vx,vy,z per mote
+  var pr = rng(21), pInit = false;
+  var wts = new Float32Array(3);
+  var sprA = [], sprB = [];                         // base-colour + accent-colour sprites per orb
+  var buf = document.createElement("canvas"), bctx = buf.getContext("2d");
+  var halo = null;
+
+  var dpr = Math.min(devicePixelRatio || 1, 2), W = 0, H = 0, BW = 0, BH = 0;
+  var sp = 0, sv = 0, spT = 0;                      // scroll progress spring
+  var px = 0, py = 0, pxT = 0, pyT = 0, mxPx = -9999, myPx = -9999; // pointer
+  var t = 0, last = 0, slow = 0, curCh = -1;
+
+  function sprite(h, d) {
+    var c = document.createElement("canvas"); c.width = c.height = Math.max(2, d | 0);
+    var g = c.getContext("2d"), c3 = rgb(h), r = c.width / 2, gr = g.createRadialGradient(r, r, 0, r, r, r);
+    gr.addColorStop(0, "rgba(" + c3 + ",.6)"); gr.addColorStop(.5, "rgba(" + c3 + ",.2)"); gr.addColorStop(1, "rgba(" + c3 + ",0)");
+    g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height); return c;
+  }
+  function resize() {
+    W = cv.width = Math.round(innerWidth * dpr); H = cv.height = Math.round(innerHeight * dpr);
+    BW = buf.width = Math.ceil(W / DS); BH = buf.height = Math.ceil(H / DS);
+    var m = Math.min(W, H);
+    for (var k = 0; k < N; k++) {
+      sx0[k] = seedX[k] * W; sy0[k] = seedY[k] * H; sr[k] = seedR[k] * m;
+      sprA[k] = sprite(HEX[k], 2 * sr[k] / DS); sprB[k] = sprite(accents[k % 3] || HEX[k], 2 * sr[k] / DS);
+    }
+    halo = sprite("#ffffff", 220 * dpr / DS * 2);
+    if (!pInit) { for (var i = 0; i < NP; i++) { P[i * 5] = pr() * W; P[i * 5 + 1] = pr() * H; P[i * 5 + 4] = 0.2 + pr() * 0.8; } pInit = true; }
+    draw(0, 0);
+  }
+  function progress() { var r = root.scrollHeight - innerHeight; return r > 1 ? Math.min(1, Math.max(0, scrollY / r)) : 0; }
+
+  function draw(tt, dt) {
+    var live = !RM;
+    // chapter crossfade weights: |chapter - 2p| < 0.8 (0.4 of progress)
+    for (var c = 0; c < 3; c++) { var w = 1 - Math.abs(sp * 2 - c) / 0.8; wts[c] = w > 0 ? w * w * (3 - 2 * w) : 0; }
+    bctx.globalCompositeOperation = "source-over"; bctx.clearRect(0, 0, BW, BH);
+    bctx.globalCompositeOperation = "lighter";
+    var off = live ? sp : 0;
+    for (var k = 0; k < N; k++) {
+      var x = sx0[k], y = sy0[k];
+      if (live) {
+        x += Math.sin(tt * 0.11 + k * 1.3) * 80 * dpr + px * par[k] * 120 * dpr;
+        y += Math.cos(tt * 0.09 + k * 2.1) * 60 * dpr + py * par[k] * 90 * dpr;
+      }
+      y -= off * H * par[k] * 1.2;
+      var m = wts[k % 3], r = sr[k], a = sprA[k], b = sprB[k];
+      var cx = (x - r) / DS, cy = (y - r) / DS, d = 2 * r / DS;
+      bctx.globalAlpha = 0.5 * (1 - m); bctx.drawImage(a, cx, cy, d, d);
+      bctx.globalAlpha = 0.5 * m; bctx.drawImage(b, cx, cy, d, d);
+    }
+    if (live && mxPx > -999) { var hd = halo.width; bctx.globalAlpha = 0.1; bctx.drawImage(halo, mxPx * dpr / DS - hd / 2, myPx * dpr / DS - hd / 2); }
+    bctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+    ctx.fillStyle = "#07070d"; ctx.fillRect(0, 0, W, H);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(buf, 0, 0, W, H);
+
+    // motes: drift up, repelled by pointer, sheared by scroll velocity
+    ctx.fillStyle = "#fff";
+    var R = 150 * dpr;
+    for (var i = 0; i < NP; i++) {
+      var o = i * 5, z = P[o + 4];
+      if (live && dt) {
+        var dx = P[o] - mxPx * dpr, dy = P[o + 1] - myPx * dpr, dd = Math.hypot(dx, dy);
+        if (dd < R && dd > 0.01) { var f = (1 - dd / R) * 520 * dpr * dt; P[o + 2] += dx / dd * f; P[o + 3] += dy / dd * f; }
+        P[o + 2] *= 0.97; P[o + 3] *= 0.97;
+        P[o] += (P[o + 2] + Math.sin(tt * 0.3 + i) * 6 * z * dpr) * dt;
+        P[o + 1] += (P[o + 3] - (8 + z * 16) * dpr - sv * 260 * z * dpr) * dt;
+        if (P[o + 1] < -10) P[o + 1] = H + 10; else if (P[o + 1] > H + 10) P[o + 1] = -10;
+        if (P[o] < -10) P[o] = W + 10; else if (P[o] > W + 10) P[o] = -10;
+        if (P[o] !== P[o] || P[o + 1] !== P[o + 1]) { P[o] = pr() * W; P[o + 1] = pr() * H; P[o + 2] = P[o + 3] = 0; }
+      }
+      ctx.globalAlpha = 0.15 + z * 0.4;
+      ctx.beginPath(); ctx.arc(P[o], P[o + 1], (0.6 + z * 1.4) * dpr, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    var ch = Math.min(2, Math.round(sp * 2));
+    if (ch !== curCh && accents[ch]) { curCh = ch; root.style.setProperty("--acc", accents[ch]); }
+  }
+
+  /* ---------- loop ---------- */
+  var heroIn = document.getElementById("heroIn");
+  function frame(now) {
+    var dt = Math.min(DT_MAX, (now - last) / 1000) || 0.016; last = now; t += dt;
+    spT = progress();
+    sv += (STIFF * (spT - sp) - DAMP * sv) * dt; sp += sv * dt;
+    if (sp !== sp || sv !== sv) { sp = spT; sv = 0; }
+    px += (pxT - px) * 0.06; py += (pyT - py) * 0.06;
+    draw(t, dt);
+    var y = scrollY, fade = Math.max(0, 1 - y / (innerHeight * 0.75));
+    heroIn.style.transform = "translate3d(" + (-px * 12).toFixed(2) + "px," + (y * 0.2 - py * 8).toFixed(2) + "px,0)";
+    heroIn.style.opacity = fade.toFixed(3);
+    // adaptive DPR: 90 consecutive slow frames (<45fps) -> drop to 1.25 once
+    if (dt > 1 / 45) slow++; else slow = 0;
+    if (slow > 90 && dpr > 1.25) { dpr = 1.25; slow = 0; resize(); }
+    requestAnimationFrame(frame);
+  }
+
+  addEventListener("pointermove", function (e) {
+    mxPx = e.clientX; myPx = e.clientY;
+    pxT = e.clientX / innerWidth * 2 - 1; pyT = e.clientY / innerHeight * 2 - 1;
+  }, { passive: true });
+  addEventListener("pointerleave", function () { mxPx = myPx = -9999; });
+  addEventListener("resize", resize);
+
+  resize();
+  if (RM) {                                         // static orbs; chapters fade only; accent still follows scroll
+    var pend = false;
+    addEventListener("scroll", function () { if (!pend) { pend = true; requestAnimationFrame(function () { pend = false; sp = progress(); draw(0, 0); }); } }, { passive: true });
+    sp = progress(); draw(0, 0);
+  } else requestAnimationFrame(frame);
 })();
 </script>
-  <script src="../../js/kit/motion.js"></script>
 </body>
 </html>
