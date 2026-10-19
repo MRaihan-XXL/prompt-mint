@@ -1,0 +1,48 @@
+/* kit.css — DepthGlow premium interaction layer
+   Included by every template. Provides: fluid type scale, magnetic buttons,
+   reticle cursor frame, glass panels, reveal-on-scroll. Zero dependencies. */
+
+:root{
+  /* fluid type — override per template via --acc */
+  --step--1: clamp(.78rem,.74rem + .2vw,.86rem);
+  --step-0:  clamp(.95rem,.9rem + .25vw,1.05rem);
+  --step-1:  clamp(1.15rem,1.05rem + .5vw,1.45rem);
+  --step-2:  clamp(1.5rem,1.3rem + 1vw,2.1rem);
+  --step-3:  clamp(2rem,1.6rem + 2vw,3.2rem);
+  --step-4:  clamp(2.6rem,2rem + 3.4vw,4.8rem);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --spring:   cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ---- reticle cursor ---- */
+#reticle{position:fixed;inset:0;pointer-events:none;z-index:9998;mix-blend-mode:difference;opacity:0;transition:opacity .3s}
+#reticle.on{opacity:1}
+#reticle .r{position:absolute;width:14px;height:14px;border:2px solid #fff;transition:width .25s var(--ease-out),height .25s var(--ease-out),border-color .25s}
+#reticle .r.tl{border-right:0;border-bottom:0}
+#reticle .r.tr{border-left:0;border-bottom:0}
+#reticle .r.bl{border-right:0;border-top:0}
+#reticle .r.br{border-left:0;border-top:0}
+#reticle.snap .r{border-color:var(--acc,#8b5cf6)}
+
+/* ---- magnetic buttons ---- */
+.btn{position:relative;border:0;border-radius:12px;padding:12px 20px;font-size:var(--step--1);font-weight:700;letter-spacing:.03em;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:.5em;will-change:transform;transition:transform .3s var(--spring),box-shadow .3s var(--ease-out),background .25s,color .25s,border-color .25s}
+.btn.primary{background:var(--acc,#8b5cf6);color:var(--acc-ink,#fff);box-shadow:0 4px 20px -4px var(--acc,#8b5cf6)}
+.btn.primary:hover{box-shadow:0 8px 32px -6px var(--acc,#8b5cf6)}
+.btn.ghost{background:rgba(12,14,20,.45);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(10px)}
+.btn.ghost:hover{border-color:rgba(255,255,255,.55);background:rgba(12,14,20,.65)}
+.btn::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;transition:opacity .3s;background:radial-gradient(120px 60px at var(--mx,50%) var(--my,50%),rgba(255,255,255,.25),transparent 70%);pointer-events:none}
+.btn:hover::after{opacity:1}
+.btn:focus-visible{outline:2px solid var(--acc,#8b5cf6);outline-offset:3px}
+
+/* ---- glass panel ---- */
+.glass{background:rgba(14,16,24,.5);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12);border-radius:16px}
+
+/* ---- reveal on scroll ---- */
+[data-reveal]{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+[data-reveal].in{opacity:1;transform:none}
+
+@media (prefers-reduced-motion: reduce){
+  #reticle{display:none}
+  .btn{transition:none}
+  [data-reveal]{opacity:1;transform:none;transition:none}
+}

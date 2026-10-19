@@ -38,337 +38,205 @@
   ],
   "templates": [
     {
-      "id": "aurora-hero",
-      "date": "2026-09-22",
-      "title": "Aurora Hero",
-      "category": "Hero",
-      "tier": "free",
+      "id": "japan-island",
+      "date": "2026-10-17",
+      "title": "Japan Island Jelly",
+      "category": "3D",
+      "tier": "pro",
       "tags": [
-        "Hero",
-        "2d",
-        "free"
+        "3D",
+        "Interactive",
+        "Landing Page",
+        "Creative",
+        "Editorial"
       ],
-      "demo": "demos/aurora-hero/index.html",
-      "accent": "linear-gradient(135deg,#7c3aed,#06b6d4)",
-      "blurb": "Full-viewport hero with a slow-shifting aurora gradient and floating light blooms.",
-      "prompt": "Build a single self-contained HTML file: a full-viewport hero section with a living aurora gradient background. Layer 3 radial-gradient \"light blooms\" that drift slowly on independent 18–26s CSS keyframe loops. Keep the aurora on a fixed canvas-free div using conic-gradient + blur(80px) so it stays cheap. Center a headline in a geometric sans (font-feature \"ss01\"), a one-line subtitle in muted grey, and two pill CTAs (primary solid, secondary ghost). Add a subtle grain overlay via an inline SVG feTurbulence at 4% opacity. Animate the headline in on load with a 0.6s blur-up + translateY. No external JS. Pure HTML/CSS, dark background #0a0a0f, text near-white. Ensure it is responsive and text stays readable at 360px width.",
-      "thumb": "assets/thumbs/aurora-hero.webp"
+      "demo": "demos/japan-island/",
+      "accent": "#e4572e",
+      "blurb": "A miniature shrine island you can orbit: torii standing in the tide, cherry blossoms, living shoreline and a full editorial layout — one HTML file, no assets.",
+      "thumb": "assets/thumbs/japan-island.webp"
     },
     {
-      "id": "glass-saas",
-      "date": "2026-09-24",
-      "title": "Glass SaaS",
+      "id": "ocean-shallows",
+      "date": "2026-10-17",
+      "title": "Ocean Shallows",
+      "category": "3D",
+      "tier": "pro",
+      "tags": [
+        "3D",
+        "Interactive",
+        "WebGL",
+        "Creative",
+        "Nature"
+      ],
+      "demo": "demos/ocean-shallows/",
+      "accent": "#19c6c0",
+      "blurb": "A living tropical sea in a single file: GPU ripples, manta rays and moon jellies you can throw, drag and release — creature counter, synth surf, zero assets.",
+      "thumb": "assets/thumbs/ocean-shallows.webp"
+    },
+    {
+      "id": "ghost-pirate-ship",
+      "date": "2026-10-17",
+      "title": "Ghost Pirate Ship",
+      "category": "3D",
+      "tier": "pro",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Gaming",
+        "Creative",
+        "Halloween"
+      ],
+      "demo": "demos/ghost-pirate-ship/",
+      "accent": "#35ff8a",
+      "blurb": "A spectral pirate ship crossing a moonlit sea — glowing green hull, skeletal crew, Gerstner waves and click-fire broadsides. Fully procedural, pure atmosphere.",
+      "thumb": "assets/thumbs/ghost-pirate-ship.webp"
+    },
+    {
+      "id": "molten-forge",
+      "date": "2026-10-18",
+      "title": "Molten Forge",
+      "category": "3D",
+      "tier": "free",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Creative",
+        "Gaming",
+        "Landscape"
+      ],
+      "demo": "demos/molten-forge/",
+      "accent": "#ff6a1f",
+      "blurb": "A volcanic caldera at night — cracked obsidian crater spilling rivers of molten lava, ember sparks on the heat, ash smoke rolling into a red-black sky. Click the crater for a controlled eruption pulse. Fully procedural, pure atmosphere.",
+      "prompt": "Molten ForgeCreate from scratch a fully interactive 3D scene of a VOLCANIC CALDERA at night: a cracked obsidian crater spilling rivers of molten lava down a black mountainside, ember sparks rising on the heat, ash smoke rolling into a starless red-black sky. The style should be cinematic and stylized — a premium 3D artwork with painterly glow, not a photoreal simulation. Start from a blank page; do not reuse any previous project.DELIVERY- One final standalone .html file that opens directly in a desktop browser (double-click, file://) with no internet connection. Bundle the 3D library (e.g. three.js) and all assets inline; generate textures procedurally.- The PAGE must be a complete mini-site, not a bare canvas: html lang=en, a non-empty title, a meta name=description (10+ chars), one h1 hero headline, at least one button and one real anchor link as CTAs, a top nav bar with the brand, and a footer credit line. All page text sits in an HTML chrome overlay above the canvas (canvas pointer-events:none, chrome interactive elements pointer-events:auto). Inside the 3D scene itself keep text out - no readable words on signs or objects, abstract shapes only. Keep the copy short and purposeful: what this site is FOR, and one clear next action.SKY AND ATMOSPHERE- Near-black sky graded from deep charcoal at the zenith to a bruised red-orange glow hugging the horizon, lit from below by the lava.- No stars: the air is thick with suspended ash; faint drifting ash flakes catch the ember light.- A slow-breathing column of smoke and gas rises from the crater vent, curling with domain-warped noise, lit warm-orange at its base and cooling to grey-violet as it climbs.VOLCANIC MOUNTAIN (detailed terrain, no primitive-looking cone)- A broad shield-volcano massif with a sunken caldera at the summit; jagged rim walls with overhanging ledges and cooled black lava shelves.- Radial gullies and buttresses down the flanks; a foreground ridge of sharp aa-lava blocks framing the bottom of the shot; distant lower cones as silhouettes for depth.- Terrain material: matte black basalt with plate-like AO, warm rim-light where it faces the lava, darker in the crevices; a heat-haze shimmer gradient near the vent.THE LAVA (the hero — layered glow technique)- A glowing crater lake at the summit: a slowly churning emissive surface with a dark cooling crust that tears apart as it drifts, revealing hotter magma beneath (scrolling noise on an emissive shader).- Two or three lava flows winding down separate gullies: each a ribbon of emissive orange-yellow core wrapped in a darker crust, with brighter molten threads crawling along its edges.- The glow must read in layers, the way professional magma shaders do: hot emissive core (yellow-white), an aura of orange bloom around it, an outer diffuse red glow bleeding onto the surrounding rock, and a soft heat distortion where the air meets the flow. Use an emissive shader plus an additive glow layer — not just a bright solid color.- Lava texture scrolls downstream at different speeds per flow; the crust pattern regenerates so it never visibly tiles.EMBERS, SPARKS, SMOKE- Hundreds of ember particles lift off the crater and the hottest flow edges: they start orange-white, cool to red, then fade to black ash as they rise on a thermal updraft, swaying on wind curl-noise. Instanced or point sprites — cheap and abundant.- Occasional burst-sparks pop from the crater with a brief flare.- Ground-hugging smoke wisps slide along the lower flanks, half-lit from beneath.LIGHT AND CAMERA- The lava itself is the main light: warm point/area lights along the flows tint the rock. A cool faint rim from a high hidden source keeps the mountain silhouette readable against the sky.- Slow cinematic camera drift orbiting a few degrees with a gentle breathing dolly; wide establishing framing by default — caldera at the top of frame, foreground lava ridge anchoring the bottom third.MOTION AND INTERACTION- Pointer parallax: moving the pointer sways the camera a few degrees; on touch, drag does the same.- Click / tap the crater: a controlled eruption pulse — the crater flares bright, a shockwave ring of light races down the flows, a burst of embers erupts, then everything settles back over ~3 seconds. Brief, elegant, self-resuming on idle — a dramatic accent, not a screen-shake game effect.- prefers-reduced-motion: keep the full static composition and slow lava scroll; stop camera drift and eruption auto-pulse.PERFORMANCE- Clamp devicePixelRatio <= 2; particle counts scale down on narrow viewports; handle resize; no horizontal scroll at 390px; pointer and touch input work; zero console errors and warnings.",
+      "thumb": "assets/thumbs/molten-forge.webp"
+    },
+    {
+      "id": "aurora-ridge",
+      "date": "2026-10-18",
+      "title": "Aurora Ridge",
+      "category": "3D",
+      "tier": "free",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Creative",
+        "Nature",
+        "Landscape"
+      ],
+      "demo": "demos/aurora-ridge/",
+      "accent": "#5dffb8",
+      "blurb": "An arctic night under a living aurora borealis — curtains of green and violet light rippling across a star-filled polar sky, bouncing on wind-carved snow drifts and a frozen pond. Pointer proximity stirs the nearest curtain. Fully procedural, pure atmosphere.",
+      "prompt": "Aurora RidgeCreate from scratch a fully interactive 3D scene of an ARCTIC NIGHT: a snow-covered ridge under a living aurora borealis — curtains of green and violet light rippling across a star-filled polar sky, their colors bouncing on the ice and snow below. Cinematic, stylized, premium; not a photoreal weather sim. Start from a blank page; do not reuse any previous project.DELIVERY- One final standalone .html file that opens directly in a desktop browser (double-click, file://) with no internet connection. Bundle the 3D library (e.g. three.js) and all assets inline; generate textures procedurally.- The PAGE must be a complete mini-site, not a bare canvas: html lang=en, a non-empty title, a meta name=description (10+ chars), one h1 hero headline, at least one button and one real anchor link as CTAs, a top nav bar with the brand, and a footer credit line. All page text sits in an HTML chrome overlay above the canvas (canvas pointer-events:none, chrome interactive elements pointer-events:auto). Inside the 3D scene itself keep text out - no readable words on signs or objects, abstract shapes only. Keep the copy short and purposeful: what this site is FOR, and one clear next action.SKY AND STARS- Deep indigo-to-black night sky; dense crisp starfield with varied magnitudes, a faint milky-way band, and the occasional slow meteor that streaks and fades.- Thin high cloud haze that catches a hint of aurora color — kept subtle so the aurora stays the star.THE AURORA (the hero — domain-warped light ribbons)- Multiple overlapping curtains of aurora light: tall vertical drapes that fold and ripple along the horizon, each curtain following its own slow domain-warped noise path so they never move in sync.- Physically inspired color layering, the way real aurora photos look: the dominant green band (oxygen emission, ~100 km up) as the body of each curtain; a rare crimson-red glow at the very top of the tallest curtains; and a delicate pink-violet fringe along the ragged bottom edge of the drape (nitrogen emission). Colors blend smoothly — no hard stripes.- The curtains are semi-transparent additive light: they brighten where folds overlap and thin out to wisps at ragged edges. A gentle vertical shimmer runs inside each curtain; the whole formation slowly advances across the sky over minutes, not seconds.- Implement as layered shaders (domain-warped noise ribbons + fbm) on tall additive-blended curtain planes — the technique used by polished aurora scenes, not a scrolling gradient texture.SNOW RIDGE AND ICE- A foreground snow ridge with wind-carved drifts and sastrugi, a few exposed dark rocks breaking through the crust, and a frozen pond / ice slab in the mid-ground with a glassy sheen.- Snow material: cool blue-white base, soft subsurface feel, fine sparkle glints that twinkle as the view angle changes (cheap sparkle noise keyed to view + light).- The snow and ice catch the aurora: a soft green-violet bounce light shifts across the drifts as the curtains brighten and move overhead; the frozen pond mirrors a blurred smear of the brightest curtain.- Distant mountain silhouettes as low-contrast layered planes against the sky for depth.A SMALL HUMAN TOUCH (scale anchor)- A tiny warm-lit cabin at the mid-distance on the ridge: one small window glowing warm amber, a thin chimney plume that rises, bends on the wind, and dissolves. Its warm light pools on the nearby snow — a cozy counterpoint to the cold sky.LIGHT AND CAMERA- Moonlight is faint and cool from behind the camera; the aurora is the event, gently tinting everything.- Slow cinematic drift: a gentle pan across the ridge with a subtle breathing dolly. Wide framing — aurora fills the upper two-thirds, ridge anchors the lower third.MOTION AND INTERACTION- Pointer parallax: moving the pointer sways the camera a few degrees; on touch, drag does the same.- Pointer proximity \"stirs\" the aurora: when the cursor nears the sky region, the nearest curtain brightens and ripples a little more lively, then relaxes — subtle and magical, not a spotlight.- Occasional meteor streaks across the sky, every so often, with a faint trail.- prefers-reduced-motion: keep the full composition and slow curtain shimmer; stop camera drift and meteors.PERFORMANCE- Clamp devicePixelRatio <= 2; curtain/shader cost scales down on narrow viewports; handle resize; no horizontal scroll at 390px; pointer and touch input work; zero console errors and warnings.",
+      "thumb": "assets/thumbs/aurora-ridge.webp"
+    },
+    {
+      "id": "neon-alley",
+      "date": "2026-10-18",
+      "title": "Neon Alley",
+      "category": "3D",
+      "tier": "free",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Creative",
+        "Gaming",
+        "Cyberpunk"
+      ],
+      "demo": "demos/neon-alley/",
+      "accent": "#ff3ec8",
+      "blurb": "A rain-slicked cyberpunk alley at night — dense neon signage in strict pink/cyan palette, heavy rain streaking down, puddles mirroring the glow with live ripple shaders. Click a puddle for a neon-flare ripple. Fully procedural, pure atmosphere.",
+      "prompt": "Neon AlleyCreate from scratch a fully interactive 3D scene of a RAIN-SLICKED CYBERPUNK ALLEY at night: a narrow street canyon between stacked buildings, dense neon signage, heavy rain streaking down, puddles on the asphalt mirroring the glow. Cinematic and stylized — premium cyberpunk mood, not a game level. Start from a blank page; do not reuse any previous project.DELIVERY- One final standalone .html file that opens directly in a desktop browser (double-click, file://) with no internet connection. Bundle the 3D library (e.g. three.js) and all assets inline; generate textures procedurally.- The PAGE must be a complete mini-site, not a bare canvas: html lang=en, a non-empty title, a meta name=description (10+ chars), one h1 hero headline, at least one button and one real anchor link as CTAs, a top nav bar with the brand, and a footer credit line. All page text sits in an HTML chrome overlay above the canvas (canvas pointer-events:none, chrome interactive elements pointer-events:auto). Inside the 3D scene itself keep text out - no readable words on signs or objects, abstract shapes only. Keep the copy short and purposeful: what this site is FOR, and one clear next action. Neon signs may carry abstract glyph shapes / stylized logomarks only — never readable words.COLOR DISCIPLINE (the soul of the shot)- Strict palette: hot magenta-pink, electric cyan, and a sparing acid-yellow, floating on a deep blue-black world. No other hues — no green, no orange, no red except a rare single accent sign. The restraint is what makes it read premium instead of toy-store neon.- Deep blue-black is the base: sky, building mass, asphalt. The neon is the only saturated light.STREET AND BUILDINGS (a canyon, not a box)- A narrow alley receding to a hazy vanishing point: stacked modular facades on both sides — balconies, AC units, cable bundles, awnings, pipes, fire escapes — silhouetted hard against the glow.- Wet asphalt with a visible crown and gutter; scattered debris (crates, a tipped bin, loose cables) breaking the ground plane.- Volumetric haze / steam: vents breathe slow plumes that catch the neon color; the distant end of the alley dissolves into fog.NEON SIGNS (the light sources, procedurally drawn)- Many signs: vertical kanji-style abstract glyph strips, boxed signs, tube outlines, marquee dots, logo emblems — all drawn procedurally onto canvases (shapes, strokes, glowing borders — abstract marks only, never readable text).- Each sign is bound to its own colored point light so the wall behind it and the puddle below receive that exact hue.- Healthy dysfunction: a few signs buzz and flicker on their own random cadence; one or two are dead-dark; one big sign occasionally sputters back to life. A couple of slow pink↔cyan color-cycle signs keep the frame alive.- Pooled dynamic lights only — a fixed small budget of real lights recycled across the brightest signs; everything else fakes its glow with emissive + baked vertex tint so performance stays clean.PUDDLES AND RAIN (the wet soul)- Several irregular puddle shapes in the asphalt, each a live shader: ripples expanding from raindrop impacts (staggered timing), with the neon signage smeared and swirling inside the reflection (ripple normal-distorts the reflected color; neon swirls as rings pass through).- A gentle continuous rain: thousands of instanced thin streaks falling with a slight wind slant, catching neon as they pass lit zones — brighter streaks near signs, faint ones in shadow. Streak length reads as motion, not dots.- Splash micro-bursts where streaks hit puddles, timed with the ripple shader.- Rain intensity breathes slowly: heavier for a while, easing to a drizzle, then building again.LIGHT AND CAMERA- The neon is the only real light; a cool ambient blue-black fill keeps building mass readable.- Slow cinematic drift down the alley (a few degrees of sway, gentle dolly); wide framing with the vanishing point slightly off-center (rule of thirds).MOTION AND INTERACTION- Pointer parallax: the camera sways a few degrees; on touch, drag does the same.- Pointer movement: the nearest sign to the pointer axis does a brief satisfying pulse (brightens and its light kicks), as if your presence energizes it.- Click / tap a puddle: a strong ripple ring bursts from that point with a brief neon flare in the reflection, then settles.- prefers-reduced-motion: keep the full composition, slow sign flicker and reflections; stop camera drift and rain-motion (static streaks, no ripples).PERFORMANCE- Clamp devicePixelRatio <= 2; on narrow viewports scale pixel ratio down and thin the rain streak count (the technique that keeps heavy cyberpunk scenes smooth on mobile); handle resize; no horizontal scroll at 390px; pointer and touch input work; zero console errors and warnings.",
+      "thumb": "assets/thumbs/neon-alley.webp"
+    },
+    {
+      "id": "pulseops",
+      "date": "2026-10-18",
+      "title": "PulseOps",
       "category": "SaaS",
       "tier": "free",
       "tags": [
         "SaaS",
-        "2d",
-        "free"
+        "Landing Page",
+        "Interactive",
+        "Gradient",
+        "Dashboard"
       ],
-      "demo": "demos/glass-saas/index.html",
-      "accent": "linear-gradient(135deg,#3b82f6,#8b5cf6)",
-      "blurb": "Glassmorphism SaaS landing with a feature grid that lifts on hover.",
-      "prompt": "Build a single self-contained HTML file: a dark SaaS landing page using glassmorphism. Background is a deep navy (#0b1020) with two big blurred color blobs (blue + violet) drifting behind the content. Top nav bar is a floating glass pill (backdrop-filter blur, 1px white/10 border, radius 999px) with logo, 4 links, and a small CTA. Hero: centered headline, subtitle, one primary CTA, and a \"trusted by\" row of 5 greyed logo placeholders. Below, a 3-column feature grid where each card is glass (rgba white/5, blur, radius 20px) that lifts 6px with a brightened border on hover (0.3s ease). Add a stats strip. Pure HTML/CSS only, no external JS. Responsive: grid collapses to 1 column under 720px.",
-      "thumb": "assets/thumbs/glass-saas.webp"
+      "demo": "demos/pulseops/",
+      "accent": "#4cc9f0",
+      "blurb": "A live observability dashboard as the hero — streaming sparklines, pulsing metric cards, honest numbers, and one clear call to action. Zero deps, one HTML file.",
+      "prompt": "PulseOps Build a single-file SaaS landing page (one index.html, no build step) for an observability product. Dark base (#070b14), cyan accent (#4cc9f0), full-viewport canvas background drawing live streaming sparklines and pulsing metric cards (canvas 2D, no libraries). Above it: a nav with brand + 'Get a demo' CTA, an eyebrow ('Observability · Metrics · Traces · Logs'), an h1 ('See every signal. Fix it before users notice.'), a supporting paragraph, and a features grid (1.2M events/sec, <400ms p99 query, one-line agent, alert routing). Include a 'The brief' toggle panel (hidden by default, opens on button click) explaining the template's purpose, and a footer credit line. The background must answer the scroll with gentle parallax on the sparklines. Every claim gets a concrete number. Make it feel like a premium DevOps brand, not a generic startup page.",
+      "thumb": "assets/thumbs/pulseops.webp"
     },
     {
-      "id": "kinetic-type",
-      "date": "2026-09-26",
-      "title": "Kinetic Type",
-      "category": "Creative",
-      "tier": "free",
-      "tags": [
-        "Creative",
-        "2d",
-        "free"
-      ],
-      "demo": "demos/kinetic-type/index.html",
-      "accent": "linear-gradient(135deg,#f59e0b,#ef4444)",
-      "blurb": "Oversized editorial type that slides, masks and reveals on load.",
-      "prompt": "Build a single self-contained HTML file: a bold creative/agency page centered on kinetic typography. Use an extremely oversized display headline (clamp from 3rem to 9vw) in a heavy grotesque, set in ALL CAPS with tight negative letter-spacing. Animate each line to slide up from a clipping mask on load, staggered 90ms apart. Behind the type, a thin outlined (stroke-only) duplicate of the same words drifts horizontally on a slow infinite marquee for depth. Add a small top bar with a logo and a single CTA, and a bottom row of 3 project cards (image-placeholder gradient blocks) that scale slightly on hover. Pure HTML/CSS, no external JS. Keep it high-contrast (near-white type on #0a0a0f) and fully responsive.",
-      "thumb": "assets/thumbs/kinetic-type.webp"
-    },
-    {
-      "id": "editorial-portfolio",
-      "date": "2026-09-28",
-      "title": "Editorial Portfolio",
-      "category": "Portfolio",
-      "tier": "free",
-      "tags": [
-        "Portfolio",
-        "2d",
-        "free"
-      ],
-      "demo": "demos/editorial-portfolio/index.html",
-      "accent": "linear-gradient(135deg,#10b981,#3b82f6)",
-      "blurb": "Magazine-style portfolio index with an animated work list.",
-      "prompt": "Build a single self-contained HTML file: an editorial portfolio index for a designer. Light, paper-like background (#f4f2ee) with near-black text for a print feel. A top masthead with the designer's name and a one-line role. Then a \"Selected Work\" list of 6 rows; each row shows an index number, a large project title, a small year, and a category tag. On hover, a row's title nudges right, the number fades, and a colored preview swatch slides in from the right edge. Stagger a reveal of the rows on load (translateY + opacity). Add a short about paragraph and a footer with contact links. Pure HTML/CSS only. Serif or high-contrast grotesque for titles. Responsive: rows stack cleanly on mobile.",
-      "thumb": "assets/thumbs/editorial-portfolio.webp"
-    },
-    {
-      "id": "mesh-waves",
-      "date": "2026-09-30",
-      "title": "Mesh Waves",
-      "category": "3D",
-      "tier": "pro",
-      "tags": [
-        "3D",
-        "2.5d",
-        "pro"
-      ],
-      "demo": "demos/mesh-waves/index.html",
-      "accent": "linear-gradient(135deg,#06b6d4,#8b5cf6)",
-      "blurb": "A rippling particle mesh that reacts to the pointer. Real-time three.js.",
-      "thumb": "assets/thumbs/mesh-waves.webp"
-    },
-    {
-      "id": "prism-orbit",
-      "date": "2026-10-02",
-      "title": "Prism Orbit",
-      "category": "3D",
-      "tier": "pro",
-      "tags": [
-        "3D",
-        "2.5d",
-        "pro"
-      ],
-      "demo": "demos/prism-orbit/index.html",
-      "accent": "linear-gradient(135deg,#f472b6,#a78bfa)",
-      "blurb": "Low-poly prisms orbiting a glowing core. Clean 3D scene prompt.",
-      "thumb": "assets/thumbs/prism-orbit.webp"
-    },
-    {
-      "id": "scroll-reveal",
-      "date": "2026-10-04",
-      "title": "Scroll Reveal",
+      "id": "aether",
+      "date": "2026-10-18",
+      "title": "Aether",
       "category": "Landing Page",
-      "tier": "pro",
+      "tier": "free",
       "tags": [
         "Landing Page",
-        "2.5d",
-        "pro"
-      ],
-      "demo": "demos/scroll-reveal/index.html",
-      "accent": "linear-gradient(135deg,#22d3ee,#4ade80)",
-      "blurb": "A long landing page where every section reveals as you scroll.",
-      "thumb": "assets/thumbs/scroll-reveal.webp"
-    },
-    {
-      "id": "pricing-glow",
-      "date": "2026-10-06",
-      "title": "Pricing Glow",
-      "category": "SaaS",
-      "tier": "pro",
-      "tags": [
-        "SaaS",
-        "2.5d",
-        "pro"
-      ],
-      "demo": "demos/pricing-glow/index.html",
-      "accent": "linear-gradient(135deg,#fbbf24,#f472b6)",
-      "blurb": "A conversion-focused pricing table with a highlighted premium tier.",
-      "thumb": "assets/thumbs/pricing-glow.webp"
-    },
-    {
-      "id": "galaxy-particles",
-      "date": "2026-10-08",
-      "title": "Galaxy Particles",
-      "category": "3D",
-      "tier": "max",
-      "tags": [
-        "3D",
-        "3d",
-        "max"
-      ],
-      "demo": "demos/galaxy-particles/index.html",
-      "accent": "linear-gradient(135deg,#8b5cf6,#ec4899)",
-      "blurb": "100k-particle spiral galaxy with colour-graded arms. Premium scene.",
-      "thumb": "assets/thumbs/galaxy-particles.webp"
-    },
-    {
-      "id": "liquid-metal",
-      "date": "2026-10-10",
-      "title": "Liquid Iridescence",
-      "category": "Interactive",
-      "tier": "max",
-      "tags": [
         "Interactive",
-        "3d",
-        "max"
+        "Gradient",
+        "Editorial",
+        "Scroll"
       ],
-      "demo": "demos/liquid-metal/index.html",
-      "accent": "linear-gradient(135deg,#38bdf8,#a78bfa)",
-      "blurb": "An iridescent metaball blob driven by a custom GLSL shader.",
-      "thumb": "assets/thumbs/liquid-metal.webp"
+      "demo": "demos/aether/",
+      "accent": "#b388ff",
+      "blurb": "A scroll-driven product story — living generative gradient orbs answer your scroll, chapters fade in and lift, one action stays in reach the whole way down. Zero deps, one HTML file.",
+      "prompt": "Aether Build a single-file scroll-driven product story (one index.html, no build step) with three full-viewport chapters. Full-viewport canvas background draws 7 generative gradient orbs (radial gradients, additive blending, gentle drift) that shift vertically with scroll depth. Each chapter is a <section> that fades in and lifts via IntersectionObserver when it enters the viewport; chapters use distinct accent colors (violet #b388ff, teal #64ffda, coral #ff8a65). Above the canvas: a fixed nav with brand + 'Start a project' CTA, a 'The brief' toggle panel, and a footer credit. Chapter 1: eyebrow 'Chapter 01 — The Idea', h1 'A product story that scrolls like a film.', supporting copy, CTA buttons. Chapter 2: 'Chapter 02 — The Build', three-move feature grid. Chapter 3: 'Chapter 03 — The Proof', three concrete number cards (14 days, +38% dwell, 1 file), closing CTA. Keep copy short so the motion carries the narrative. Premium editorial feel, not a generic startup page.",
+      "thumb": "assets/thumbs/aether.webp"
     },
     {
-      "id": "city-flyover",
-      "date": "2026-10-12",
-      "title": "City Flyover",
-      "category": "3D",
-      "tier": "max",
-      "tags": [
-        "3D",
-        "3d",
-        "max"
-      ],
-      "demo": "demos/city-flyover/index.html",
-      "accent": "linear-gradient(135deg,#34d399,#22d3ee)",
-      "blurb": "A procedural low-poly city with a cinematic camera flyover.",
-      "thumb": "assets/thumbs/city-flyover.webp"
-    },
-    {
-      "id": "terrain-hike",
-      "date": "2026-10-14",
-      "title": "Terrain Hike",
-      "category": "3D",
-      "tier": "max",
-      "tags": [
-        "3D",
-        "3d",
-        "max"
-      ],
-      "demo": "demos/terrain-hike/index.html",
-      "accent": "linear-gradient(135deg,#a3e635,#14b8a6)",
-      "blurb": "Procedural fog-lit terrain with a slow first-person drift.",
-      "thumb": "assets/thumbs/terrain-hike.webp"
-    },
-    {
-      "id": "voxel-frontier",
-      "tier": "free",
-      "category": "Gaming",
-      "title": "Voxel Frontier",
-      "tags": [
-        "Gaming",
-        "2d",
-        "free"
-      ],
-      "accent": "linear-gradient(135deg,#4ade80,#0ea5e9)",
-      "blurb": "Blocky voxel terrain hero - floating island, drifting clouds, retro-game energy.",
-      "demo": "demos/voxel-frontier/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/voxel-frontier.webp",
-      "prompt": "Build a single self-contained HTML file: a full-viewport hero scene of a blocky voxel landscape inspired by sandbox games, using ONLY CSS 3D transforms and HTML divs (no images, no WebGL). Construct one floating grass island from ~40 cube divs (each cube = 6 faces via transform-style:preserve-3d, grass-green top face, dirt-brown sides), tilted 55deg toward the viewer like an orthographic game camera. Add 3 smaller floating islands at different depths, 4 rounded-rect white clouds drifting on independent 30s linear loops, and a sky that gradients from noon blue to sunset orange near the horizon. A single tiny blocky tree (trunk + 3 green cubes) sits on the main island. Overlay: uppercase letterspaced tag, bold headline \"Build your world\", muted subtitle, two pill CTAs. Keep every animation under 8% CPU: transform/opacity only. Dark vignette at edges for focus."
-    },
-    {
-      "id": "waifu-lofi-room",
-      "tier": "free",
-      "category": "Anime",
-      "title": "Lofi Study Room",
-      "tags": [
-        "Anime",
-        "2d",
-        "free"
-      ],
-      "accent": "linear-gradient(135deg,#f9a8d4,#c4b5fd)",
-      "blurb": "Cozy lofi study-room mood - warm lamp, rain window, soft anime palette.",
-      "demo": "demos/waifu-lofi-room/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/waifu-lofi-room.webp",
-      "prompt": "Build a single self-contained HTML file: a full-viewport lofi study-room hero in a soft anime aesthetic, pure CSS+HTML (no images, no WebGL). Scene: warm dusk room — a large rain-streaked window on the right with slow sliding droplet divs, a desk lamp casting a peach radial glow, a steaming mug (3 rising semi-transparent steam divs on 4s loops), a silhouette of a girl with shoulder-length hair sitting at the desk drawn as ONE smooth SVG path filled #1e1b2e (no facial features — silhouette only, this is the 2D-smoothing style: everything rounded, nothing sharp), a floating playlist card UI in the corner, potted plant with 2 leaves that sway 3deg on 6s loops. Palette: cream #fef3c7, peach #fdba74, lavender #c4b5fd, deep ink #1e1b2e. Add TV-scanline overlay at 3% opacity and gentle 0.5% zoom-breath on the whole scene (10s loop). Overlay copy: tag \"Lofi x Anime\", headline \"Study mode: ON\", muted subtitle, one pill CTA. All animations transform/opacity only."
-    },
-    {
-      "id": "cel-shaded-hero",
-      "tier": "pro",
-      "category": "Anime",
-      "title": "Cel-Shaded Hero",
-      "tags": [
-        "Anime",
-        "2.5d",
-        "pro"
-      ],
-      "accent": "linear-gradient(135deg,#f43f5e,#f59e0b)",
-      "blurb": "Shonen-style hero bust - hard two-tone cel shadows, halftone dots, speed lines.",
-      "demo": "demos/cel-shaded-hero/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/cel-shaded-hero.webp",
-      "prompt": ""
-    },
-    {
-      "id": "web-slinger-noir",
-      "tier": "pro",
+      "id": "robot-foundry",
+      "date": "2026-10-18",
+      "title": "Robot Foundry",
       "category": "Creative",
-      "title": "Web Slinger Noir",
+      "tier": "free",
       "tags": [
         "Creative",
-        "2.5d",
-        "pro"
+        "Interactive",
+        "Toy",
+        "Generative",
+        "Free"
       ],
-      "accent": "linear-gradient(135deg,#ef4444,#1e3a8a)",
-      "blurb": "Masked acrobat swinging over a neon noir skyline - parallax on mouse move.",
-      "demo": "demos/web-slinger-noir/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/web-slinger-noir.webp",
-      "prompt": ""
+      "demo": "demos/robot-foundry/",
+      "accent": "#ffd166",
+      "blurb": "A free generative toy — procedural robot heads drawn from a seed on canvas, one-click randomize, SVG download, shareable seed code. A lead-magnet free template.",
+      "prompt": "Robot Foundry Build a single-file generative robot-head toy (one index.html, no build step) as a free-tier lead magnet. Dark base (#0a0d12), three fixed accent colors (amber #ffd166, cyan #4cc9f0, pink #f06292). Full-viewport canvas draws a procedurally generated robot head from a numeric seed: rounded/square/hexagonal head shape, 2-4 antenna variants, four eye styles (visor bar, twin dots, hollow rounds, thin bar), four mouth styles (grille with pink slots, smile arc, straight line, none), optional side ear panels, and a slow scan-line sweep. Every part drawn from a seeded PRNG (mulberry32) so the same seed reproduces the same face. Above the canvas: a nav with brand + 'Download SVG' CTA, an eyebrow ('Free generative toy · procedural · no assets'), an h1 ('Forge a robot head. Every seed is a new face.'), a seed-code display line, 'Randomize' / 'Download SVG' / 'The brief' buttons, a three-card feature grid (Procedural, SVG export, Shareable), a hidden 'The brief' toggle panel, and a footer credit. The SVG export must be a valid standalone vector file that scales. Keep it playful but premium — a toy that makes people smile and share the seed code.",
+      "thumb": "assets/thumbs/robot-foundry.webp"
     },
     {
-      "id": "samurai-slash",
+      "id": "nexus",
+      "date": "2026-10-18",
+      "title": "NEXUS One",
+      "category": "3D",
+      "tier": "max",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Product",
+        "Landing Page",
+        "model-viewer"
+      ],
+      "demo": "demos/nexus/",
+      "accent": "#8b5cf6",
+      "blurb": "A premium AR-headset product landing page with a live 3D hero — the visor tilts toward your cursor, click to spin it 360°. Glassmorphism nav, fluid type, scroll-reveal features. One HTML file + model-viewer + a local GLB.",
+      "thumb": "assets/thumbs/nexus.webp"
+    },
+    {
+      "id": "firefly-meadow",
+      "date": "2026-10-18",
+      "title": "Firefly Meadow",
+      "category": "3D",
       "tier": "pro",
-      "category": "Creative",
-      "title": "Samurai Slash",
-      "tags": [
-        "Creative",
-        "2.5d",
-        "pro"
-      ],
-      "accent": "linear-gradient(135deg,#e11d48,#0f172a)",
-      "blurb": "One frozen frame of a katana slash - speed lines, impact flash, drifting petals.",
-      "demo": "demos/samurai-slash/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/samurai-slash.webp",
-      "prompt": ""
-    },
-    {
-      "id": "mecha-hangar",
-      "tier": "max",
-      "category": "3D",
-      "title": "Mecha Hangar",
       "tags": [
         "3D",
-        "3d",
-        "max"
+        "Interactive"
       ],
-      "accent": "linear-gradient(135deg,#22d3ee,#a855f7)",
-      "blurb": "Giant mecha silhouette in a neon hangar - 3D depth + 2D cel outline combo.",
-      "demo": "demos/mecha-hangar/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/mecha-hangar.webp",
-      "prompt": ""
-    },
-    {
-      "id": "ki-aura",
-      "tier": "max",
-      "category": "3D",
-      "title": "Ki Aura Burst",
-      "tags": [
-        "3D",
-        "3d",
-        "max"
-      ],
-      "accent": "linear-gradient(135deg,#facc15,#f97316)",
-      "blurb": "Energy warrior powering up - rising ki particles, lightning arcs, aura flame.",
-      "demo": "demos/ki-aura/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/ki-aura.webp",
-      "prompt": ""
-    },
-    {
-      "id": "gothic-mage",
-      "tier": "max",
-      "category": "3D",
-      "title": "Gothic Mage Circle",
-      "tags": [
-        "3D",
-        "3d",
-        "max"
-      ],
-      "accent": "linear-gradient(135deg,#8b5cf6,#1e1b4b)",
-      "blurb": "Occult magic circle with drifting runes - dark fantasy hero, candle light.",
-      "demo": "demos/gothic-mage/index.html",
-      "date": "2026-10-16",
-      "thumb": "assets/thumbs/gothic-mage.webp",
-      "prompt": ""
+      "demo": "demos/firefly-meadow/",
+      "accent": "#8b5cf6",
+      "blurb": "Firefly Meadow Build a single-file Three.js page: a twilight meadow alive with fireflies. Tall grass sways in a gentle breeze, wildflowers d...",
+      "thumb": "assets/thumbs/firefly-meadow.png"
     }
   ]
 }
-

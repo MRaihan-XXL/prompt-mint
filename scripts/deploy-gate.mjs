@@ -7,6 +7,7 @@ import { chromium } from "playwright";
 import { createServer } from "node:http";
 import { readFile, mkdir } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { jsSyntaxCheck } from "./lib-js-syntax.mjs";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 const OUT = join(ROOT, "eval-shots");
@@ -63,6 +64,10 @@ for (const t of items) {
     if (!/<html[^>]*\slang=/.test(html)) miss.push("lang");
     if (miss.length) fail(`${t.id}: BUKAN SITUS — hilang: ${miss.join(", ")}`);
     else pass(`${t.id}: site-ness ok (title+desc+h1+cta+lang)`);
+    // JS syntax check (shared lib; bukti: firefly-meadow lolos site-ness tapi scene hitam)
+    const jsErrs = jsSyntaxCheck(html);
+    if (jsErrs.length) fail(`${t.id}: JS SYNTAX ERROR — ${jsErrs[0]}`);
+    else pass(`${t.id}: js syntax ok`);
     // KIBLAT bar: wajib interaction kit (reticle cursor + magnetic buttons + reveal)
     const kitMiss = [];
     if (!html.includes("js/kit/kit.css")) kitMiss.push("kit.css");
@@ -70,6 +75,16 @@ for (const t of items) {
     if (!/<button[^>]*class="[^"]*btn/i.test(html) && !/class="btn/i.test(html)) kitMiss.push("btn");
     if (kitMiss.length) fail(`${t.id}: KIBLAT BAR — kit hilang: ${kitMiss.join(", ")}`);
     else pass(`${t.id}: kiblat kit ok (reticle+magnetic+reveal)`);
+    // Tier feature contract (spec pemilik round-7): pro=max pengubah tampilan (data-dc);
+    // free dilarang. Legacy 4 di-exempt — dirakit sebelum kontrak ada (retrofit: lihat MEMO §L).
+    const LEGACY_NO_DC = new Set(["japan-island", "ocean-shallows", "ghost-pirate-ship", "nexus"]);
+    if (!LEGACY_NO_DC.has(t.id)) {
+      const dcCount = (html.match(/\sdata-dc=/g) || []).length;
+      const dcNeed = t.tier === "max" ? 4 : t.tier === "pro" ? 2 : 0;
+      if (dcCount < dcNeed) fail(`${t.id}: tier ${t.tier} — display-changers ${dcCount} < ${dcNeed} (wajib data-dc)`);
+      else if (t.tier === "free" && dcCount > 0) fail(`${t.id}: free tier tidak boleh punya display-changers (${dcCount})`);
+      else pass(`${t.id}: tier feature ok (data-dc=${dcCount}, butuh ${dcNeed})`);
+    } else pass(`${t.id}: legacy exempt (tanpa display-changers)`);
   } catch (e) {
     fail(`${t.id}: baca demo gagal: ${e.message}`);
   }

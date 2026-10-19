@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PulseOps — live observability for modern stacks</title>
+<meta name="description" content="PulseOps — a template for SaaS, DevOps and infrastructure brands: a live streaming dashboard hero, honest numbers, and one clear call to action.">
+<meta name="color-scheme" content="dark">
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{background:#070b14;color:#e6edf7;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%}
+canvas#dash{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.9}
+.ui{--acc:#4cc9f0;--acc-ink:#031018;position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;pointer-events:none}
+.ui a,.ui button{pointer-events:auto}
+.nav{display:flex;align-items:center;gap:12px;padding:16px 22px}
+.brand{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-weight:800;font-size:13px;letter-spacing:.16em;text-transform:uppercase}
+.brand i{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc)}
+.navr{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{border:0;border-radius:9px;padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
+.btn.primary{background:var(--acc);color:var(--acc-ink)}
+.btn.ghost{background:rgba(10,12,18,.4);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
+.hero{padding:48px 22px 0;max-width:720px}
+.eyebrow{margin:0 0 14px;font-size:10.5px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
+h1{margin:0 0 16px;font-size:clamp(32px,5vw,58px);line-height:1.04;font-weight:850;letter-spacing:-.015em}
+h1 em{font-style:normal;color:var(--acc)}
+.sub{margin:0 0 22px;font-size:15px;line-height:1.6;opacity:.85;max-width:480px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px}
+.feats{display:flex;gap:10px;flex-wrap:wrap;margin:0 22px 28px}
+.f{background:rgba(8,10,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px);flex:1;min-width:160px}
+.f b{display:block;font-size:12.5px;letter-spacing:.03em}
+.f span{display:block;margin-top:4px;font-size:11px;line-height:1.45;opacity:.62}
+.foot{margin-top:auto;padding:14px 22px;display:flex;justify-content:space-between;gap:10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.55}
+.panel{position:fixed;right:22px;top:64px;width:min(320px,86vw);background:rgba(8,10,15,.8);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:18px;backdrop-filter:blur(12px);z-index:10;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.panel h2{margin:0 0 8px;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.panel p{margin:0 0 10px;font-size:12px;line-height:1.6;opacity:.8}
+.panel .pbtns{display:flex;gap:8px;margin-top:12px}
+.panel .x{position:absolute;top:10px;right:12px;background:none;border:0;color:#fff;opacity:.6;font-size:16px;cursor:pointer;font-family:inherit}
+@media (max-width:700px){.feats .f:nth-child(n+3){display:none}.foot span:last-child{display:none}}
+@media (max-width:700px){.nav{padding:14px 16px;gap:8px}.brand{font-size:11px;letter-spacing:.08em;white-space:nowrap}.btn{padding:9px 11px;font-size:11.5px;white-space:nowrap}}
+</style>
+  <link rel="stylesheet" href="../../js/kit/kit.css">
+</head>
+<body>
+<canvas id="dash" role="img" aria-label="Live streaming observability dashboard background: moving sparklines, metrics and status dots"></canvas>
+<div class="ui">
+  <div class="nav">
+    <a class="brand" href="#"><i></i>PulseOps</a>
+    <div class="navr">
+      <button class="btn ghost" type="button" data-brief>The brief</button>
+      <button class="btn primary" type="button" data-brief>Get a demo</button>
+    </div>
+  </div>
+  <div class="hero">
+    <p class="eyebrow">Observability · Metrics · Traces · Logs</p>
+    <h1>See every signal.<br><em>Fix it before users notice.</em></h1>
+    <p class="sub">PulseOps streams metrics, traces and logs into one live dashboard — so your team spots the regression in seconds, not after the Slack thread starts.</p>
+    <div class="btns">
+      <button class="btn primary" type="button" data-brief>Get a demo</button>
+      <button class="btn ghost" type="button" data-brief>Read the brief</button>
+    </div>
+  </div>
+  <div class="feats">
+    <div class="f"><b>1.2M events/sec</b><span>Ingest without sampling loss</span></div>
+    <div class="f"><b>&lt;400ms p99 query</b><span>Across a 30-day window</span></div>
+    <div class="f"><b>One-line agent</b><span>Drop-in, auto-discovers services</span></div>
+    <div class="f"><b>Alert routing</b><span>PagerDuty, Slack, webhooks</span></div>
+  </div>
+  <aside class="panel" id="brief" hidden aria-label="About this template">
+    <button class="x" id="briefClose" type="button" aria-label="Close">×</button>
+    <h2>The brief</h2>
+    <p>A template for SaaS, DevOps and infrastructure brands: a live streaming dashboard as the hero, honest numbers as proof, and one obvious next step — request a demo.</p>
+    <p>The background canvas draws real moving sparklines and status pulses; swap the copy for your own and the proof stays alive.</p>
+    <div class="pbtns"><button class="btn primary" type="button" data-copy="hello@pulseops.dev">Copy email</button></div>
+  </aside>
+  <div class="foot"><span>Live streaming demo background · no data collected</span><span>PulseOps — a DepthGlow template</span></div>
+</div>
+<script>
+(function(){var p=document.getElementById('brief');document.querySelectorAll('[data-brief]').forEach(function(b){b.addEventListener('click',function(){p.hidden=!p.hidden;});});document.getElementById('briefClose').addEventListener('click',function(){p.hidden=true;});
+document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){var t=b.getAttribute('data-copy'),o=b.textContent;
+function ok(){b.textContent='Copied ✓';setTimeout(function(){b.textContent=o;},1400);}
+function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){}ta.remove();}
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,fb);}else fb();});});})();
+
+// ---- live dashboard background (canvas 2D, no deps) ----
+(function(){
+  var c=document.getElementById('dash'),x=c.getContext('2d'),W,H,t=0;
+  var series=[],cards=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;build();}
+  var pool=[
+    {l:'p99 latency',v:'382ms',d:'-12%',ok:true,up:true},
+    {l:'error rate',v:'0.03%',d:'-0.4%',ok:true,up:true},
+    {l:'ingest',v:'1.2M/s',d:'+8%',ok:true,up:true},
+    {l:'uptime',v:'99.98%',d:'+0.01',ok:true,up:true},
+    {l:'queue depth',v:'14',d:'+3',ok:false,up:false},
+    {l:'cpu sat.',v:'61%',d:'-4%',ok:true,up:true}
+  ];
+  function build(){
+    series=[];var n=6;
+    for(var i=0;i<n;i++){var pts=[],v=Math.random();for(var j=0;j<80;j++){v+=(0.5-v)*.05+(Math.random()-.5)*.16;pts.push(v);}series.push({pts:pts,acc:.14+Math.random()*.1,sp:.002+Math.random()*.004});}
+    cards=[];var narrow=W<700;
+    var cols=narrow?[.055,.53]:[.555,.785],rows=narrow?[.60,.75]:[.10,.255,.41];
+    var cw=narrow?.41:.2,ch=narrow?.13:.135;
+    var order=narrow?[0,1,4,5]:[0,1,2,3,4,5];
+    for(var k=0;k<order.length;k++){var p=pool[order[k]];cards.push({x:cols[k%2],y:rows[(k/2)|0],w:cw,h:ch,ph:k*1.1,ok:p.ok,up:p.up,l:p.l,v:p.v,d:p.d});}
+  }
+  function draw(){
+    t+=.016;x.clearRect(0,0,W,H);
+    // deep gradient base
+    var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0f1c');g.addColorStop(1,'#05070d');x.fillStyle=g;x.fillRect(0,0,W,H);
+    // faint grid
+    x.strokeStyle='rgba(76,201,240,.05)';x.lineWidth=1;
+    for(var gx=0;gx<W;gx+=48){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke();}
+    for(var gy=0;gy<H;gy+=48){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
+    // metric cards (right column)
+    for(var i=0;i<cards.length;i++){var c1=cards[i];var cx=c1.x*W,cy=c1.y*H,cw=c1.w*W,ch=c1.h*H;
+      var pulse=.5+.5*Math.sin(t*2+c1.ph);
+      x.fillStyle='rgba(13,19,33,.72)';roundRect(cx,cy,cw,ch,10);x.fill();
+      x.strokeStyle=c1.ok?'rgba(76,201,240,'+(.18+.28*pulse)+')':'rgba(255,90,90,.4)';x.lineWidth=1.5;x.stroke();
+      x.fillStyle=c1.ok?'rgba(76,201,240,.9)':'rgba(255,90,90,.9)';x.beginPath();x.arc(cx+11,cy+13,3,0,6.28);x.fill();
+      x.font='700 10px ui-sans-serif,system-ui,sans-serif';x.fillStyle='rgba(230,237,247,.6)';x.fillText(c1.l.toUpperCase(),cx+21,cy+17);
+      x.font='800 22px ui-sans-serif,system-ui,sans-serif';x.fillStyle=c1.ok?'rgba(230,237,247,.94)':'rgba(255,150,150,.94)';x.fillText(c1.v,cx+11,cy+ch-24);
+      x.font='700 10px ui-sans-serif,system-ui,sans-serif';x.fillStyle=c1.up?'rgba(76,240,180,.85)':'rgba(255,140,140,.85)';
+      x.fillText(c1.d+' 24h',cx+11,cy+ch-9);
+      // mini bar row under the label
+      x.fillStyle='rgba(230,237,247,.16)';for(var bi=0;bi<14;bi++){var bh=3+((i*7+bi*13)%9);x.fillRect(cx+11+bi*((cw-24)/14),cy+30,4,bh*.9);}
+    }
+    // sparklines (right half on desktop, lower band on mobile — hero text zone stays clean)
+    var narrow=W<700;
+    for(var s=0;s<series.length;s++){var S=series[s];
+      var prev=S.pts[S.pts.length-1];var nv=Math.min(.95,Math.max(.05,prev+(0.5-prev)*.04+(Math.random()-.5)*S.acc));
+      S.pts.push(nv);if(S.pts.length>80)S.pts.shift();
+      var y0=narrow?(H*.66+s*(H*.24/series.length)):(H*.12+s*(H*.54/series.length));
+      var amp=narrow?H*.028:H*.045,x0=narrow?W*.04:W*.46,xw=narrow?W*.92:W*.56;
+      x.beginPath();for(var j2=0;j2<S.pts.length;j2++){var px=x0+j2/(S.pts.length-1)*xw,py=y0+(1-S.pts[j2]*2)*amp;j2?x.lineTo(px,py):x.moveTo(px,py);}
+      var lg=x.createLinearGradient(0,y0-amp,0,y0+amp);lg.addColorStop(0,'rgba(76,201,240,.14)');lg.addColorStop(1,'rgba(76,201,240,0)');
+      x.strokeStyle='rgba(76,201,240,.4)';x.lineWidth=1.2;x.stroke();x.lineTo(x0+xw,y0+amp);x.lineTo(x0,y0+amp);x.closePath();x.fillStyle=lg;x.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  function roundRect(a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+  addEventListener('resize',resize);resize();draw();
+})();
+</script>
+  <script src="../../js/kit/motion.js"></script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Molten Forge</title>
+<meta name="description" content="Molten Forge: an interactive 3D volcanic caldera at night — churning lava lake, lava flows, embers and smoke. Click the crater to erupt.">
+<meta name="theme-color" content="#060203">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#060203;overscroll-behavior:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none;cursor:grab}
+#gl.hot{cursor:pointer}
+#gl.drag{cursor:grabbing}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="Interactive 3D volcanic caldera: click or tap the crater to trigger an eruption" role="img" tabindex="0"></canvas>
+
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+/* ───────────────────────── setup ───────────────────────── */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('gl');
+const isNarrow = () => innerWidth < 700;
+const PR = () => Math.min(devicePixelRatio || 1, isNarrow() ? 1.5 : 2);
+const lite = isNarrow(); // particle budgets scale down on narrow viewports
+const SPEED = reduce ? 0.4 : 1; // reduced-motion keeps a slow lava scroll
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+renderer.setPixelRatio(PR());
+renderer.setSize(innerWidth, innerHeight, false);
+renderer.setClearColor(0x060203, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.92;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 0.5, 1800);
+
+/* ───────────────────────── CPU noise + terrain ───────────────────────── */
+const hs = (x, y) => { const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); };
+function vn(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+  const a = hs(ix, iy), b = hs(ix + 1, iy), c = hs(ix, iy + 1), d = hs(ix + 1, iy + 1);
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+}
+const fbm = (x, y, o = 5) => { let s = 0, a = 0.5; for (let i = 0; i < o; i++) { s += a * vn(x, y); x = x * 2.03 + 11.7; y = y * 2.03 + 4.3; a *= 0.5; } return s; };
+const ridge = (x, y, o = 4) => { let s = 0, a = 0.5; for (let i = 0; i < o; i++) { s += a * (1 - Math.abs(vn(x, y) * 2 - 1)); x = x * 2.03 + 11.7; y = y * 2.03 + 4.3; a *= 0.5; } return s; };
+const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const mix = (a, b, t) => a + (b - a) * t;
+const rnd = (a = 0, b = 1) => a + Math.random() * (b - a);
+const TAU = Math.PI * 2;
+
+const HALF = 110;          // terrain half-size (world units)
+const FLOOR = 11.2;        // caldera floor
+const LAKE_Y = 11.75;      // lava lake surface
+const LAKE_R = 6.9;
+const VENT = new THREE.Vector3(0, LAKE_Y, 0);
+
+/* lava flows: each winds down its own gully (polar path r → angle) */
+const FLOWS = [
+  { a0: 1.00, wob: 0.075, ph: 0.6, drift: 0.14,  speed: 0.95, w0: 1.0, w1: 2.1, end: 60 },
+  { a0: 1.64, wob: 0.060, ph: 2.3, drift: -0.05, speed: 1.40, w0: 1.1, w1: 2.3, end: 64 },
+  { a0: 2.32, wob: 0.080, ph: 4.1, drift: -0.15, speed: 0.72, w0: 0.9, w1: 1.9, end: 56 },
+];
+const R0 = 6.0; // flows start inside the lake
+const fAng = (f, r) => f.a0 + f.wob * Math.sin(r * 0.19 + f.ph) + f.drift * (Math.max(r, 9) - 9) / 40;
+const fHalfW = (f, r) => f.w0 + (f.w1 - f.w0) * ss(10, f.end, r) + 0.3 * Math.sin(r * 0.7 + f.ph);
+const wrapA = d => d - Math.round(d / TAU) * TAU;
+
+function H(x, z) {
+  const r = Math.hypot(x, z), a = Math.atan2(z, x), ca = Math.cos(a), sa = Math.sin(a);
+  // broad shield massif
+  let h = 18 * Math.pow(Math.max(0, 1 - r / 95), 1.6);
+  // radial gullies + buttresses (seamless angular noise)
+  const butt = fbm(ca * 3.2 + 5, sa * 3.2 + 2, 3);
+  const gul = Math.sin(a * 9 + butt * 6) * 0.5 + 0.5;
+  const flank = ss(11, 22, r) * ss(92, 45, r);
+  h += (gul * 2.8 - 1.4) * flank * (1 + r * 0.02);
+  h += (fbm(x * 0.07 + 3, z * 0.07 + 1, 4) - 0.5) * 5.5 * ss(9, 25, r) * ss(88, 50, r);
+  h += (ridge(x * 0.19, z * 0.19, 3) - 0.5) * 1.8 * ss(14, 30, r) * ss(90, 55, r);
+  // jagged caldera rim, lower on the camera side
+  const rimR = 10.5 + (fbm(ca * 2.4 + 9, sa * 2.4 + 1, 3) - 0.5) * 3.2;
+  const front = ss(-0.1, 0.9, sa);
+  const rim = Math.exp(-Math.pow((r - rimR) / 2.3, 2)) * (2.2 + 4.2 * ridge(ca * 3.5 + 20, sa * 3.5, 3)) * (1 - 0.6 * front);
+  h += rim;
+  // sunken caldera wall with cooled-lava ledges
+  if (r < rimR + 1) {
+    const hr = 18 * Math.pow(1 - rimR / 95, 1.6) + (2.2 + 2.1) * (1 - 0.6 * front);
+    const t = ss(5.4, rimR, r);
+    let wall = FLOOR + (hr - FLOOR) * Math.pow(t, 1.15);
+    const stair = Math.floor(wall * 0.8) / 0.8;
+    wall = wall * 0.72 + stair * 0.28 + (ridge(x * 0.5, z * 0.5, 3) - 0.5) * 1.3 * t;
+    wall += (fbm(x * 0.9, z * 0.9, 3) - 0.5) * 0.25 * (1 - t);
+    h = mix(h, wall, ss(rimR, rimR - 1.5, r));
+  }
+  // lava gullies: spill notch in the rim + trench down the flank
+  for (const f of FLOWS) {
+    const dd = r * wrapA(a - fAng(f, r));
+    const w = fHalfW(f, r);
+    const prof = Math.exp(-Math.pow(dd / (w * 1.35 + 0.6), 2)) * ss(5.2, 7.5, r);
+    const bed = Math.min(h - 1.1 * ss(rimR - 1, rimR + 4, r), LAKE_Y + 0.8 - 0.15 * Math.max(0, r - rimR));
+    h = mix(h, bed, prof);
+    h += 0.45 * Math.exp(-Math.pow((Math.abs(dd) - w * 1.7) / 0.7, 2)) * ss(rimR, rimR + 6, r); // levees
+  }
+  // foreground ridge of sharp aa-lava blocks
+  const fg = ss(22, 32, z) * ss(66, 48, z) * ss(85, 62, Math.abs(x));
+  h += fg * (Math.pow(ridge(x * 0.15 + 40, z * 0.15, 4), 2.2) * 17 - 2.2) + fg * (vn(x * 0.9, z * 0.9) - 0.5) * 1.6;
+  const edge = ss(HALF, HALF - 28, Math.max(Math.abs(x), Math.abs(z)));
+  return Math.max(0, h) * edge;
+}
+
+/* ───────────────────────── shared GLSL + uniforms ───────────────────────── */
+const U = { // shared by reference across every material
+  uTime: { value: 0 },     // visual time (slowed under reduced-motion)
+  uClock: { value: 0 },    // real seconds (eruption / bursts)
+  uErupt: { value: 0 },    // eruption envelope 0..1
+  uWave: { value: -100 },  // shockwave front (world units from vent)
+};
+const GL_PRE = `precision highp float;
+uniform float uTime,uClock,uErupt,uWave;`;
+const GL_NOISE = `
+float hash31(vec3 p){p=fract(p*0.3183099+.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float noise(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.0-2.0*f);
+ return mix(mix(mix(hash31(i),hash31(i+vec3(1,0,0)),f.x),mix(hash31(i+vec3(0,1,0)),hash31(i+vec3(1,1,0)),f.x),f.y),
+            mix(mix(hash31(i+vec3(0,0,1)),hash31(i+vec3(1,0,1)),f.x),mix(hash31(i+vec3(0,1,1)),hash31(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float fbm3(vec3 p){float a=.5,s=0.;for(int i=0;i<3;i++){s+=a*noise(p);p=p*2.03+vec3(17.1,3.7,9.2);a*=.5;}return s;}
+float fbm5(vec3 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*noise(p);p=p*2.03+vec3(17.1,3.7,9.2);a*=.5;}return s;}
+vec2 hash22(vec2 p){p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));return fract(sin(p)*43758.5453);}
+`;
+const GL_FOG = `
+vec3 fogColAt(vec3 dir){vec2 hz=normalize(dir.xz+1e-4);float lobe=pow(max(dot(hz,vec2(0.,-1.)),0.),3.);
+ return vec3(.115,.024,.013)*(.7+1.15*lobe)*(1.+uErupt*.6);}
+vec3 applyFog(vec3 col,vec3 wp){vec3 d=wp-cameraPosition;float f=1.-exp(-pow(length(d)*0.0055,1.6));return mix(col,fogColAt(d),f);}
+`;
+const GL_LAVA = `
+vec3 lavaRamp(float h){
+ vec3 c=mix(vec3(.02,.006,.005),vec3(.45,.032,.008),smoothstep(0.,.35,h));
+ c=mix(c,vec3(1.55,.32,.045),smoothstep(.3,.75,h));
+ return mix(c,vec3(2.4,1.2,.4),smoothstep(.7,1.25,h));}
+`;
+const mkMat = (o) => new THREE.ShaderMaterial(o);
+
+/* ───────────────────────── terrain ───────────────────────── */
+const SEG = lite ? 240 : 360;
+const tg = new THREE.PlaneGeometry(HALF * 2, HALF * 2, SEG, SEG);
+tg.rotateX(-Math.PI / 2);
+{
+  const p = tg.attributes.position, n = p.count, st = SEG + 1;
+  const hts = new Float32Array(n), cav = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const h = H(p.getX(i), p.getZ(i)); p.setY(i, h); hts[i] = h; }
+  for (let iy = 2; iy < st - 2; iy++) for (let ix = 2; ix < st - 2; ix++) {
+    const i = iy * st + ix;
+    cav[i] = hts[i] - 0.25 * (hts[i - 2] + hts[i + 2] + hts[i - 2 * st] + hts[i + 2 * st]);
+  }
+  tg.setAttribute('aCav', new THREE.BufferAttribute(cav, 1));
+  tg.computeVertexNormals();
+}
+
+/* glow map: lava proximity painted in world space → bleeds red onto rock */
+const flowPt = (f, r) => { const a = fAng(f, r); return [r * Math.cos(a), r * Math.sin(a)]; };
+const glowTex = (() => {
+  const S = 1024, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, S, S);
+  g.globalCompositeOperation = 'lighter'; g.lineCap = g.lineJoin = 'round';
+  const px = v => (v + HALF) / (HALF * 2) * S, k = S / (HALF * 2);
+  for (const f of FLOWS) {
+    for (const [wd, al] of [[15, .05], [10, .07], [6.5, .1], [4, .14], [2.4, .2]]) {
+      g.strokeStyle = `rgba(255,255,255,${al})`; g.lineWidth = wd * k;
+      g.beginPath();
+      for (let r = R0; r <= f.end; r += 1.5) { const [x, z] = flowPt(f, r); r === R0 ? g.moveTo(px(x), px(z)) : g.lineTo(px(x), px(z)); }
+      g.stroke();
+    }
+  }
+  const lg = g.createRadialGradient(px(0), px(0), 0, px(0), px(0), 30 * k);
+  lg.addColorStop(0, 'rgba(255,255,255,1)'); lg.addColorStop(.25, 'rgba(255,255,255,.7)'); lg.addColorStop(.6, 'rgba(255,255,255,.2)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = lg; g.beginPath(); g.arc(px(0), px(0), 30 * k, 0, TAU); g.fill();
+  const t = new THREE.CanvasTexture(c);
+  t.flipY = false; t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter;
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+})();
+
+// warm point lights along the flows (vent + 7) — evaluated inside the rock shader
+const LIGHTS = [new THREE.Vector4(0, LAKE_Y + 3, 0, 46)];
+for (const [fi, r] of [[0, 15], [0, 34], [1, 15], [1, 34], [2, 15], [2, 32], [1, 50]]) {
+  const [x, z] = flowPt(FLOWS[fi], r); LIGHTS.push(new THREE.Vector4(x, H(x, z) + 1.8, z, 15));
+}
+const LIGHT_BASE = LIGHTS.map(l => l.w);
+
+const terrainMat = mkMat({
+  uniforms: { ...U, uGlow: { value: glowTex }, uL: { value: LIGHTS } },
+  vertexShader: `attribute float aCav;varying vec3 vW;varying vec3 vN;varying float vCav;
+void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;vN=normal;vCav=aCav;gl_Position=projectionMatrix*viewMatrix*w;}`,
+  fragmentShader: GL_PRE + GL_NOISE + GL_FOG + `
+uniform sampler2D uGlow;uniform vec4 uL[8];
+varying vec3 vW;varying vec3 vN;varying float vCav;
+vec2 vor(vec2 p){vec2 i=floor(p),f=fract(p);float d1=8.,d2=8.;
+ for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 g=vec2(x,y);vec2 r=g+hash22(i+g)-f;float d=dot(r,r);
+  if(d<d1){d2=d1;d1=d;}else if(d<d2)d2=d;}
+ return vec2(sqrt(d1),sqrt(d2));}
+void main(){
+ vec3 V=normalize(cameraPosition-vW);
+ float n1=fbm3(vec3(vW.xz*.8,vW.y*.45));
+ float n2=noise(vec3(vW.xz*4.,vW.y*2.));
+ vec3 N=normalize(normalize(vN)+.32*vec3(n2-.5,0.,noise(vec3(vW.zx*4.,vW.y*2.+7.))-.5));
+ vec2 c=vor(vW.xz*.45+vW.y*.35);
+ float plate=smoothstep(0.,.14,c.y-c.x);                       // plate-like AO between basalt slabs
+ vec3 alb=mix(vec3(.010,.009,.012),vec3(.060,.052,.058),n1*.8+n2*.35)*(.35+.65*plate);
+ float ao=clamp(1.+vCav*1.3,.18,1.25);                         // crevices darker
+ vec3 lit=vec3(0.);
+ for(int i=0;i<8;i++){
+  vec3 d=uL[i].xyz-vW;float dist=length(d);vec3 L=d/dist;
+  float att=uL[i].w/(1.+dist*dist*.012+dist*.03);
+  float lam=clamp(dot(N,L)*.6+.4,0.,1.);lam*=lam;
+  float sp=pow(max(dot(N,normalize(L+V)),0.),26.);
+   lit+=vec3(1.,.34,.08)*att*(lam*alb*1.6+sp*.03*plate);
+ }
+ vec2 gu=(vW.xz+110.)/220.;float heat=texture2D(uGlow,gu).r;
+ float fl=.85+.15*noise(vec3(vW.xz*.12,uTime*.8));
+ vec3 bleed=vec3(1.,.2,.04)*(pow(heat,1.5)*.45+pow(heat,6.)*.35)*fl*(1.+uErupt*.9)*(.18+1.1*n1*plate)*(.65+.35*N.y);
+ vec3 Lc=normalize(vec3(-.3,.55,-1.));
+ float rim=pow(1.-max(dot(N,V),0.),3.)*max(dot(N,Lc)*.5+.5,0.);
+ vec3 col=alb*vec3(.5,.25,.25)*(.45+.55*N.y)*ao+lit*ao+bleed*.42*ao+vec3(.10,.13,.28)*rim*.32*(.4+plate);
+ gl_FragColor=vec4(applyFog(col,vW),1.);
+}`,
+});
+const terrain = new THREE.Mesh(tg, terrainMat);
+scene.add(terrain);
+
+// endless dark ground out to the horizon (same rock shader, fogged)
+const gg = new THREE.PlaneGeometry(1500, 1500); gg.rotateX(-Math.PI / 2);
+gg.setAttribute('aCav', new THREE.BufferAttribute(new Float32Array(4), 1));
+const ground = new THREE.Mesh(gg, terrainMat); ground.position.y = -0.06; scene.add(ground);
+
+/* ───────────────────────── sky + distant cones ───────────────────────── */
+const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), mkMat({
+  uniforms: { ...U }, side: THREE.BackSide, depthWrite: false, depthTest: false,
+  vertexShader: `varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*viewMatrix*(modelMatrix*vec4(position,1.));}`,
+  fragmentShader: GL_PRE + GL_NOISE + GL_FOG + `varying vec3 vD;
+void main(){
+ vec3 d=normalize(vD);float h=max(d.y,0.);
+ vec2 hz=normalize(d.xz+1e-4);float lobe=pow(max(dot(hz,vec2(0.,-1.)),0.),3.);
+ vec3 hor=fogColAt(d);
+ float k=smoothstep(0.,.5,h);
+ vec3 col=mix(hor,vec3(.016,.014,.019),pow(k,.5));              // charcoal zenith → bruised red horizon
+ vec2 cp=d.xz/(h+.22)*.9;
+ float c=fbm3(vec3(cp+vec2(uTime*.010,0.),uTime*.012));
+ float cm=smoothstep(.36,.82,c)*smoothstep(0.,.1,h)*smoothstep(.95,.2,h);
+ col+=vec3(.30,.06,.025)*cm*(.2+lobe*1.3)*(1.-k*.55)*(1.+uErupt*.7);   // ash cloud, lit from below by lava
+ gl_FragColor=vec4(col,1.);}`,
+}));
+sky.frustumCulled = false; sky.renderOrder = -10; scene.add(sky);
+
+const coneMat = mkMat({
+  uniforms: { ...U },
+  vertexShader: `varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
+  fragmentShader: GL_PRE + GL_FOG + `varying vec3 vW;
+void main(){vec3 col=vec3(.010,.006,.008)+vec3(.30,.06,.025)*smoothstep(26.,0.,vW.y)*.22;
+ gl_FragColor=vec4(applyFog(col,vW),1.);}`,
+});
+function addCone(x, z, h, R, seed) {
+  const pts = [];
+  for (let i = 0; i <= 14; i++) { const t = i / 14; pts.push(new THREE.Vector2(R * t + 0.001, h * Math.pow(1 - t, 1.9) * (i === 14 ? 0 : 1))); }
+  pts.push(new THREE.Vector2(R * 1.0 + 4, 0));
+  const g = new THREE.LatheGeometry(pts, 56);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const vx = p.getX(i), vz = p.getZ(i), a = Math.atan2(vz, vx);
+    const j = 1 + 0.28 * (fbm(Math.cos(a) * 2.2 + seed, Math.sin(a) * 2.2, 3) - 0.5) + 0.14 * (ridge(vx * 0.07 + seed, vz * 0.07, 3) - 0.5);
+    p.setXYZ(i, vx * j, p.getY(i) * (0.85 + 0.3 * (ridge(vx * 0.05 + seed * 2, vz * 0.05, 3))) , vz * j);
+  }
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, coneMat); m.position.set(x, 0, z); scene.add(m);
+}
+addCone(-100, -150, 24, 64, 1.3); addCone(115, -135, 19, 52, 7.1); addCone(-190, -40, 28, 72, 3.7);
+addCone(170, 0, 21, 56, 5.5); addCone(10, -230, 32, 80, 9.2); addCone(-60, -300, 26, 90, 2.2); addCone(-175, 90, 18, 50, 4.4);
+
+/* ───────────────────────── lava lake ───────────────────────── */
+const POP = new THREE.Vector4(0, LAKE_Y, 0, -100); // latest spark-pop: xyz origin, w clock time
+const lakeMat = mkMat({
+  uniforms: { ...U, uPop: { value: POP } },
+  vertexShader: `varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
+  fragmentShader: GL_PRE + GL_NOISE + GL_LAVA + `uniform vec4 uPop;varying vec3 vW;
+void main(){
+ vec2 lp=vW.xz;float rr=length(lp)/${LAKE_R.toFixed(2)};
+ float ang=uTime*.02;mat2 R=mat2(cos(ang),-sin(ang),sin(ang),cos(ang));
+ vec2 p=R*lp*.32+vec2(uTime*.05,uTime*.03);       // crust drifts + slowly rotates
+ float t=uTime*.06;                                 // time axis → plates regenerate, never tile
+ vec2 q=vec2(fbm3(vec3(p,t)),fbm3(vec3(p+5.2,t+1.3)));
+ float n=fbm5(vec3(p*1.3+q*2.,t*1.3));
+ float pl=fbm3(vec3(p*.7+q*2.4+3.1,t*.8+1.7));
+ float crust=smoothstep(.47,.58,pl)*(1.-uErupt*.9);  // dark cooling crust that tears apart
+ float crack=1.-smoothstep(0.,.045,abs(pl-.54));      // hotter magma shows in the tears
+ float heat=(.5+.5*n)*(1.-crust*.94)+crack*.6;
+ heat*=1.-smoothstep(.78,1.,rr)*.65;
+ float ring=exp(-pow((rr*${LAKE_R.toFixed(2)}-uWave)/1.4,2.));
+ float fl=exp(-dot(lp-uPop.xz,lp-uPop.xz)/5.)*exp(-(uClock-uPop.w)*4.)*step(0.,uClock-uPop.w);
+ heat+=uErupt*.75+ring*1.6+fl*1.1;
+ gl_FragColor=vec4(lavaRamp(heat)*(1.+uErupt*.4),1.);
+}`,
+});
+const lakeGeo = new THREE.CircleGeometry(LAKE_R, 72); lakeGeo.rotateX(-Math.PI / 2);
+const lake = new THREE.Mesh(lakeGeo, lakeMat); lake.position.copy(VENT); scene.add(lake);
+
+/* ───────────────────────── lava flows: emissive core + crust + additive glow sheet ───────────────────────── */
+function buildRibbon(f, wMul, yOff) {
+  const N = 230, K = 9, pts = [];
+  let s = 0, px = 0, pz = 0;
+  for (let i = 0; i < N; i++) {
+    const r = R0 + (f.end - R0) * i / (N - 1), [x, z] = flowPt(f, r);
+    if (i) s += Math.hypot(x - px, z - pz);
+    px = x; pz = z; pts.push({ x, z, s, r });
+  }
+  const pos = [], uv = [], idx = [];
+  for (let i = 0; i < N; i++) {
+    const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, N - 1)], p = pts[i];
+    const tx = b.x - a.x, tz = b.z - a.z, l = Math.hypot(tx, tz) || 1, nx = -tz / l, nz = tx / l;
+    const hw0 = fHalfW(f, p.r), hw = hw0 * wMul;
+    for (let k = 0; k < K; k++) {
+      const u = -1 + 2 * k / (K - 1), x = p.x + nx * u * hw, z = p.z + nz * u * hw;
+      pos.push(x, Math.max(H(x, z), p.r < 7.5 ? LAKE_Y : 0) + yOff, z);
+      uv.push(u, p.s, hw);
+    }
+    if (i < N - 1) for (let k = 0; k < K - 1; k++) { const q = i * K + k; idx.push(q, q + K, q + 1, q + 1, q + K, q + K + 1); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('aU', new THREE.Float32BufferAttribute(uv, 3));
+  g.setIndex(idx);
+  return { geo: g, len: s };
+}
+const FLOW_VS = `attribute vec3 aU;varying vec3 vU;varying vec3 vW;
+void main(){vU=aU;vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
+const flowFS = GL_PRE + GL_NOISE + GL_LAVA + `uniform float uSpeed,uLen;varying vec3 vU;varying vec3 vW;
+void main(){
+ float u=vU.x,s=vU.y,hw=vU.z,au=abs(u);
+ float t=uTime*.05;
+ vec2 p=vec2(u*hw*.55,s*.34-uTime*uSpeed*.34);      // scrolls downstream at this flow's own speed
+ vec2 q=vec2(fbm3(vec3(p*1.1,t)),fbm3(vec3(p*1.1+7.3,t+3.)));
+ float n=fbm3(vec3(p*1.5+q*1.7,t*1.5));
+ float cn=fbm3(vec3(p*.8+q*2.2+3.1,t+1.7));
+ float crust=smoothstep(.5,.62,cn);
+ float core=1.-pow(au,1.6);
+ float heat=core*(.55+.6*n);
+ heat*=1.-crust*(.55+.4*au);                          // darker crust wraps the core
+ heat+=(1.-smoothstep(0.,.05,abs(cn-.56)))*.55*core;
+ float th=noise(vec3(s*.5-uTime*uSpeed*.9,u*3.,t*8.));
+ heat+=exp(-pow((au-.84)/.07,2.))*smoothstep(.35,.8,th)*.9;   // molten threads crawl along the edges
+ heat*=1.-.45*smoothstep(0.,uLen,s);                           // cools downstream
+ float w=exp(-pow((s-(uWave-${R0.toFixed(1)}))/3.,2.));
+ heat+=w*1.5*(1.-au*.5)+uErupt*.35*core;
+ vec3 c=lavaRamp(heat);
+ float a=smoothstep(1.,.84,au)*(1.-smoothstep(uLen-4.,uLen,s))*smoothstep(0.,2.5,s);
+ gl_FragColor=vec4(c,a);
+}`;
+const glowFS = GL_PRE + GL_NOISE + `uniform float uSpeed,uLen;varying vec3 vU;varying vec3 vW;
+void main(){
+ float u=vU.x,s=vU.y;
+ float a=exp(-u*u*2.6)*(.6+.8*noise(vec3(s*.15-uTime*uSpeed*.1,u*1.5,uTime*.1)));
+ a*=(1.-smoothstep(uLen-8.,uLen,s))*smoothstep(1.,5.,s);
+ float w=exp(-pow((s-(uWave-${R0.toFixed(1)}))/4.,2.));
+ gl_FragColor=vec4(vec3(1.,.27,.05)*a*.5*(1.+uErupt*1.8+w*2.5),1.);
+}`;
+for (const f of FLOWS) {
+  const core = buildRibbon(f, 1, 0.2), glow = buildRibbon(f, 3.4, 0.4);
+  const m = new THREE.Mesh(core.geo, mkMat({
+    uniforms: { ...U, uSpeed: { value: f.speed }, uLen: { value: core.len } },
+    vertexShader: FLOW_VS, fragmentShader: flowFS, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide,
+  }));
+  m.renderOrder = 1; m.frustumCulled = false; scene.add(m);
+  const gm = new THREE.Mesh(glow.geo, mkMat({
+    uniforms: { ...U, uSpeed: { value: f.speed }, uLen: { value: glow.len } },
+    vertexShader: FLOW_VS, fragmentShader: glowFS, transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  }));
+  gm.renderOrder = 2; gm.frustumCulled = false; scene.add(gm);
+}
+
+/* ───────────────────────── instanced billboards: vent aura, smoke column, ground wisps ───────────────────────── */
+const SC = { value: 1 }; // pixel scale for point sprites, updated on resize
+const quad = new THREE.PlaneGeometry(1, 1);
+function instanced(n) {
+  const g = new THREE.InstancedBufferGeometry();
+  g.index = quad.index; g.setAttribute('position', quad.attributes.position); g.setAttribute('uv', quad.attributes.uv);
+  g.instanceCount = n; return g;
+}
+const inst = (g, name, arr, size) => g.setAttribute(name, new THREE.InstancedBufferAttribute(new Float32Array(arr), size));
+
+// vent aura — outer diffuse red/orange glow in the air
+const auraMat = mkMat({
+  uniforms: { ...U }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+  vertexShader: `uniform float uErupt;varying vec2 vUv;void main(){vUv=uv;vec4 mv=viewMatrix*vec4(0.,${(LAKE_Y + 2.5).toFixed(1)},0.,1.);mv.xy+=position.xy*(46.+uErupt*26.);gl_Position=projectionMatrix*mv;}`,
+  fragmentShader: GL_PRE + GL_NOISE + `varying vec2 vUv;
+void main(){vec2 p=vUv*2.0-1.0;float r=length(p);
+ float fl=.9+.1*noise(vec3(uTime*1.3,1.,2.));
+ float a=(exp(-r*r*7.)*.8+exp(-r*3.2)*.3)*smoothstep(1.,.7,r)*(.5+uErupt*1.5)*fl;
+ gl_FragColor=vec4(vec3(1.,.3,.07)*a,1.);}`,
+});
+const aura = new THREE.Mesh(instanced(1), auraMat); aura.renderOrder = 6; aura.frustumCulled = false; scene.add(aura);
+
+// smoke column: domain-warped curl, warm-orange base → grey-violet
+const SMOKE_N = lite ? 48 : 84;
+const smokeG = instanced(SMOKE_N);
+inst(smokeG, 'aSeed', Array.from({ length: SMOKE_N * 4 }, () => Math.random()), 4);
+const BREATH = { value: 0 };
+const smokeMat = (wisp) => mkMat({
+  uniforms: { ...U, uBreath: BREATH }, transparent: true, depthWrite: false, defines: wisp ? { WISP: 1 } : {},
+  vertexShader: `uniform float uTime;attribute vec4 aSeed;
+#ifdef WISP
+attribute vec3 aPos;attribute float aHeat;varying float vHeat;
+#endif
+uniform float uBreath;varying vec2 vUv;varying float vT;varying float vS;
+float h31(vec3 p){p=fract(p*0.3183099+.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+void main(){
+#ifdef WISP
+ float t=fract(uTime*.025+aSeed.x);
+ vec3 c=aPos+vec3(aSeed.y-.5,0.,aSeed.z-.5)*14.*t+vec3(sin(uTime*.3+aSeed.w*6.28)*1.5,1.2*t+.6*sin(uTime*.4+aSeed.y*9.),0.);
+ float size=5.+6.*aSeed.w;vHeat=aHeat;
+ vec4 mv=viewMatrix*vec4(c,1.);mv.xy+=position.xy*vec2(size*1.9,size*.6);
+#else
+ float t=fract(uTime*.038+aSeed.x);
+ float y=${(LAKE_Y + 1.5).toFixed(1)}+t*(.75+.25*t)*46.;
+ float sw=1.+t*5.5;
+ vec3 c=vec3(sin(y*.11+uTime*.21+aSeed.y*6.283)*sw+t*t*10.+(h31(vec3(floor(y*.5),aSeed.y*9.,floor(uTime*.1)))-.5)*t*6.+(aSeed.y-.5)*5.*(1.-t),
+             y,
+             cos(y*.09+uTime*.17+aSeed.z*6.283)*(.8+t*3.8)-t*3.+(aSeed.z-.5)*5.*(1.-t));
+ float size=(3.+16.*pow(t,.65))*(.7+.6*aSeed.w)*(1.+.1*uBreath);
+ vec4 mv=viewMatrix*vec4(c,1.);mv.xy+=position.xy*size;
+#endif
+ vUv=uv;vT=t;vS=aSeed.y;gl_Position=projectionMatrix*mv;}`,
+  fragmentShader: GL_PRE + GL_NOISE + `varying vec2 vUv;varying float vT;varying float vS;
+#ifdef WISP
+varying float vHeat;
+#endif
+void main(){
+ vec2 p=vUv*2.0-1.0;float r=length(p);if(r>1.)discard;
+ float n=fbm3(vec3(p*1.5+vS*13.,uTime*.07+vS*7.));
+ float body=smoothstep(1.,.2,r)*(.25+1.2*n);
+#ifdef WISP
+ float a=clamp(body,0.,1.)*smoothstep(0.,.2,vT)*smoothstep(1.,.6,vT)*.34;
+ float under=clamp(-p.y*.7+.45,0.,1.)*vHeat*(1.+uErupt*1.2);        // half-lit from beneath
+ vec3 col=mix(vec3(.05,.04,.06),vec3(1.3,.32,.06),clamp(under,0.,1.));
+#else
+ float a=clamp(body,0.,1.)*smoothstep(0.,.1,vT)*smoothstep(1.,.55,vT)*.5;
+ float lit=(1.-smoothstep(0.,.45,vT))*(.45+.55*clamp(-p.y*.8+.4,0.,1.))*(1.+uErupt*1.6);
+ vec3 grey=vec3(.075,.062,.092)*(.7+.6*n)+vec3(.05,.012,.01)*smoothstep(.2,0.,vT);
+ vec3 col=mix(grey,vec3(1.5,.42,.09),clamp(lit,0.,1.));
+ col+=vec3(.02,.025,.06)*smoothstep(.4,1.,vT)*clamp(p.y*.5+.5,0.,1.);
+#endif
+ gl_FragColor=vec4(col,a);}`,
+});
+const smoke = new THREE.Mesh(smokeG, smokeMat(false)); smoke.renderOrder = 3; smoke.frustumCulled = false; scene.add(smoke);
+
+const WISP_N = lite ? 18 : 34;
+const wispG = instanced(WISP_N);
+{
+  const pos = [], heat = [];
+  for (let i = 0; i < WISP_N; i++) {
+    const a = rnd(0.15, Math.PI - 0.15), r = rnd(16, 58), x = r * Math.cos(a), z = r * Math.sin(a);
+    pos.push(x, H(x, z) + 0.9, z);
+    let hv = 0; for (const f of FLOWS) hv = Math.max(hv, Math.exp(-Math.pow(r * wrapA(a - fAng(f, r)) / 7, 2)));
+    heat.push(hv);
+  }
+  inst(wispG, 'aSeed', Array.from({ length: WISP_N * 4 }, () => Math.random()), 4);
+  inst(wispG, 'aPos', pos, 3); inst(wispG, 'aHeat', heat, 1);
+}
+const wisps = new THREE.Mesh(wispG, smokeMat(true)); wisps.renderOrder = 3; wisps.frustumCulled = false; scene.add(wisps);
+
+/* ───────────────────────── embers, burst sparks, ash flakes (GPU-driven points) ───────────────────────── */
+const SPRITE_FS = GL_PRE + `varying vec4 vC;
+void main(){float d=length(gl_PointCoord-.5)*2.;if(d>1.)discard;float a=1.-d;a*=a;gl_FragColor=vec4(vC.rgb,a*vC.a);}`;
+const RAMP = `vec3 emberRamp(float age){
+ vec3 col=mix(vec3(5.,2.8,1.),vec3(1.6,.16,.03),smoothstep(0.,.35,age));
+ return mix(col,vec3(.05,.025,.025),smoothstep(.35,.95,age));}`; // orange-white → red → black ash
+const pointMat = (vs, extra = {}) => mkMat({
+  uniforms: { ...U, uScale: SC, ...extra }, vertexShader: vs, fragmentShader: SPRITE_FS,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+});
+
+// continuous embers: lift off the lake and the hottest flow edges on a thermal updraft
+const EMB_N = lite ? 260 : 700;
+const emberG = new THREE.BufferGeometry();
+{
+  const pos = [], R = [], K = [];
+  for (let i = 0; i < EMB_N; i++) {
+    if (Math.random() < 0.42) {
+      const a = rnd(0, TAU), r = Math.sqrt(Math.random()) * (LAKE_R - 0.8);
+      pos.push(r * Math.cos(a), LAKE_Y + 0.2, r * Math.sin(a)); K.push(0);
+    } else {
+      const f = FLOWS[(Math.random() * FLOWS.length) | 0], rr = rnd(R0 + 3, f.end * 0.75);
+      const aa = fAng(f, rr) + (Math.random() < 0.5 ? -1 : 1) * fHalfW(f, rr) * rnd(0.6, 1) / rr;
+      const x = rr * Math.cos(aa), z = rr * Math.sin(aa);
+      pos.push(x, H(x, z) + 0.4, z); K.push(1);
+    }
+    R.push(rnd(3, 8.5), Math.random(), rnd(0.12, 0.38), Math.random());
+  }
+  emberG.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  emberG.setAttribute('aR', new THREE.Float32BufferAttribute(R, 4));
+  emberG.setAttribute('aK', new THREE.Float32BufferAttribute(K, 1));
+}
+const embers = new THREE.Points(emberG, pointMat(`uniform float uTime,uScale;attribute vec4 aR;attribute float aK;varying vec4 vC;` + RAMP + `
+void main(){
+ float life=aR.x,age=fract(uTime/life+aR.y),sec=age*life,w=aR.w;
+ vec3 p=position;
+ p.y+=sec*mix(2.4,1.,aK)*(.7+.6*w)+sec*sec*mix(.22,.08,aK);              // updraft
+ p.x+=1.3*sec*(.5+w)+sin(sec*1.7+w*40.)*.8*age+sin(sec*3.1+w*13.+p.y*.3)*.35;   // wind curl
+ p.z+=cos(sec*1.3+w*31.)*.9*age+cos(sec*2.7+w*7.+p.y*.25)*.3-sec*.25;
+ float fl=.7+.3*sin(uTime*(8.+w*10.)+w*50.);
+ vC=vec4(emberRamp(age)*fl,smoothstep(0.,.04,age)*(1.-smoothstep(.6,1.,age)));
+ vec4 mv=viewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+ gl_PointSize=clamp(aR.z*uScale/(-mv.z),1.5,28.);}`));
+embers.frustumCulled = false; embers.renderOrder = 4; scene.add(embers);
+
+// bursts: groups 0-3 = occasional crater pops, group 4 = eruption
+const POP_N = lite ? 20 : 34, ERU_N = lite ? 190 : 380;
+const BT0 = [-1e3, -1e3, -1e3, -1e3, -1e3];
+const BO = Array.from({ length: 5 }, () => new THREE.Vector3(0, LAKE_Y, 0));
+const burstG = new THREE.BufferGeometry();
+{
+  const pos = [], V = [], R = [], G = [];
+  const add = (g, off, v, life, delay, size) => { pos.push(...off); V.push(...v); R.push(life, delay, size, Math.random()); G.push(g); };
+  for (let g = 0; g < 4; g++) for (let i = 0; i < POP_N; i++) {
+    const a = rnd(0, TAU), sp = rnd(4, 12);
+    add(g, [0, 0, 0], [Math.cos(a) * sp * 0.5, sp * rnd(0.6, 1.1), Math.sin(a) * sp * 0.5], rnd(1.1, 2.2), rnd(0, 0.15), rnd(0.15, 0.4));
+  }
+  for (let i = 0; i < ERU_N; i++) {
+    const a = rnd(0, TAU), e = rnd(0, 0.85), sp = rnd(6, 22), r = Math.sqrt(Math.random()) * 4;
+    add(4, [r * Math.cos(a), 0, r * Math.sin(a)], [Math.cos(a) * sp * Math.sin(e), sp * Math.cos(e), Math.sin(a) * sp * Math.sin(e)], rnd(1.6, 3.2), rnd(0, 0.45), rnd(0.2, 0.6));
+  }
+  burstG.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  burstG.setAttribute('aV', new THREE.Float32BufferAttribute(V, 3));
+  burstG.setAttribute('aR', new THREE.Float32BufferAttribute(R, 4));
+  burstG.setAttribute('aG', new THREE.Float32BufferAttribute(G, 1));
+}
+const bursts = new THREE.Points(burstG, pointMat(`uniform float uClock,uScale;uniform float uT0[5];uniform vec3 uO[5];
+attribute vec3 aV;attribute vec4 aR;attribute float aG;varying vec4 vC;` + RAMP + `
+void main(){
+ int g=int(aG+.5);
+ float sec=uClock-uT0[g]-aR.y;
+ if(sec<0.||sec>aR.x){gl_Position=vec4(2.,2.,2.,1.);gl_PointSize=0.;vC=vec4(0.);return;}
+ float age=sec/aR.x;
+ vec3 p=uO[g]+position+aV*(1.-exp(-sec*1.1))/1.1;                          // drag
+ p.y-=1.6*sec*sec;                                                         // soft gravity
+ p.x+=sin(sec*3.+aR.w*20.)*.3*age;
+ float fl=.75+.25*sin(sec*30.+aR.w*50.);
+ float flare=1.+2.*exp(-sec*7.);                                            // brief flare as it pops
+ vC=vec4(emberRamp(age)*fl*flare,smoothstep(0.,.03,age)*(1.-smoothstep(.55,1.,age)));
+ vec4 mv=viewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+ gl_PointSize=clamp(aR.z*uScale/(-mv.z)*(1.+exp(-sec*7.)),1.5,32.);}`, { uT0: { value: BT0 }, uO: { value: BO } }));
+bursts.frustumCulled = false; bursts.renderOrder = 4; scene.add(bursts);
+
+// drifting ash flakes that catch the ember light
+const ASH_N = lite ? 120 : 260;
+const ashG = new THREE.BufferGeometry();
+{
+  const pos = [], R = [];
+  for (let i = 0; i < ASH_N; i++) { pos.push(rnd(-60, 60), rnd(0, 50), rnd(-50, 60)); R.push(Math.random(), Math.random(), Math.random(), Math.random()); }
+  ashG.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  ashG.setAttribute('aR', new THREE.Float32BufferAttribute(R, 4));
+}
+const ash = new THREE.Points(ashG, pointMat(`uniform float uTime,uScale;attribute vec4 aR;varying vec4 vC;
+void main(){
+ vec3 p=position;
+ p.x=mod(p.x+60.+uTime*.55*(.5+aR.x)+sin(uTime*.2+aR.y*30.)*2.,120.)-60.;
+ p.y=mod(p.y-uTime*(.25+.3*aR.z)+cos(uTime*.17+aR.w*20.)*1.5,50.);
+ p.z=mod(p.z+50.+sin(uTime*.13+aR.x*50.)*2.,110.)-50.;
+ float d=length(p-vec3(0.,14.,0.));
+ float b=(.05+exp(-d/32.)*.6)*(.6+.4*sin(uTime*(2.+aR.x*4.)+aR.y*60.));
+ vC=vec4(vec3(.9,.38,.16)*b,1.);
+ vec4 mv=viewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+ gl_PointSize=clamp(.16*uScale/(-mv.z),1.,6.);}`));
+ash.frustumCulled = false; ash.renderOrder = 4; scene.add(ash);
+
+/* ───────────────────────── post: bloom → ACES → heat haze / vignette / grain ───────────────────────── */
+const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: lite ? 0 : 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.setPixelRatio(PR()); composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.45, 0.7, 0.88);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const fx = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uAspect: { value: 1 }, uErupt: { value: 0 }, uVent: { value: new THREE.Vector2(0.5, 0.6) } },
+  vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader: `precision highp float;uniform sampler2D tDiffuse;uniform float uTime,uAspect,uErupt;uniform vec2 uVent;varying vec2 vUv;
+float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+void main(){
+ vec2 d=(vUv-uVent)*vec2(uAspect,1.);float dy=max(d.y+.02,0.);
+ float m=exp(-(d.x*d.x*28.+dy*dy*5.))*smoothstep(-.06,0.,d.y);            // heat haze rising off the vent
+ vec2 off=vec2(sin(vUv.y*60.-uTime*2.2)+sin(vUv.y*37.+uTime*1.7+vUv.x*20.),cos(vUv.x*50.+uTime*1.9))*.0012*m*(1.+uErupt*2.);
+ vec3 col=texture2D(tDiffuse,vUv+off).rgb;
+ float vig=smoothstep(1.25,.35,length((vUv-.5)*vec2(uAspect*.9,1.2)));
+ col*=mix(.32,1.,vig);
+ col+=(h21(vUv*1000.+fract(uTime)*37.)-.5)*.035;                           // film grain
+ gl_FragColor=vec4(col,1.);}`,
+});
+composer.addPass(fx);
+
+/* ───────────────────────── camera + input ───────────────────────── */
+const TARGET = new THREE.Vector3(0, 5, 0);
+const sph0 = new THREE.Spherical().setFromVector3(new THREE.Vector3(0, 46, 74).sub(TARGET));
+const sph = new THREE.Spherical(), tmp = new THREE.Vector3();
+let px = 0, py = 0, tx = 0, ty = 0, down = false, sx = 0, sy = 0;
+
+function resize() {
+  const w = innerWidth, h = innerHeight, a = w / h, pr = PR();
+  camera.aspect = a; camera.fov = a < 1 ? 46 + (1 - a) * 45 : 46; camera.updateProjectionMatrix();
+  renderer.setPixelRatio(pr); renderer.setSize(w, h, false);
+  composer.setPixelRatio(pr); composer.setSize(w, h);
+  SC.value = h * pr / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  fx.uniforms.uAspect.value = a;
+}
+addEventListener('resize', resize); resize();
+
+const ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -LAKE_Y), hit = new THREE.Vector3(), ndc = new THREE.Vector2();
+function onCrater(cx, cy) {
+  ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  return !!ray.ray.intersectPlane(plane, hit) && Math.hypot(hit.x, hit.z) < 13;
+}
+let eT = -1e3;
+function erupt() {
+  if (clockNow() - eT < 1.2) return;
+  eT = clockNow(); BT0[4] = eT; BO[4].copy(VENT);
+}
+let clk = 0; const clockNow = () => clk;
+
+canvas.addEventListener('pointerdown', e => {
+  down = true; sx = e.clientX; sy = e.clientY; canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag');
+  if (e.pointerType !== 'mouse') { tx = e.clientX / innerWidth * 2 - 1; ty = e.clientY / innerHeight * 2 - 1; }
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse' || down) { tx = e.clientX / innerWidth * 2 - 1; ty = e.clientY / innerHeight * 2 - 1; }
+  if (e.pointerType === 'mouse' && !down) canvas.classList.toggle('hot', onCrater(e.clientX, e.clientY));
+});
+const release = e => {
+  if (!down) return; down = false; canvas.classList.remove('drag');
+  if (e.type === 'pointerup' && Math.hypot(e.clientX - sx, e.clientY - sy) < 10 && onCrater(e.clientX, e.clientY)) erupt();
+  if (e.pointerType !== 'mouse') tx = ty = 0;
+};
+canvas.addEventListener('pointerup', release);
+canvas.addEventListener('pointercancel', release);
+canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { tx = ty = 0; canvas.classList.remove('hot'); } });
+canvas.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); erupt(); } });
+
+/* ───────────────────────── main loop ───────────────────────── */
+const envAt = t => t < 0 ? 0 : t < 0.18 ? t / 0.18 : Math.exp(-(t - 0.18) * 1.6); // flare fast, settle in ~3s
+let last = performance.now(), tVis = 0, popNext = 2.5, popIdx = 0;
+const ventScreen = new THREE.Vector3();
+
+renderer.setAnimationLoop(now => {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  clk += dt; tVis += dt * SPEED;
+  const et = clk - eT, env = envAt(et);
+  U.uTime.value = tVis; U.uClock.value = clk; U.uErupt.value = env;
+  U.uWave.value = et >= 0 && et < 3 ? et * 36 : -100;
+  BREATH.value = Math.sin(tVis * 0.45);
+
+  // occasional burst-sparks pop from the crater (off under reduced motion)
+  if (!reduce && clk > popNext) {
+    const g = popIdx++ % 4, a = rnd(0, TAU), r = Math.sqrt(Math.random()) * (LAKE_R - 2);
+    BT0[g] = clk; BO[g].set(r * Math.cos(a), LAKE_Y + 0.2, r * Math.sin(a)); POP.set(BO[g].x, LAKE_Y, BO[g].z, clk);
+    popNext = clk + rnd(2.2, 5.5);
+  }
+
+  // flickering lava light, boosted by the eruption
+  for (let i = 0; i < LIGHTS.length; i++) {
+    LIGHTS[i].w = LIGHT_BASE[i] * (0.88 + 0.12 * Math.sin(tVis * (2.1 + i * 0.37) + i * 1.7) + 0.06 * Math.sin(tVis * 5.3 + i)) * (1 + env * (i === 0 ? 3 : 1.2));
+  }
+  bloom.strength = 0.45 + 0.35 * env;
+
+  // slow cinematic drift + pointer parallax
+  const k = 1 - Math.exp(-dt * 3);
+  px += (tx - px) * k; py += (ty - py) * k;
+  const yaw = (reduce ? 0 : Math.sin(clk * 0.07) * 0.06) + px * 0.07;
+  const pitch = (reduce ? 0 : Math.sin(clk * 0.05 + 1) * 0.015) - py * 0.035;
+  const dolly = reduce ? 1 : 1 + 0.018 * Math.sin(clk * 0.16) - 0.012 * env;
+  sph.set(sph0.radius * dolly, sph0.phi - pitch, sph0.theta + yaw);
+  camera.position.copy(TARGET).add(tmp.setFromSpherical(sph));
+  camera.lookAt(TARGET);
+  camera.updateMatrixWorld();
+
+  ventScreen.set(0, LAKE_Y + 1, 0).project(camera);
+  fx.uniforms.uVent.value.set(ventScreen.x * 0.5 + 0.5, ventScreen.y * 0.5 + 0.5);
+  fx.uniforms.uTime.value = tVis; fx.uniforms.uErupt.value = env;
+  composer.render();
+});
+
+window.__dbg = { renderer, scene, camera, composer, erupt };
+</script>
+</body>
+</html>

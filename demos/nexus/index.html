@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NEXUS One — Spatial Computing Headset</title>
+<meta name="description" content="NEXUS One: an AR headset landing page with a 3D product hero you can orbit. 12K micro-OLED, 220° FOV, 89g carbon frame.">
+<meta name="theme-color" content="#08090d">
+<style>
+@font-face{font-family:'ClashDisplay';src:url(../../fonts/ClashDisplay-600.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'ClashDisplay';src:url(../../fonts/ClashDisplay-700.woff2) format('woff2');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-500.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-700.woff2) format('woff2');font-weight:700;font-style:normal;font-display:swap}
+:root{
+  --bg:#08090d;--bg2:#0e1018;--surface:rgba(255,255,255,.055);--surface-hi:rgba(255,255,255,.1);
+  --line:rgba(255,255,255,.1);--line-hi:rgba(255,255,255,.18);
+  --ink:#f0f0f5;--ink2:rgba(240,240,245,.62);--ink3:rgba(240,240,245,.36);
+  --acc:#8b5cf6;--acc-ink:#fff;--acc-glow:rgba(139,92,246,.35);
+  --cyan:#22d3ee;
+  --display:'ClashDisplay',system-ui,sans-serif;--sans:'Satoshi',system-ui,sans-serif;
+  --shadow:0 12px 40px rgba(0,0,0,.5);
+  --r:16px;--r-lg:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 clamp(15px,1.6vw,17px)/1.6 var(--sans);overflow-x:hidden}
+::selection{background:var(--acc);color:var(--acc-ink)}
+
+/* ---------- background canvas ---------- */
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ---------- model-viewer hero ---------- */
+model-viewer{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;--poster-color:transparent}
+model-viewer canvas{pointer-events:auto}
+
+/* ---------- UI overlay ---------- */
+.ui{position:relative;z-index:2;pointer-events:none}
+.ui>*{pointer-events:auto}
+
+/* nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,4vw,48px);pointer-events:none;transition:background .3s}
+.nav.scrolled{background:rgba(8,9,13,.72);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--line)}
+.nav>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;font:700 19px/1 var(--display);letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc-glow)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{font:500 14px/1 var(--sans);color:var(--ink2);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--ink)}
+.btn{appearance:none;border:0;cursor:pointer;font:700 14px/1 var(--sans);letter-spacing:.01em;padding:13px 22px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s,background .2s;text-decoration:none;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.btn.primary{background:var(--acc);color:var(--acc-ink);box-shadow:0 4px 24px var(--acc-glow)}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--acc-glow)}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-hi);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.btn.ghost:hover{background:var(--surface-hi)}
+
+/* hero */
+.hero{position:fixed;inset:0;z-index:3;display:flex;align-items:flex-start;justify-content:flex-end;padding:clamp(90px,14vh,140px) clamp(24px,5vw,72px) 0;pointer-events:none}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 40%,rgba(8,9,13,.55) 75%,rgba(8,9,13,.78) 100%);pointer-events:none}
+.hero-copy{position:relative;max-width:min(460px,42vw);text-align:right;pointer-events:auto}
+.eyebrow{margin:0 0 16px;font:700 11px/1 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--acc)}
+.hero h1{margin:0 0 18px;font:700 clamp(36px,4.8vw,64px)/1.02 var(--display);letter-spacing:-.03em}
+.hero h1 em{font-style:normal;color:var(--acc)}
+.hero-sub{margin:0 0 28px;font:400 clamp(15px,1.7vw,18px)/1.55 var(--sans);color:var(--ink2);max-width:38ch;margin-left:auto}
+.hero-ctas{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+
+/* scroll hint */
+.scroll-hint{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;animation:hintFloat 2.4s ease-in-out infinite}
+.scroll-hint span{font:500 11px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+.scroll-hint .line{width:1px;height:36px;background:linear-gradient(to bottom,var(--acc),transparent);animation:hintPulse 2.4s ease-in-out infinite}
+@keyframes hintFloat{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+@keyframes hintPulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ---------- sections below fold ---------- */
+.hero-spacer{height:100vh;height:100dvh}
+.sections{position:relative;z-index:4;background:linear-gradient(to bottom,transparent 0,var(--bg) 120px)}
+.section{max-width:1100px;margin:0 auto;padding:clamp(72px,10vw,120px) clamp(20px,4vw,48px)}
+.section-label{margin:0 0 12px;font:700 11px/1 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--acc)}
+.section h2{margin:0 0 40px;font:700 clamp(28px,3.6vw,44px)/1.08 var(--display);letter-spacing:-.025em;max-width:20ch}
+
+/* features grid */
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feature{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:28px 24px;transition:transform .35s,border-color .35s,background .35s;opacity:0;transform:translateY(28px)}
+.feature.vis{opacity:1;transform:translateY(0)}
+.feature:hover{transform:translateY(-4px);border-color:var(--line-hi);background:var(--surface-hi)}
+.feature .num{font:700 11px/1 var(--sans);letter-spacing:.18em;color:var(--acc);margin:0 0 14px}
+.feature h3{margin:0 0 10px;font:600 clamp(18px,2vw,22px)/1.2 var(--display);letter-spacing:-.015em}
+.feature p{margin:0;font:400 14.5px/1.55 var(--sans);color:var(--ink2)}
+
+/* specs strip */
+.specs{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line)}
+.spec{background:var(--bg2);padding:28px 20px;text-align:center}
+.spec .val{display:block;font:700 clamp(28px,3.2vw,40px)/1 var(--display);letter-spacing:-.02em;color:var(--ink);margin-bottom:8px}
+.spec .lbl{font:500 12px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* CTA band */
+.cta-band{text-align:center;padding:clamp(72px,10vw,110px) clamp(20px,4vw,48px)}
+.cta-band h2{margin:0 auto 16px;max-width:22ch;text-align:center}
+.cta-band p{margin:0 auto 32px;max-width:42ch;color:var(--ink2);text-align:center}
+.cta-band .btn{margin:0 6px}
+
+/* footer */
+.foot{border-top:1px solid var(--line);padding:24px clamp(20px,4vw,48px);display:flex;justify-content:space-between;align-items:center;gap:12px;font:500 12px/1 var(--sans);color:var(--ink3)}
+.foot a{color:var(--ink2);text-decoration:none}
+.foot a:hover{color:var(--ink)}
+
+/* ---------- brief panel ---------- */
+#brief{position:fixed;right:24px;bottom:24px;z-index:20;width:min(380px,calc(100vw - 32px));max-height:min(70vh,580px);overflow:auto;padding:26px 26px 20px;border-radius:var(--r-lg);background:rgba(14,16,24,.92);border:1px solid var(--line-hi);-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);box-shadow:var(--shadow);scrollbar-width:thin}
+#brief[hidden]{display:none}
+#brief h2{margin:0 0 14px;font:700 13px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--acc)}
+#brief p{margin:0 0 12px;font:400 14px/1.6 var(--sans);color:var(--ink2)}
+#brief ul{margin:0 0 16px;padding-left:18px;font:400 14px/1.7 var(--sans);color:var(--ink2)}
+#brief li{margin-bottom:4px}
+#brief .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+#briefClose{appearance:none;border:0;background:var(--surface);color:var(--ink);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer;position:absolute;top:14px;right:14px;font:400 18px/1 var(--sans);transition:background .2s}
+#briefClose:hover{background:var(--surface-hi)}
+#briefClose:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .features{grid-template-columns:1fr 1fr}
+  .specs{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .nav-links{display:none}
+  .hero{align-items:flex-end;padding:0 20px 100px;justify-content:center}
+  .hero::before{background:linear-gradient(to top,rgba(8,9,13,.82) 0%,rgba(8,9,13,.5) 40%,transparent 70%)}
+  .hero-copy{max-width:100%;text-align:center}
+  .hero-sub{margin-left:auto;margin-right:auto}
+  .hero-ctas{justify-content:center}
+  .features{grid-template-columns:1fr}
+  .specs{grid-template-columns:1fr 1fr}
+  .scroll-hint{display:none}
+  .foot{flex-direction:column;text-align:center;gap:8px}
+  #brief{right:12px;left:12px;bottom:12px;width:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+<script type="module" src="../../js/vendor/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="../../js/kit/kit.css">
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<model-viewer
+  id="hero3d"
+  src="helmet.glb"
+  alt="NEXUS One AR headset — a matte-black visor with carbon-fiber temples and a cyan light strip."
+  camera-orbit="0deg 72deg 158%"
+  min-camera-orbit="auto auto 95%"
+  max-camera-orbit="auto auto 270%"
+  min-field-of-view="18deg"
+  max-field-of-view="42deg"
+  disable-tap
+  interaction-prompt="none"
+  shadow-intensity="1.1"
+  shadow-softness="0.9"
+  exposure="1.15"
+  environment-image="neutral"
+  loading="eager"
+  reveal="auto"
+></model-viewer>
+
+<div class="ui">
+
+  <nav class="nav" id="nav" aria-label="Main">
+    <a class="brand" href="#" aria-label="NEXUS home"><span class="dot" aria-hidden="true"></span>NEXUS</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#specs">Specs</a>
+      <a href="#order">Order</a>
+    </div>
+    <button class="btn primary" data-brief type="button">The brief</button>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">Spatial Computing · Gen III</p>
+      <h1>See beyond<br>the <em>screen.</em></h1>
+      <p class="hero-sub">NEXUS One paints the digital world onto reality — 12K micro-OLED per eye, 220° panoramic FOV, and an 89 g carbon frame you forget you're wearing.</p>
+      <div class="hero-ctas">
+        <button class="btn ghost" id="bSpin" type="button">Spin the visor</button>
+        <button class="btn primary" data-brief type="button">Explore NEXUS</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint" aria-hidden="true"><span>Scroll</span><div class="line"></div></div>
+
+</div>
+
+<div class="hero-spacer" aria-hidden="true"></div>
+
+<div class="sections">
+
+  <section class="section" data-reveal id="features">
+    <p class="section-label">Why NEXUS</p>
+    <h2>Built for the next decade of computing.</h2>
+    <div class="features">
+      <article class="feature" data-reveal>
+        <p class="num">01</p>
+        <h3>12K per eye</h3>
+        <p>Dual micro-OLED panels deliver 3800 × 3800 pixels per eye — text is crisp, edges vanish, and the screen-door effect is gone.</p>
+      </article>
+      <article class="feature" data-reveal>
+        <p class="num">02</p>
+        <h3>220° field of view</h3>
+        <p>Panoramic optics fill your peripheral vision. Digital objects sit naturally in the room, not in a letterboxed window.</p>
+      </article>
+      <article class="feature" data-reveal>
+        <p class="num">03</p>
+        <h3>All-day comfort</h3>
+        <p>89 grams of forged carbon fiber, balanced at the temples. 14-hour battery. Heat pipes that keep the visor cool to the touch.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" data-reveal id="specs">
+    <p class="section-label">Specifications</p>
+    <h2>The numbers behind the magic.</h2>
+    <div class="specs">
+      <div class="spec"><span class="val">89 g</span><span class="lbl">Weight</span></div>
+      <div class="spec"><span class="val">14 hr</span><span class="lbl">Battery</span></div>
+      <div class="spec"><span class="val">12 K</span><span class="lbl">Per eye</span></div>
+      <div class="spec"><span class="val">220°</span><span class="lbl">Field of view</span></div>
+    </div>
+  </section>
+
+  <section class="section cta-band" data-reveal id="order">
+    <p class="section-label">Ready when you are</p>
+    <h2>Step into spatial computing.</h2>
+    <p>Ships Q2 2027. Reserve your unit today — fully refundable deposit.</p>
+    <button class="btn primary" data-brief type="button">Reserve a unit</button>
+    <button class="btn ghost" id="bSpin2" type="button">One more spin</button>
+  </section>
+
+  <footer class="foot">
+    <span>© 2026 NEXUS Labs. All rights reserved.</span>
+    <span>Premium 3D product template · <a href="#" id="footBrief">The brief</a></span>
+  </footer>
+
+</div>
+
+<aside id="brief" hidden aria-label="Template brief">
+  <button id="briefClose" type="button" aria-label="Close brief">×</button>
+  <h2>The brief</h2>
+  <p>This is <strong>NEXUS</strong> — a premium product landing page template built around a live 3D hero.</p>
+  <ul>
+    <li><strong>Signature effect:</strong> the headset tilts toward your cursor; click to spin it 360°.</li>
+    <li><strong>Best for:</strong> hardware brands, AR/VR products, luxury tech launches.</li>
+    <li><strong>Stack:</strong> one HTML file + model-viewer + a local GLB. No build step.</li>
+    <li><strong>Tier:</strong> Pro / Max. Free tier templates use procedural canvas instead of GLB.</li>
+  </ul>
+  <div class="btn-row">
+    <button class="btn primary" id="bCopy" type="button">Copy prompt</button>
+  </div>
+</aside>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- background: animated glow + particles (2D canvas, gate samples this) ---------- */
+const bg = document.getElementById('bg');
+const bctx = bg.getContext('2d');
+let W, H, dpr;
+function resizeBG(){ dpr = Math.min(devicePixelRatio||1, 2); W = innerWidth; H = innerHeight; bg.width = W*dpr; bg.height = H*dpr; bctx.setTransform(dpr,0,0,dpr,0,0); }
+resizeBG();
+addEventListener('resize', resizeBG);
+
+let mx = W*.5, my = H*.45, tmx = mx, tmy = my;
+addEventListener('pointermove', e => { tmx = e.clientX; tmy = e.clientY; });
+
+const parts = Array.from({length:48}, () => ({
+  x: Math.random()*W, y: Math.random()*H,
+  r: .6 + Math.random()*1.8,
+  vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
+  a: .12 + Math.random()*.22
+}));
+
+function drawBG(t){
+  mx += (tmx-mx)*.06; my += (tmy-my)*.06;
+  // base
+  bctx.fillStyle = '#08090d';
+  bctx.fillRect(0,0,W,H);
+  // cursor glow
+  const g1 = bctx.createRadialGradient(mx,my,0,mx,my,Math.max(W,H)*.42);
+  g1.addColorStop(0,'rgba(139,92,246,.13)');
+  g1.addColorStop(.5,'rgba(139,92,246,.04)');
+  g1.addColorStop(1,'transparent');
+  bctx.fillStyle = g1;
+  bctx.fillRect(0,0,W,H);
+  // bottom ambient
+  const g2 = bctx.createRadialGradient(W*.5,H*1.1,0,W*.5,H*1.1,W*.7);
+  g2.addColorStop(0,'rgba(34,211,238,.06)');
+  g2.addColorStop(1,'transparent');
+  bctx.fillStyle = g2;
+  bctx.fillRect(0,0,W,H);
+  // particles
+  for(const p of parts){
+    p.x += p.vx; p.y += p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0; if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    bctx.beginPath();
+    bctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bctx.fillStyle = 'rgba(240,240,245,'+p.a+')';
+    bctx.fill();
+  }
+  requestAnimationFrame(drawBG);
+}
+requestAnimationFrame(drawBG);
+
+/* ---------- model-viewer: cursor tilt + idle spin + click spin ---------- */
+const mv = document.getElementById('hero3d');
+let mvReady = false;
+mv.addEventListener('load', () => { mvReady = true; });
+// fallback if load already fired
+if(mv.loaded) mvReady = true;
+
+const BASE_PHI = 78 * Math.PI/180;
+let targetTheta = 0, targetPhi = BASE_PHI;
+let idleT = 0, lastMove = 0;
+const IDLE_MS = 2200;
+
+addEventListener('pointermove', e => {
+  const nx = e.clientX / W - .5;
+  const ny = e.clientY / H - .5;
+  targetTheta = nx * .55;
+  targetPhi = BASE_PHI + ny * .3;
+  lastMove = performance.now();
+});
+
+function tiltLoop(){
+  if(mvReady){
+    const now = performance.now();
+    const idle = now - lastMove > IDLE_MS;
+    if(idle){ idleT += .008; targetTheta = Math.sin(idleT)*.25; }
+    try{
+      const o = mv.getCameraOrbit();
+      const nt = o.theta + (targetTheta - o.theta)*.07;
+      const np = o.phi + (targetPhi - o.phi)*.07;
+      mv.cameraOrbit = nt+'rad '+np+'rad '+o.radius+'%';
+    }catch(e){}
+  }
+  requestAnimationFrame(tiltLoop);
+}
+requestAnimationFrame(tiltLoop);
+
+function spin360(){
+  if(!mvReady) return;
+  try{
+    const o = mv.getCameraOrbit();
+    mv.cameraOrbit = (o.theta + Math.PI*2)+'rad '+o.phi+'rad '+o.radius+'%';
+  }catch(e){}
+}
+document.getElementById('bSpin').addEventListener('click', spin360);
+document.getElementById('bSpin2').addEventListener('click', spin360);
+
+/* ---------- nav scroll state ---------- */
+const nav = document.getElementById('nav');
+addEventListener('scroll', () => { nav.classList.toggle('scrolled', scrollY > 40); }, {passive:true});
+
+/* ---------- feature reveal (IntersectionObserver) ---------- */
+const io = new IntersectionObserver(entries => {
+  for(const en of entries){
+    if(en.isIntersecting){ en.target.classList.add('vis'); io.unobserve(en.target); }
+  }
+}, {threshold:.15});
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+/* ---------- brief panel ---------- */
+const brief = document.getElementById('brief');
+const briefClose = document.getElementById('briefClose');
+function openBrief(){ brief.hidden = false; }
+function closeBrief(){ brief.hidden = true; }
+document.querySelectorAll('[data-brief]').forEach(b => b.addEventListener('click', openBrief));
+document.getElementById('footBrief').addEventListener('click', e => { e.preventDefault(); openBrief(); });
+briefClose.addEventListener('click', closeBrief);
+// ESC closes
+addEventListener('keydown', e => { if(e.key==='Escape' && !brief.hidden) closeBrief(); });
+
+/* ---------- copy prompt ---------- */
+document.getElementById('bCopy').addEventListener('click', async () => {
+  const btn = document.getElementById('bCopy');
+  const text = 'NEXUS Build a premium AR-headset product landing page (one HTML file, no build step) with a live 3D hero: a matte-black visor with carbon-fiber temples rendered via <model-viewer> + a local GLB. The headset tilts smoothly toward the cursor (±15° yaw, ±10° pitch, eased interpolation); idle for 2s and it gently sways; click to spin it a full 360°. Background: near-black (#08090d) with an animated cursor-following violet glow + floating particles on a 2D canvas. Typography: ClashDisplay for headlines, Satoshi for body, fluid clamp() sizes. Glassmorphism fixed nav (brand + links + violet pill CTA). Hero copy right-aligned: eyebrow "Spatial Computing · Gen III", h1 "See beyond the screen.", sub about 12K micro-OLED / 220° FOV / 89g. Below fold: 3 feature cards with scroll-reveal (IntersectionObserver, staggered), a 4-cell specs strip (89g / 14hr / 12K / 220°), a CTA band, and a footer. Hidden "The brief" panel opens on any primary CTA click (button[data-brief]) explaining the template. All CTAs are in-page buttons — no mailto/tel/external links. Premium, dark, Apple-keynote energy — not a generic startup page.';
+  try{
+    await navigator.clipboard.writeText(text);
+    btn.textContent = 'Copied ✓';
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); btn.textContent='Copied ✓'; }catch(e2){ btn.textContent='Copy failed'; }
+    ta.remove();
+  }
+  setTimeout(()=>{ btn.textContent='Copy prompt'; }, 2200);
+});
+
+})();
+</script>
+  <script src="../../js/kit/motion.js"></script>
+</body>
+</html>
