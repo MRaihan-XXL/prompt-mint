@@ -77,7 +77,7 @@ for (const t of items) {
     else pass(`${t.id}: kiblat kit ok (reticle+magnetic+reveal)`);
     // Tier feature contract (spec pemilik round-7): pro=max pengubah tampilan (data-dc);
     // free dilarang. Legacy 4 di-exempt — dirakit sebelum kontrak ada (retrofit: lihat MEMO §L).
-    const LEGACY_NO_DC = new Set(["japan-island", "ocean-shallows", "ghost-pirate-ship", "nexus"]);
+    const LEGACY_NO_DC = new Set(["japan-island", "ocean-shallows", "ghost-pirate-ship"]);
     if (!LEGACY_NO_DC.has(t.id)) {
       const dcCount = (html.match(/\sdata-dc=/g) || []).length;
       const dcNeed = t.tier === "max" ? 4 : t.tier === "pro" ? 2 : 0;
@@ -209,7 +209,7 @@ for (const id of ids) {
 }
 
 console.log(`\n== Part B2: interaksi demo (native click, CTA bg, panel toggle, diversity, contrast) ==`);
-const CHROME7 = ["ghost-pirate-ship", "molten-forge", "aurora-ridge", "neon-alley", "pulseops", "aether", "robot-foundry"];
+const CHROME7 = ["ghost-pirate-ship", "cutaway-classroom", "frame-walk-gallery", "harukaze-station", "isoglow-lab", "particle-swarm", "pelagia-railway", "reef-lagoon"];
 const sigs = {};
 const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
 for (const id of ids) {
@@ -328,7 +328,7 @@ for (const id of ids) {
   const vertOf = (s) => (s.y < 0.33 ? "T" : s.y > 0.62 ? "B" : "M");
   const sig = {};
   for (const [id, s] of Object.entries(sigs)) sig[id] = s ? sideOf(s) + vertOf(s) : "?";
-  const EXPECT = { "ghost-pirate-ship": "LM", "molten-forge": "LB", "aurora-ridge": "CM", "neon-alley": "RM" };
+  const EXPECT = { "ghost-pirate-ship": "LM", "ocean-shallows": "RT", "harukaze-station": "LB", "reef-lagoon": "CM" };
   for (const [id, want] of Object.entries(EXPECT)) {
     if (sig[id] !== want) fail(`diversity: ${id} sig=${sig[id]} (kontrak: ${want}) — layout bergeser/seragam`);
   }

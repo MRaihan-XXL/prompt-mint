@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Particle Swarm — a 14,000-point instrument</title>
+<meta name="description" content="Particle Swarm: 14,000 GPU-drawn points that snap between sphere, torus knot and helix formations with springy physics. Throw it between Drift and Storm.">
+<meta name="theme-color" content="#101a2e">
+<link rel="stylesheet" href="../../js/kit/kit.css">
+<style>
+@font-face{font-family:'Clash Display';font-weight:600;font-display:swap;src:url(../../fonts/ClashDisplay-600.woff2) format('woff2')}
+@font-face{font-family:'Clash Display';font-weight:700;font-display:swap;src:url(../../fonts/ClashDisplay-700.woff2) format('woff2')}
+@font-face{font-family:'Satoshi';font-weight:400;font-display:swap;src:url(../../fonts/Satoshi-400.woff2) format('woff2')}
+@font-face{font-family:'Satoshi';font-weight:500;font-display:swap;src:url(../../fonts/Satoshi-500.woff2) format('woff2')}
+@font-face{font-family:'Satoshi';font-weight:700;font-display:swap;src:url(../../fonts/Satoshi-700.woff2) format('woff2')}
+
+:root{--acc:#6ee7ff;--acc-ink:#04121c;--acc2:#ff6b4a;--bg:#101a2e;--slab:#0b1220;--ink:#e8f1ff;--muted:#8ea3c0;--line:rgba(110,231,255,.2)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--step-0)/1.55 var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.02;letter-spacing:-.015em;margin:0}
+p{margin:0}
+a{color:inherit}
+::selection{background:var(--acc);color:var(--acc-ink)}
+
+#gl{position:fixed;inset:0;width:100vw;height:100dvh;display:block;z-index:0;touch-action:pan-y;cursor:grab}
+#gl.drag{cursor:grabbing}
+#poster{display:none;position:fixed;inset:0;z-index:0;background:
+  radial-gradient(circle at 60% 45%,rgba(42,108,255,.35),transparent 55%),
+  radial-gradient(circle,rgba(110,231,255,.55) 1px,transparent 1.6px) 0 0/14px 14px,#101a2e;
+  -webkit-mask:radial-gradient(ellipse 60% 55% at 60% 45%,#000 40%,rgba(0,0,0,.35) 100%);mask:radial-gradient(ellipse 60% 55% at 60% 45%,#000 40%,rgba(0,0,0,.35) 100%)}
+html.nogl #gl{display:none}
+html.nogl #poster{display:block}
+#glNote{display:none;position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:5;padding:10px 16px;border-radius:10px;background:var(--slab);border:1px solid var(--line);font:700 11px var(--mono);letter-spacing:.1em;text-align:center}
+html.nogl #glNote{display:block}
+
+main{position:relative;z-index:2;pointer-events:none}
+main a,main button,main .glass,main input,main textarea,main output,.nav{pointer-events:auto}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(16px,4vw,56px);background:linear-gradient(180deg,rgba(16,26,46,.85),rgba(16,26,46,0))}
+.brand{font:700 13px var(--mono);letter-spacing:.2em;text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 14px var(--acc),0 0 0 4px rgba(110,231,255,.16)}
+.nav nav{display:flex;gap:6px}
+.nav nav a{position:relative;padding:8px 12px;font:500 var(--step--1) var(--sans);letter-spacing:.06em;text-decoration:none;color:var(--muted);transition:color .25s}
+.nav nav a::after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:2px;background:repeating-linear-gradient(90deg,var(--acc) 0 5px,transparent 5px 8px);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease-out)}
+.nav nav a:hover,.nav nav a:focus-visible{color:var(--ink)}
+.nav nav a:hover::after,.nav nav a:focus-visible::after{transform:scaleX(1)}
+
+/* ---------- buttons (segmented-slab family) ---------- */
+.btn.slab{background:var(--slab);color:#dff6ff;border:1px solid rgba(110,231,255,.38);border-radius:9px;padding:10px 16px 13px;font:700 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase}
+.btn.slab::before{content:"";position:absolute;left:9px;right:9px;bottom:5px;height:2px;background:repeating-linear-gradient(90deg,var(--acc) 0 6px,transparent 6px 10px);opacity:.4;clip-path:inset(0 72% 0 0);transition:opacity .3s,clip-path .5s var(--ease-out)}
+.btn.slab:hover{border-color:var(--acc);box-shadow:0 0 22px -6px var(--acc)}
+.btn.slab:hover::before{opacity:1;clip-path:inset(0)}
+.btn.seg-cta{padding:0;gap:0;border-radius:11px;overflow:hidden;background:var(--acc);color:var(--acc-ink);font:700 13px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.seg-cta .lab{padding:17px 20px 17px 24px}
+.seg-cta .tick{align-self:stretch;display:grid;place-items:center;width:52px;margin:3px;border-radius:8px;background:var(--slab);color:var(--acc);transition:width .45s var(--ease-out)}
+.seg-cta:hover .tick{width:72px}
+.seg-cta .tick svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--ease-out)}
+.seg-cta:hover .tick svg{transform:translateX(5px)}
+.btn.ulink[data-go-form],.btn.ulink[data-go-regime],.btn.ulink.lnk{padding:8px 0 9px;color:var(--ink)}
+
+/* ---------- segmented radio bars (display-changers) ---------- */
+.btn.seg{--n:3;--i:0;display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;position:relative;padding:3px;gap:0;border-radius:11px;background:var(--slab);border:1px solid var(--line);color:var(--muted);font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;box-shadow:inset 0 0 18px rgba(0,0,0,.4)}
+.btn.seg[data-dc=time]{--n:2}
+.seg span{position:relative;z-index:1;padding:11px 15px;text-align:center;white-space:nowrap;transition:color .3s}
+.seg span.on{color:var(--acc-ink)}
+.seg:not([data-state]) span:first-of-type{color:var(--acc-ink)}
+.seg .ind{position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n));border-radius:8px;background:var(--acc);box-shadow:0 0 20px -2px var(--acc);transform:translateX(calc(var(--i)*100%));transition:transform .5s var(--spring),background .4s,box-shadow .4s}
+.seg[data-state=Storm] .ind{background:var(--acc2);box-shadow:0 0 20px -2px var(--acc2)}
+.seg:hover{border-color:rgba(110,231,255,.5)}
+.btn.seg::after{border-radius:inherit}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:100svh;display:grid;grid-template-rows:auto 1fr auto;gap:18px;padding:84px clamp(16px,4vw,56px) 26px}
+.hud-name{font:700 12px var(--mono);letter-spacing:.28em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:5px 9px;border-radius:7px;background:rgba(11,18,32,.82);border:1px solid var(--line);font:700 10px var(--mono);letter-spacing:.14em;color:var(--muted)}
+.chip b{color:var(--acc);font-weight:700;margin-left:4px;letter-spacing:.06em}
+.copy{align-self:center;max-width:min(32rem,44vw)}
+h1{font-size:clamp(2.4rem,1.1rem + 3.6vw,4.3rem);text-shadow:0 2px 28px rgba(16,26,46,.9),0 0 3px rgba(16,26,46,.9)}
+h1 .ln{display:block}
+h1 .ln.r{padding-left:.9em}
+h1 .w{display:inline-block;opacity:0;transform:translateY(.5em);animation:rise .9s var(--ease-out) forwards;animation-delay:calc(.15s + var(--d)*.09s)}
+h1 .acc{color:var(--acc)}
+@keyframes rise{to{opacity:1;transform:none}}
+.copy p{margin:18px 0 26px;max-width:38ch;color:#c4d4ea;text-shadow:0 1px 14px rgba(16,26,46,.95)}
+.cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:22px}
+.deck{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px}
+.glass{background:rgba(11,18,32,.66);border-color:var(--line)}
+.wave{position:relative;width:240px;height:64px;padding:6px 8px 0;overflow:hidden}
+.wave canvas{display:block;width:224px;height:34px}
+.wave span,.fld small{font:700 9.5px var(--mono);letter-spacing:.2em;color:var(--muted)}
+.wave span{position:absolute;left:10px;bottom:6px}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.fld{display:grid;gap:7px}
+.hint{font:500 10px var(--mono);letter-spacing:.12em;color:var(--muted);align-self:center}
+.sliders{padding:12px 14px;display:grid;gap:10px;width:230px}
+.sliders label{display:grid;grid-template-columns:1fr auto;gap:4px 8px;font:700 9.5px var(--mono);letter-spacing:.2em;color:var(--muted)}
+.sliders output{color:var(--acc)}
+.sliders input{grid-column:1/3;width:100%;margin:0;height:18px;accent-color:var(--acc);cursor:pointer;background:transparent}
+
+/* ---------- content blocks ---------- */
+.blk{padding:clamp(72px,12vh,140px) clamp(16px,4vw,56px);background:linear-gradient(180deg,rgba(16,26,46,0),rgba(16,26,46,.8) 20%,rgba(16,26,46,.8))}
+.blk + .blk{background:rgba(16,26,46,.8)}
+.kick{font:700 11px var(--mono);letter-spacing:.26em;color:var(--acc);margin-bottom:16px}
+h2{font-size:var(--step-3);max-width:20ch}
+.lede{margin-top:18px;max-width:52ch;color:#b9cae2}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:44px}
+.card{padding:26px;display:flex;flex-direction:column;gap:12px}
+.card h3{font-size:var(--step-2)}
+.card .spec{font:700 10.5px var(--mono);letter-spacing:.14em;color:var(--acc)}
+.card p{color:#b9cae2;font-size:var(--step--1);flex:1}
+.card .btn{align-self:flex-start}
+.tbl{margin-top:40px;width:100%;max-width:760px;border-collapse:collapse;font:500 var(--step--1) var(--mono)}
+.tbl th,.tbl td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line)}
+.tbl th{font-size:10px;letter-spacing:.2em;color:var(--muted);font-weight:700}
+.tbl td:nth-child(2){color:var(--acc)}
+.tbl td:nth-child(3){color:var(--acc2)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);align-items:start}
+.keys{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:10px}
+.keys li{display:flex;align-items:center;gap:14px;color:#b9cae2;font-size:var(--step--1)}
+kbd{min-width:2.6em;padding:6px 9px;text-align:center;border-radius:7px;background:var(--slab);border:1px solid var(--line);border-bottom-width:3px;font:700 11px var(--mono);color:var(--ink)}
+.band{text-align:center;padding:clamp(80px,14vh,160px) 16px}
+.band h2{max-width:none;font-size:var(--step-4)}
+.band p{margin:18px auto 34px;max-width:46ch;color:#b9cae2}
+footer{position:relative;z-index:2;padding:26px clamp(16px,4vw,56px);background:#0b1220;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font:500 11px var(--mono);letter-spacing:.12em;color:var(--muted)}
+footer a{text-decoration:none;color:var(--ink)}
+footer a:hover{color:var(--acc)}
+
+/* ---------- brief panel + toast ---------- */
+#brief{position:fixed;z-index:50;top:0;right:0;bottom:0;width:min(420px,100vw);padding:26px 24px;display:flex;flex-direction:column;gap:16px;background:rgba(11,18,32,.96);border-left:1px solid var(--line);backdrop-filter:blur(16px);pointer-events:auto}
+#brief[hidden]{display:none}
+#brief.open{animation:slide .5s var(--ease-out)}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+#brief h2{font-size:var(--step-2)}
+#brief p{color:#b9cae2;font-size:var(--step--1)}
+#brief textarea{flex:0 0 auto;min-height:130px;resize:vertical;padding:12px;border-radius:9px;border:1px solid var(--line);background:#0e1628;color:var(--ink);font:400 var(--step--1)/1.5 var(--sans)}
+#brief textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#briefClose{align-self:flex-end}
+#toast{position:fixed;z-index:60;left:50%;top:76px;transform:translate(-50%,-12px);padding:10px 16px;border-radius:9px;background:var(--slab);border:1px solid var(--acc);font:700 11px var(--mono);letter-spacing:.1em;opacity:0;pointer-events:none;transition:opacity .3s,transform .4s var(--ease-out)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:900px){.two{grid-template-columns:1fr}.copy{max-width:36rem}}
+@media (max-width:720px){
+  .nav nav{display:none}
+  .hero{padding-top:74px;gap:14px}
+  .copy{align-self:end;max-width:none;padding:56px 0 0;background:linear-gradient(0deg,rgba(16,26,46,.82) 55%,rgba(16,26,46,0))}
+  h1 .ln.r{padding-left:.5em}
+  .wave{width:100%}.wave canvas{width:100%}
+  .deck{flex-direction:column;align-items:stretch}
+  .sliders{width:100%}
+  .btn.seg span{padding:11px 11px}
+  .hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  h1 .w{opacity:1;transform:none;animation:none}
+  #brief.open{animation:none}
+  .seg .ind,.seg-cta .tick,.seg-cta .tick svg{transition:none}
+}
+</style>
+<script type="importmap">{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}</script>
+</head>
+<body>
+<canvas id="gl" aria-label="Interactive 3D particle swarm"></canvas>
+<div id="poster" aria-hidden="true"></div>
+<div id="glNote" role="status">WebGL isn't available here — showing a static poster. The controls still work.</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<header class="nav">
+  <a class="brand" href="#top"><i></i>SWARM·14K</a>
+  <nav aria-label="Sections"><a href="#formations">Formations</a><a href="#physics">Physics</a><a href="#instrument">Instrument</a></nav>
+  <button class="btn slab" data-brief>Throw it</button>
+</header>
+
+<main>
+  <section class="hero" id="top">
+    <div class="hud" aria-label="Live readouts">
+      <div class="hud-name">PARTICLE SWARM</div>
+      <div class="chips">
+        <span class="chip">PTS<b id="cPts">14,000</b></span>
+        <span class="chip">FPS<b id="cFps">--</b></span>
+        <span class="chip">FORM<b id="cForm">sphere</b></span>
+        <span class="chip">REGIME<b id="cReg">drift</b></span>
+      </div>
+    </div>
+
+    <div class="copy">
+      <h1><span class="ln"><span class="w" style="--d:0">Fourteen</span> <span class="w" style="--d:1">thousand</span> <span class="w" style="--d:2">points.</span></span><span class="ln r"><span class="w acc" style="--d:3">One</span> <span class="w acc" style="--d:4">decision.</span></span></h1>
+      <p>A GPU particle instrument that snaps between mathematical formations on springs. Drag to orbit, click to detonate, and throw it between calm and storm.</p>
+      <div class="cta-row">
+        <button class="btn primary seg-cta" data-brief><span class="lab">Throw it</span><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+        <a class="btn ulink lnk" href="#physics">See the physics</a>
+      </div>
+    </div>
+
+    <div class="deck">
+      <div class="wave glass" aria-label="Mean particle velocity"><canvas id="wave" width="448" height="68"></canvas><span>MEAN VELOCITY</span></div>
+      <div class="ctl">
+        <div class="fld"><small>FORMATION</small>
+          <button class="btn seg" data-dc="asset" data-state="Sphere" aria-label="Formation: Sphere. Activate to change."><i class="ind"></i><span class="on">Sphere</span><span>Torus Knot</span><span>Helix</span></button></div>
+        <div class="fld"><small>REGIME</small>
+          <button class="btn seg" data-dc="time" data-state="Drift" aria-label="Regime: Drift. Activate to change."><i class="ind"></i><span class="on">Drift</span><span>Storm</span></button></div>
+        <span class="hint">KEYS 1 · 2</span>
+      </div>
+      <div class="sliders glass">
+        <label>DOT SIZE<output id="oSize">0.055</output><input id="rSize" type="range" min="0.03" max="0.10" step="0.001" value="0.055" aria-label="Dot size"></label>
+        <label>TRAIL LENGTH<output id="oTrail">0.20</output><input id="rTrail" type="range" min="0" max="0.6" step="0.01" value="0.2" aria-label="Trail length"></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="formations">
+    <div data-reveal>
+      <div class="kick">01 — FORMATIONS</div>
+      <h2>Three shapes, one swarm.</h2>
+      <p class="lede">Every point owns a target in each formation. Swapping rewrites the targets in place — no allocation, no rebuild — and the points follow on their own clocks.</p>
+    </div>
+    <div class="cards">
+      <article class="card glass" data-reveal><div class="spec">FIBONACCI · R 4.2</div><h3>Sphere</h3><p>A golden-angle lattice with ±0.35 radial jitter. The still point of the instrument, and the first thing the swarm assembles into.</p><button class="btn ulink" data-go-form="0">Snap to sphere</button></article>
+      <article class="card glass" data-reveal><div class="spec">P2 · Q3 · PATH 3.4 · TUBE 1.15</div><h3>Torus knot</h3><p>Points ride the knot by their index and spread around a 1.15 tube. The colour ramp reads along the path, cyan to gold.</p><button class="btn ulink" data-go-form="1">Snap to knot</button></article>
+      <article class="card glass" data-reveal><div class="spec">3 STRANDS · R 3.2 · PITCH 5.5</div><h3>Helix</h3><p>Three interleaved strands, 120° apart, climbing from −1.6 to 4.4. The cloud turns into a spinning column of light.</p><button class="btn ulink" data-go-form="2">Snap to helix</button></article>
+    </div>
+  </section>
+
+  <section class="blk" id="physics">
+    <div data-reveal>
+      <div class="kick">02 — PHYSICS</div>
+      <h2>Springs with a wave of delay.</h2>
+      <p class="lede">Each point waits <code>fract(seed)·0.45 s</code> before its spring engages, so a swap sweeps through the cloud as a wave instead of a uniform snap. Two regimes change how hard it pulls and how long it rings.</p>
+    </div>
+    <table class="tbl" data-reveal>
+      <thead><tr><th>PARAMETER</th><th>DRIFT</th><th>STORM</th></tr></thead>
+      <tbody>
+        <tr><td>Spring k</td><td>0.055</td><td>0.10</td></tr>
+        <tr><td>Damping</td><td>0.90</td><td>0.955</td></tr>
+        <tr><td>Turbulence</td><td>0.006</td><td>0.02</td></tr>
+        <tr><td>Tip colour</td><td>#f5d76e</td><td>#ff6b4a</td></tr>
+        <tr><td>Cloud pulse</td><td>—</td><td>×1.03</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:34px" data-reveal><button class="btn ulink" data-go-regime="1">Throw it into the storm</button></div>
+  </section>
+
+  <section class="blk" id="instrument">
+    <div class="two">
+      <div data-reveal>
+        <div class="kick">03 — INSTRUMENT</div>
+        <h2>Play it like a keyboard.</h2>
+        <p class="lede">The readouts up top are live: the waveform plots the real mean particle velocity, so you can watch a shockwave ring out and settle.</p>
+      </div>
+      <ul class="keys glass" style="padding:24px" data-reveal>
+        <li><kbd>1</kbd> Cycle formation</li>
+        <li><kbd>2</kbd> Toggle Drift / Storm</li>
+        <li><kbd>3</kbd><kbd>4</kbd><kbd>5</kbd> Jump to sphere, knot, helix</li>
+        <li><kbd>Space</kbd> Blast from the centre</li>
+        <li><kbd>Click</kbd> Shockwave at the pointer</li>
+        <li><kbd>Drag</kbd> Orbit · <kbd>Scroll</kbd> dolly in</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="blk band" id="cta">
+    <div data-reveal>
+      <h2>Throw it.</h2>
+      <p>Tell us what the cloud should become and we'll tune a swarm to it.</p>
+      <button class="btn primary seg-cta" data-brief><span class="lab">Open the brief</span><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+    </div>
+  </section>
+</main>
+
+<footer><span>PARTICLE SWARM — a DepthGlow demo · three.js r170</span><a href="#top">Back to top ↑</a></footer>
+
+<aside id="brief" role="dialog" aria-labelledby="briefT" hidden>
+  <button class="btn slab" id="briefClose">Close · Esc</button>
+  <h2 id="briefT">Throw your own swarm</h2>
+  <p>Describe the formation, the mood and where it will live. Copy the brief and send it wherever you work.</p>
+  <textarea id="briefTxt" aria-label="Brief" placeholder="e.g. 20k points that form our logo, then scatter into a storm on scroll…"></textarea>
+  <button class="btn primary seg-cta" id="briefCopy"><span class="lab">Copy brief</span><span class="tick"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+</aside>
+
+<script type="module">
+import * as THREE from 'three';
+
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const N = 14000, HALF = 7000;
+const $ = (s) => document.querySelector(s);
+const FORMS = ['Sphere', 'Torus Knot', 'Helix'];
+const REGIMES = ['Drift', 'Storm'];
+let form = 0, regime = 0, gl = null;
+
+/* ---------------- UI state (works with or without WebGL) ---------------- */
+const segs = { asset: $('[data-dc=asset]'), time: $('[data-dc=time]') };
+function paintSeg(btn, i, label, names) {
+  btn.style.setProperty('--i', i);
+  btn.dataset.state = names[i];
+  btn.querySelectorAll('span').forEach((s, k) => s.classList.toggle('on', k === i));
+  btn.setAttribute('aria-label', label + ': ' + names[i] + '. Activate to change.');
+}
+function setForm(i) {
+  form = ((i % 3) + 3) % 3;
+  paintSeg(segs.asset, form, 'Formation', FORMS);
+  $('#cForm').textContent = FORMS[form].toLowerCase();
+  gl && gl.setForm(form);
+}
+function setRegime(i) {
+  regime = ((i % 2) + 2) % 2;
+  paintSeg(segs.time, regime, 'Regime', REGIMES);
+  $('#cReg').textContent = REGIMES[regime].toLowerCase();
+  gl && gl.setRegime(regime);
+}
+// click a segment to pick it, click elsewhere on the bar to cycle
+function bind(btn, count, set, get) {
+  btn.addEventListener('click', (e) => {
+    const s = e.target.closest('span');
+    const k = s ? [...btn.querySelectorAll('span')].indexOf(s) : -1;
+    set(k >= 0 && k !== get() ? k : get() + 1);
+  });
+}
+bind(segs.asset, 3, setForm, () => form);
+bind(segs.time, 2, setRegime, () => regime);
+document.querySelectorAll('[data-go-form]').forEach((b) => b.addEventListener('click', () => { setForm(+b.dataset.goForm); scrollTo({ top: 0 }); }));
+document.querySelectorAll('[data-go-regime]').forEach((b) => b.addEventListener('click', () => { setRegime(+b.dataset.goRegime); scrollTo({ top: 0 }); }));
+
+const rSize = $('#rSize'), rTrail = $('#rTrail');
+const sizeVal = () => +rSize.value, trailVal = () => +rTrail.value;
+rSize.addEventListener('input', () => { $('#oSize').textContent = sizeVal().toFixed(3); });
+rTrail.addEventListener('input', () => { $('#oTrail').textContent = trailVal().toFixed(2); });
+
+let toastT = 0;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400);
+}
+
+/* ---------------- brief panel ---------------- */
+const brief = $('#brief');
+let briefOpener = null;
+function openBrief(opener) {
+  briefOpener = opener || null;
+  brief.hidden = false; brief.classList.remove('open'); void brief.offsetWidth; brief.classList.add('open');
+  $('#briefTxt').focus({ preventScroll: true });
+}
+function closeBrief() {
+  if (brief.hidden) return;
+  brief.hidden = true;
+  briefOpener && briefOpener.focus({ preventScroll: true });
+}
+document.querySelectorAll('button[data-brief]').forEach((b) => b.addEventListener('click', () => {
+  openBrief(b);
+  if (b.closest('.nav')) gl && gl.blast(); // nav CTA also throws the swarm
+}));
+$('#briefClose').addEventListener('click', closeBrief);
+$('#briefCopy').addEventListener('click', async () => {
+  const txt = $('#briefTxt').value.trim() || 'Particle Swarm brief: (empty)';
+  try { await navigator.clipboard.writeText(txt); }
+  catch (_) {
+    const ta = $('#briefTxt'); ta.select();
+    try { document.execCommand('copy'); } catch (__) { /* clipboard blocked: text stays selected */ }
+  }
+  toast('Brief copied');
+});
+
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') return closeBrief();
+  if (e.target.closest('textarea,input') || e.ctrlKey || e.metaKey || e.altKey) return;
+  const onBtn = !!e.target.closest('button,a');
+  if (e.key === '1') setForm(form + 1);
+  else if (e.key === '2') setRegime(regime + 1);
+  else if (e.key === '3') setForm(0);
+  else if (e.key === '4') setForm(1);
+  else if (e.key === '5') setForm(2);
+  else if (e.code === 'Space' && !onBtn) { e.preventDefault(); gl && gl.blast(); }
+});
+
+/* ---------------- waveform strip (real mean-velocity data) ---------------- */
+const wave = $('#wave'), wctx = wave.getContext('2d');
+const WN = 112, wbuf = new Float32Array(WN); let whead = 0, wacc = 0;
+function pushWave(v) { wbuf[whead] = v; whead = (whead + 1) % WN; }
+function drawWave() {
+  const w = wave.width, h = wave.height;
+  wctx.clearRect(0, 0, w, h);
+  wctx.lineWidth = 2.4; wctx.lineJoin = 'round';
+  wctx.strokeStyle = regime ? '#ff6b4a' : '#6ee7ff';
+  wctx.shadowColor = wctx.strokeStyle; wctx.shadowBlur = 8;
+  wctx.beginPath();
+  for (let i = 0; i < WN; i++) {
+    const v = wbuf[(whead + i) % WN];
+    const x = (i / (WN - 1)) * w, y = h - 5 - Math.min(1, v) * (h - 10);
+    i ? wctx.lineTo(x, y) : wctx.moveTo(x, y);
+  }
+  wctx.stroke();
+}
+
+/* ---------------- WebGL scene ---------------- */
+function initGL() {
+  const canvas = $('#gl');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+  const BG = 0x101a2e;
+  renderer.setClearColor(BG, 1);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(BG);
+  scene.fog = new THREE.Fog(BG, 14, 70);
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+  const TGT = new THREE.Vector3(0, 1.4, 0);
+  const BASE_PITCH = Math.atan(1.8 / 13), BASE_DIST = Math.hypot(1.8, 13);
+
+  /* lights: only the accent rings are lit, everything else is self-lit */
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8); dir.position.set(0.4, 1, 0.5); scene.add(dir);
+  scene.add(new THREE.HemisphereLight(0x4f8cff, 0x101a2e, 0.5));
+
+  /* ground: canvas grid, 1u pitch, fogged by distance */
+  const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+  const g = gc.getContext('2d');
+  g.fillStyle = '#14263f'; g.fillRect(0, 0, 128, 128);
+  g.strokeStyle = 'rgba(42,74,110,.45)'; g.lineWidth = 7; g.strokeRect(0, 0, 128, 128);
+  g.strokeStyle = '#2a4a6e'; g.lineWidth = 2.5; g.strokeRect(0, 0, 128, 128);
+  const gtex = new THREE.CanvasTexture(gc);
+  gtex.wrapS = gtex.wrapT = THREE.RepeatWrapping; gtex.repeat.set(160, 160);
+  gtex.colorSpace = THREE.SRGBColorSpace; gtex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshBasicMaterial({ map: gtex }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -2.2; scene.add(ground);
+
+  /* emissive pool under the cloud (#1b3a5e, additive) */
+  const pc = document.createElement('canvas'); pc.width = pc.height = 256;
+  const p2 = pc.getContext('2d'), pg = p2.createRadialGradient(128, 128, 0, 128, 128, 128);
+  pg.addColorStop(0, '#2a5a8e'); pg.addColorStop(0.45, '#1b3a5e'); pg.addColorStop(1, '#000');
+  p2.fillStyle = pg; p2.fillRect(0, 0, 256, 256);
+  const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = THREE.SRGBColorSpace;
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(9, 64), new THREE.MeshBasicMaterial({ map: ptex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false }));
+  pool.rotation.x = -Math.PI / 2; pool.position.y = -2.19; scene.add(pool);
+
+  /* lit accent rings */
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0x3a6aa8, emissive: 0x1b3a5e, emissiveIntensity: 0.9, roughness: 0.6 });
+  [[4.9, 5.05], [8.9, 9.05]].forEach(([a, b]) => {
+    const r = new THREE.Mesh(new THREE.RingGeometry(a, b, 96), ringMat);
+    r.rotation.x = -Math.PI / 2; r.position.y = -2.18; scene.add(r);
+  });
+
+  /* horizon glow: gradient #2a6cff -> transparent, opacity 0.35, behind everything */
+  const hc = document.createElement('canvas'); hc.width = 8; hc.height = 256;
+  const h2 = hc.getContext('2d'), hg = h2.createLinearGradient(0, 256, 0, 0);
+  hg.addColorStop(0, 'rgba(255,255,255,1)'); hg.addColorStop(0.35, 'rgba(255,255,255,.55)'); hg.addColorStop(1, 'rgba(255,255,255,0)');
+  h2.fillStyle = hg; h2.fillRect(0, 0, 8, 256);
+  const glowMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(hc), color: 0x2a6cff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(260, 46), glowMat);
+  glow.position.set(0, 14, -95); glow.renderOrder = -1; scene.add(glow);
+
+  /* depth-cue wireframes */
+  const polyMat = new THREE.LineBasicMaterial({ color: 0x7c5cff, transparent: true, opacity: 0.55 });
+  const polys = [[new THREE.IcosahedronGeometry(6, 0), 0.2], [new THREE.OctahedronGeometry(6.8, 0), 0.3], [new THREE.TetrahedronGeometry(7.5, 0), 0.15]].map(([geo, spd]) => {
+    const m = new THREE.LineSegments(new THREE.EdgesGeometry(geo), polyMat);
+    m.position.copy(TGT); scene.add(m); return { m, spd };
+  });
+
+  /* ---- particles ---- */
+  let s32 = 1337;
+  const rnd = () => { s32 = (s32 + 0x6D2B79F5) | 0; let t = Math.imul(s32 ^ (s32 >>> 15), 1 | s32); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const pos = new Float32Array(N * 3), vel = new Float32Array(N * 3), tgt = new Float32Array(N * 3);
+  const seed = new Float32Array(N * 3), idx = new Float32Array(N), delay = new Float32Array(N);
+  const sinS = new Float32Array(N * 3), cosS = new Float32Array(N * 3);
+  const colA = new Float32Array(N * 3), colS = new Float32Array(N * 3);
+  const cA = [new THREE.Color('#6ee7ff'), new THREE.Color('#7c5cff'), new THREE.Color('#f5d76e')];
+  const cS = [new THREE.Color('#6ee7ff'), new THREE.Color('#c04aff'), new THREE.Color('#ff6b4a')];
+  const tmpC = new THREE.Color();
+  const ramp = (c, t, out, j) => { t < 0.5 ? tmpC.lerpColors(c[0], c[1], t * 2) : tmpC.lerpColors(c[1], c[2], (t - 0.5) * 2); out[j] = tmpC.r; out[j + 1] = tmpC.g; out[j + 2] = tmpC.b; };
+  for (let i = 0; i < N; i++) {
+    const j = i * 3;
+    seed[j] = rnd(); seed[j + 1] = rnd(); seed[j + 2] = rnd();
+    idx[i] = i / N; delay[i] = (seed[j] % 1) * 0.45;
+    for (let a = 0; a < 3; a++) { sinS[j + a] = Math.sin(seed[j + a] * 6.2832); cosS[j + a] = Math.cos(seed[j + a] * 6.2832); }
+    pos[j] = (seed[j] - 0.5) * 18; pos[j + 1] = 1.4 + (seed[j + 1] - 0.5) * 12; pos[j + 2] = (seed[j + 2] - 0.5) * 18; // arrive from a loose cloud
+    ramp(cA, idx[i], colA, j); ramp(cS, idx[i], colS, j);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  const posAttr = new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage);
+  const velAttr = new THREE.BufferAttribute(vel, 3).setUsage(THREE.DynamicDrawUsage);
+  geo.setAttribute('position', posAttr);
+  geo.setAttribute('aVel', velAttr);
+  geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 3));
+  geo.setAttribute('aIndex', new THREE.BufferAttribute(idx, 1));
+  geo.setAttribute('color', new THREE.BufferAttribute(colA, 3));
+  geo.setAttribute('colorS', new THREE.BufferAttribute(colS, 3));
+
+  const U = { uSize: { value: sizeVal() }, uPx: { value: 600 }, uStorm: { value: 0 }, uTrail: { value: trailVal() }, uAspect: { value: 1 }, uSizeMul: { value: 1 } };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: U, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `
+      attribute vec3 aVel; attribute vec3 aSeed; attribute float aIndex; attribute vec3 colorS;
+      uniform float uSize, uPx, uStorm, uTrail, uAspect, uSizeMul;
+      varying vec3 vCol; varying vec2 vDir; varying float vSt;
+      void main(){
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mv;
+        vec4 c2 = projectionMatrix * (modelViewMatrix * vec4(position + aVel * 6.0, 1.0));
+        vec2 d = (c2.xy / c2.w - gl_Position.xy / gl_Position.w) * vec2(uAspect, 1.0);
+        float len = length(d);
+        vDir = len > 1e-5 ? d / len : vec2(1.0, 0.0);
+        vSt = clamp(len * uTrail * 60.0, 0.0, 5.0);
+        float s = uSize * uSizeMul * uPx / max(-mv.z, 0.1);
+        gl_PointSize = clamp(s * (1.0 + vSt), 1.8, 90.0);
+        vCol = mix(color, colorS, uStorm);
+      }`,
+    fragmentShader: `
+      varying vec3 vCol; varying vec2 vDir; varying float vSt;
+      void main(){
+        vec2 p = gl_PointCoord * 2.0 - 1.0; p.y = -p.y;
+        float along = dot(p, vDir), perp = dot(p, vec2(-vDir.y, vDir.x));
+        float d = length(vec2(along, perp * (1.0 + vSt)));
+        if (d > 1.0) discard;
+        float a = exp(-d * d * 3.4);
+        gl_FragColor = vec4(vCol * 1.25 * inversesqrt(1.0 + vSt), a);
+        #include <colorspace_fragment>
+      }`
+  });
+  const cloud = new THREE.Points(geo, mat);
+  cloud.frustumCulled = false;
+  const group = new THREE.Group(); group.add(cloud); scene.add(group);
+
+  /* ---- formations: write into tgt in place ---- */
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  const fillTargets = (f) => {
+    if (f === 0) {
+      for (let i = 0; i < N; i++) {
+        const j = i * 3, y = 1 - 2 * (i + 0.5) / N, r = Math.sqrt(1 - y * y), th = i * GA;
+        const R = 4.2 + (seed[j + 1] - 0.5) * 0.7;
+        tgt[j] = Math.cos(th) * r * R; tgt[j + 1] = 1.4 + y * R; tgt[j + 2] = Math.sin(th) * r * R;
+      }
+    } else if (f === 1) {
+      const sc = 3.4 / 2, e = 0.002, P = [0, 0, 0], Q = [0, 0, 0];
+      const knot = (u, o) => { const r = 2 + Math.cos(3 * u); o[0] = r * Math.cos(2 * u) * sc; o[1] = r * Math.sin(2 * u) * sc; o[2] = Math.sin(3 * u) * sc; };
+      for (let i = 0; i < N; i++) {
+        const j = i * 3, u = idx[i] * 6.2832;
+        knot(u, P); knot(u + e, Q);
+        let tx = Q[0] - P[0], ty = Q[1] - P[1], tz = Q[2] - P[2]; const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+        let ax = 0, ay = 0, az = 1; if (Math.abs(tz) > 0.95) { ax = 1; az = 0; }
+        let nx = ty * az - tz * ay, ny = tz * ax - tx * az, nz = tx * ay - ty * ax; const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+        const bx = ty * nz - tz * ny, by = tz * nx - tx * nz, bz = tx * ny - ty * nx;
+        const ph = seed[j + 1] * 6.2832, rr = 1.15 * (0.8 + 0.2 * seed[j + 2]), c = Math.cos(ph) * rr, s = Math.sin(ph) * rr;
+        tgt[j] = P[0] + nx * c + bx * s; tgt[j + 1] = 1.4 + P[1] + ny * c + by * s; tgt[j + 2] = P[2] + nz * c + bz * s;
+      }
+    } else {
+      for (let i = 0; i < N; i++) {
+        const j = i * 3, k = i % 3, t = Math.floor(i / 3) / (N / 3);
+        const y = -1.6 + 6 * t + (seed[j + 1] - 0.5) * 0.3;
+        const ang = (y + 1.6) / 5.5 * 6.2832 + k * 2.0944 + (seed[j + 2] - 0.5) * 0.12;
+        const R = 3.2 + (seed[j] - 0.5) * 0.5;
+        tgt[j] = Math.cos(ang) * R; tgt[j + 1] = y; tgt[j + 2] = Math.sin(ang) * R;
+      }
+    }
+  };
+
+  /* ---- state ---- */
+  let drawN = N, level = 0, time = 0, swapT = -10;
+  let kC = 0.055, dampC = 0.90, driftC = 0.006, stormC = 0;
+  const jump = () => { pos.set(tgt); vel.fill(0); posAttr.needsUpdate = velAttr.needsUpdate = true; };
+  fillTargets(0);
+  if (REDUCED) jump();
+
+  const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(), hit = new THREE.Vector3(), tmpV = new THREE.Vector3();
+
+  /* shockwave ring */
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 64), new THREE.MeshBasicMaterial({ color: 0x6ee7ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide }));
+  ring.visible = false; scene.add(ring);
+  let ringT = 1, ringR = 2.2;
+
+  function shock(world, R, str) {
+    if (REDUCED) return;
+    group.updateMatrixWorld(); cloud.worldToLocal(tmpV.copy(world));
+    const hx = tmpV.x, hy = tmpV.y, hz = tmpV.z, R2 = R * R;
+    for (let i = 0; i < drawN; i++) {
+      const j = i * 3, dx = pos[j] - hx, dy = pos[j + 1] - hy, dz = pos[j + 2] - hz, d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < R2) { const d = Math.sqrt(d2) || 1e-3, f = (1 - d / R) * str / d; vel[j] += dx * f; vel[j + 1] += dy * f; vel[j + 2] += dz * f; }
+    }
+    ring.position.copy(world); ring.quaternion.copy(camera.quaternion); ring.visible = true; ringT = 0; ringR = R;
+    ring.material.color.set(stormC > 0.5 ? 0xff6b4a : 0x6ee7ff);
+  }
+
+  /* ---- camera rig ---- */
+  let yawAuto = 0, yawOff = 0, pitOff = 0, yawT = 0, pitT = 0, dolly = 0, dragging = false;
+  const PMAX = 18 * Math.PI / 180;
+  let dx0 = 0, dy0 = 0, downT = 0, moved = 0, downId = -1;
+  const interactive = (t) => t.closest && t.closest('button,a,input,textarea,aside,.glass,.nav,output');
+  addEventListener('pointerdown', (e) => {
+    if (e.button || interactive(e.target)) return;
+    dragging = true; downId = e.pointerId; dx0 = e.clientX; dy0 = e.clientY; downT = performance.now(); moved = 0;
+    canvas.classList.add('drag');
+  });
+  addEventListener('pointermove', (e) => {
+    if (!dragging || e.pointerId !== downId) return;
+    const mx = e.clientX - dx0, my = e.clientY - dy0; dx0 = e.clientX; dy0 = e.clientY;
+    moved += Math.abs(mx) + Math.abs(my);
+    yawT -= mx * 0.006; pitT = Math.max(-PMAX, Math.min(PMAX, pitT + my * 0.004));
+  });
+  const up = (e) => {
+    if (!dragging || e.pointerId !== downId) return;
+    dragging = false; canvas.classList.remove('drag');
+    if (e.type === 'pointerup' && moved < 6 && performance.now() - downT < 450) {
+      ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+      raycaster.setFromCamera(ndc, camera);
+      plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(tmpV).negate(), TGT);
+      if (raycaster.ray.intersectPlane(plane, hit)) shock(hit, 2.2, 0.5);
+    }
+  };
+  addEventListener('pointerup', up); addEventListener('pointercancel', up);
+
+  /* ---- sizing ---- */
+  let dpr = Math.min(devicePixelRatio || 1, 2);
+  function resize() {
+    const w = innerWidth, h = innerHeight, asp = w / h;
+    renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
+    camera.aspect = asp;
+    camera.fov = 2 * Math.atan(Math.tan(25 * Math.PI / 180) * Math.min(Math.max(1, 1 / asp), 2.2)) * 180 / Math.PI; // refit so the cloud keeps its width on tall screens
+    if (asp > 1.3) camera.setViewOffset(w, h, -w * 0.1, 0, w, h);      // desktop: cloud sits right of the headline
+    else if (asp < 0.9) camera.setViewOffset(w, h, 0, h * 0.16, w, h); // mobile: cloud rides above the copy
+    else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
+    U.uPx.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
+    U.uAspect.value = asp;
+  }
+  resize(); addEventListener('resize', resize);
+
+  /* ---- context loss ---- */
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); toast('Graphics context lost — restoring…'); });
+  canvas.addEventListener('webglcontextrestored', () => { posAttr.needsUpdate = velAttr.needsUpdate = true; resize(); toast('Graphics restored'); });
+
+  /* ---- loop ---- */
+  const hero = $('.hero');
+  const glowCool = new THREE.Color(0x2a6cff), glowHot = new THREE.Color(0xff5a3a), polyCool = new THREE.Color(0x7c5cff), polyHot = new THREE.Color(0xff6b4a);
+  let last = performance.now(), start = last, emaDt = 1 / 60, slowT = 0, fastT = 0, restoreWait = 8, lastRestore = -99, fpsT = 0, waveT = 0, speedAcc = 0, speedN = 0;
+
+  function setLevel(l) {
+    level = l;
+    const was = drawN;
+    drawN = l >= 1 ? HALF : N;
+    geo.setDrawRange(0, drawN);
+    if (drawN > was) { for (let i = was * 3; i < N * 3; i++) { pos[i] = tgt[i]; vel[i] = 0; } posAttr.needsUpdate = velAttr.needsUpdate = true; }
+    const nd = l >= 2 ? 1 : Math.min(devicePixelRatio || 1, 2);
+    if (nd !== dpr) { dpr = nd; resize(); }
+    $('#cPts').textContent = drawN.toLocaleString('en-US');
+  }
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const raw = (now - last) / 1000; last = now;
+    const dt = Math.min(raw, 0.1);
+    time += dt;
+
+    /* adaptive quality: ignore init + hidden-tab spikes */
+    if (raw < 0.25 && now - start > 3000) {
+      emaDt += (raw - emaDt) * 0.1; const fps = 1 / emaDt;
+      if (fps < 45) { slowT += raw; fastT = 0; } else if (fps > 57) { fastT += raw; slowT = 0; } else { slowT = fastT = 0; }
+      if (slowT > 2) { slowT = 0; if (level < 2) { if (level === 1 && time - lastRestore < 14) restoreWait = Math.min(restoreWait * 2, 64); setLevel(level + 1); } }
+      if (fastT > restoreWait && level > 0) { fastT = 0; lastRestore = time; setLevel(level - 1); }
+    }
+
+    /* regime tween */
+    const kt = regime ? 0.10 : 0.055, dt_ = regime ? 0.955 : 0.90, drt = regime ? 0.02 : 0.006;
+    const a = 1 - Math.exp(-dt * 4);
+    kC += (kt - kC) * a; dampC += (dt_ - dampC) * a; driftC += (drt - driftC) * a; stormC += (regime - stormC) * a;
+    U.uStorm.value = stormC;
+
+    /* spring physics (typed arrays, zero allocation) */
+    let sum = 0;
+    if (!REDUCED) {
+      const s = Math.min(dt * 60, 3), K = kC * s, D = Math.pow(dampC, s), dr = driftC * s;
+      const sa = Math.sin(time * 1.2), ca = Math.cos(time * 1.2), since = time - swapT;
+      for (let i = 0; i < drawN; i++) {
+        const j = i * 3;
+        if (since >= delay[i]) { vel[j] += (tgt[j] - pos[j]) * K; vel[j + 1] += (tgt[j + 1] - pos[j + 1]) * K; vel[j + 2] += (tgt[j + 2] - pos[j + 2]) * K; }
+        const vx = vel[j] * D, vy = vel[j + 1] * D, vz = vel[j + 2] * D;
+        vel[j] = vx; vel[j + 1] = vy; vel[j + 2] = vz;
+        pos[j] += vx * s + (sa * cosS[j] + ca * sinS[j]) * dr;
+        pos[j + 1] += vy * s + (sa * cosS[j + 1] + ca * sinS[j + 1]) * dr;
+        pos[j + 2] += vz * s + (sa * cosS[j + 2] + ca * sinS[j + 2]) * dr;
+        if (!isFinite(pos[j] + pos[j + 1] + pos[j + 2] + vx + vy + vz)) { pos[j] = tgt[j]; pos[j + 1] = tgt[j + 1]; pos[j + 2] = tgt[j + 2]; vel[j] = vel[j + 1] = vel[j + 2] = 0; }
+        sum += Math.sqrt(vx * vx + vy * vy + vz * vz);
+      }
+      posAttr.needsUpdate = velAttr.needsUpdate = true;
+    }
+    speedAcc += sum / drawN; speedN++;
+
+    /* camera: auto-orbit, damped drag, scroll dolly */
+    if (!REDUCED && !dragging) yawAuto += 0.05 * dt;
+    const kd = 1 - Math.pow(1 - 0.07, dt * 60);
+    yawOff += (yawT - yawOff) * kd; pitOff += (pitT - pitOff) * kd;
+    const p = Math.min(1, Math.max(0, scrollY / Math.max(1, hero.offsetHeight))), e = 1 - (1 - p) * (1 - p);
+    dolly += (e - dolly) * kd;
+    const yaw = yawAuto + yawOff, pit = BASE_PITCH + pitOff, dist = BASE_DIST - 4 * dolly;
+    camera.position.set(TGT.x + dist * Math.sin(yaw) * Math.cos(pit), TGT.y + dist * Math.sin(pit), TGT.z + dist * Math.cos(yaw) * Math.cos(pit));
+    camera.lookAt(TGT);
+    U.uSize.value = sizeVal(); U.uTrail.value = trailVal(); U.uSizeMul.value = 1 + 0.35 * dolly;
+
+    /* cloud: slow spin + storm pulse */
+    if (!REDUCED) group.rotation.y += 0.06 * dt;
+    const pulse = 1 + 0.03 * stormC * (0.5 + 0.5 * Math.sin(time * 2.4));
+    group.scale.setScalar(pulse); group.position.y = TGT.y * (1 - pulse);
+    glowMat.color.lerpColors(glowCool, glowHot, stormC * 0.6);
+    polyMat.color.lerpColors(polyCool, polyHot, stormC * 0.5);
+    if (!REDUCED) polys.forEach((q, i) => { q.m.rotation.y += q.spd * dt; q.m.rotation.x += q.spd * 0.6 * dt * (i + 1) * 0.5; });
+
+    if (ringT < 1) {
+      ringT = Math.min(1, ringT + dt / 0.7);
+      ring.scale.setScalar(0.3 + ringR * 1.6 * (1 - Math.pow(1 - ringT, 3)));
+      ring.material.opacity = 0.8 * (1 - ringT) * (1 - ringT);
+      if (ringT >= 1) ring.visible = false;
+    }
+
+    renderer.render(scene, camera);
+
+    /* HUD */
+    fpsT += raw; waveT += raw;
+    if (fpsT > 0.4) { $('#cFps').textContent = Math.round(1 / Math.max(emaDt, 1e-3)); fpsT = 0; }
+    if (waveT > 0.033) { pushWave(Math.min(1, (speedAcc / Math.max(1, speedN)) * 14)); drawWave(); waveT = 0; speedAcc = 0; speedN = 0; }
+  }
+  requestAnimationFrame((t) => { last = t; start = t; frame(t); });
+
+  window.__dbg = { renderer, scene, camera }; // QA capture hook
+  return {
+    setForm(f) {
+      fillTargets(f); swapT = time;
+      if (REDUCED) jump();
+    },
+    setRegime() { /* tween reads `regime` each frame */ },
+    blast() { shock(TGT, 6.5, 0.9); }
+  };
+}
+
+try {
+  gl = initGL();
+} catch (err) {
+  document.documentElement.classList.add('nogl');
+  console.warn('WebGL unavailable:', err && err.message);
+}
+setForm(0); setRegime(0);
+if (!gl) { for (let i = 0; i < 112; i++) pushWave(0.15 + 0.1 * Math.sin(i * 0.4)); drawWave(); }
+
+</script>
+<script src="../../js/kit/motion.js"></script>
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Harukaze Station — a low-poly spring railway diorama</title>
+<meta name="description" content="春風駅 Harukaze Station: an interactive low-poly Japanese countryside railway platform. Switch the season and the hour, ride the 12-second commuter loop.">
+<meta name="theme-color" content="#f3e3d2">
+<style>
+@font-face{font-family:'Clash Display';src:url(../../fonts/ClashDisplay-600.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Clash Display';src:url(../../fonts/ClashDisplay-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-400.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'ZenJP';src:url(../../fonts/ZenOldMincho-jp.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'ZenJP';src:url(../../fonts/ZenOldMincho-700.woff2) format('woff2');font-weight:700;font-display:swap;unicode-range:U+0000-00FF}
+</style>
+<link rel="stylesheet" href="../../js/kit/kit.css">
+<style>
+:root{--acc:#e86f9a;--acc-ink:#1f1620;--ink:#2a2230;--paper:rgba(243,227,210,.82);--slab:#1f2937;--slab-ink:#f4ece0;--jp:'ZenJP','Zen Old Mincho','Yu Mincho','Hiragino Mincho ProN',serif;--pad:clamp(16px,4vw,56px)}
+body[data-time="night"]{--ink:#f6eee2;--paper:rgba(20,33,60,.74)}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+html.lenis,html.lenis body{height:auto}
+body{margin:0;background:#f3e3d2;color:var(--ink);font:400 var(--step-0)/1.55 var(--sans);overflow-x:hidden;transition:color .8s}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+.ui{position:relative;z-index:2}
+a{color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.02;margin:0;letter-spacing:-.01em}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+
+/* ---------- flip-board chip: dark slab + split-flap crease + hinge dots ---------- */
+.btn.chip{border-radius:3px;font-family:var(--mono);font-weight:700;font-size:var(--step--1);letter-spacing:.14em;text-transform:uppercase;padding:.9em 1.3em;background-color:var(--slab);color:var(--slab-ink);border:1px solid rgba(255,255,255,.16);overflow:hidden;
+  background-image:radial-gradient(circle at 7px 50%,rgba(0,0,0,.65) 1.6px,transparent 2.4px),radial-gradient(circle at calc(100% - 7px) 50%,rgba(0,0,0,.65) 1.6px,transparent 2.4px);
+  box-shadow:0 6px 18px -8px rgba(20,16,30,.55),inset 0 -2px 0 rgba(0,0,0,.35)}
+.btn.chip::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.1);z-index:2;pointer-events:none}
+.btn.chip:hover{border-color:var(--acc)}
+.btn.chip.primary{background-color:var(--acc);color:var(--acc-ink);border-color:rgba(0,0,0,.25);box-shadow:0 8px 22px -8px var(--acc),inset 0 -2px 0 rgba(0,0,0,.18)}
+.btn.chip.primary:hover{box-shadow:0 12px 30px -8px var(--acc),inset 0 -2px 0 rgba(0,0,0,.18)}
+.btn.chip svg{width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn.chip.navcta{padding:.55em .9em;letter-spacing:.1em;font-size:var(--step--1)}
+.btn.chip.big{padding:1.1em 1.7em;font-size:var(--step-0)}
+.btn.chip.big svg{transition:transform .35s var(--ease-out)}
+.btn.chip.big:hover svg{transform:translateX(5px)}
+.btn.chip.ticket{padding:1.2em 2.2em;font-size:var(--step-1);
+  -webkit-mask:radial-gradient(circle 7px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat;
+  mask:radial-gradient(circle 7px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat}
+.btn.chip.foot{background-color:transparent;background-image:none;color:inherit;border:0;border-bottom:2px solid currentColor;border-radius:0;box-shadow:none;padding:.4em 0}
+.btn.chip.foot::before{display:none}
+/* display-changer chips: current row; hover flips the next row up */
+.btn.dc{min-width:9.5em;padding:0;height:2.9em;justify-content:center}
+.dc .fb{display:block;width:100%;text-align:center;line-height:2.9em;position:relative;transition:transform .38s var(--ease-out)}
+.dc .fb::after{content:attr(data-next);position:absolute;left:0;right:0;top:100%;color:var(--acc)}
+.dc:hover .fb,.dc:focus-visible .fb{transform:translateY(-100%)}
+.dc .fb.tick{animation:flap .42s var(--ease-out)}
+@keyframes flap{0%{scale:1 1}45%{scale:1 .04}55%{scale:1 .04}100%{scale:1 1}}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px var(--pad);background:linear-gradient(var(--paper),transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.brand{display:flex;align-items:baseline;gap:.6em;text-decoration:none;font-family:var(--display);font-weight:700;font-size:var(--step-1)}
+.brand b{font-family:var(--jp);font-weight:700;color:var(--acc);filter:saturate(1.2) brightness(.82)}
+.nav ul{display:flex;gap:clamp(14px,3vw,36px);list-style:none;margin:0;padding:0}
+.nav ul a{position:relative;text-decoration:none;font-weight:700;font-size:var(--step--1);letter-spacing:.1em;text-transform:uppercase;padding:6px 0;background:linear-gradient(var(--acc),var(--acc)) 0 100%/0 2px no-repeat;transition:background-size .4s var(--ease-out)}
+.nav ul a:hover,.nav ul a:focus-visible{background-size:100% 2px}
+@media(max-width:640px){.nav ul{display:none}.brand span{display:none}}
+
+/* ---------- hero ---------- */
+.hero{min-height:100svh;display:grid;grid-template-rows:auto 1fr auto;padding:92px var(--pad) clamp(20px,4vh,44px);position:relative}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,var(--paper) 0,transparent 55%)}
+.plate{justify-self:start;display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:12px 18px;background:rgba(31,41,55,.9);color:var(--slab-ink);border:1px solid rgba(255,255,255,.14);border-radius:4px;box-shadow:0 14px 34px -14px rgba(20,16,30,.6)}
+.plate .jp{font-family:var(--jp);font-weight:700;font-size:var(--step-2);line-height:1}
+.plate .en{font-family:var(--display);font-weight:700;font-size:var(--step-1)}
+.plate .sub{flex-basis:100%;font-family:var(--jp);font-size:var(--step--1);opacity:.75;letter-spacing:.2em;margin:0}
+.eta{font-family:var(--mono);font-size:var(--step--1);font-weight:700;letter-spacing:.12em;padding:.35em .7em;background:var(--acc);color:var(--acc-ink);border-radius:2px;min-width:9.5em;text-align:center}
+.hero-row{align-self:end;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.hero-copy{max-width:min(40rem,100%)}
+.eyebrow{font-family:var(--mono);font-size:var(--step--1);letter-spacing:.2em;text-transform:uppercase;margin:0 0 14px;opacity:.8}
+.hero h1{font-size:var(--step-4);margin-bottom:18px}
+.hero h1 em{font-style:normal;color:#96305a;filter:saturate(1.15) brightness(.85)}
+.hero p.lead{font-size:var(--step-1);max-width:34em;margin:0 0 26px;font-weight:500}
+.actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.dcbar{display:grid;grid-template-columns:auto auto;gap:8px 12px;align-items:center;padding:12px;background:rgba(31,41,55,.9);border-radius:4px;border:1px solid rgba(255,255,255,.14);box-shadow:0 14px 34px -14px rgba(20,16,30,.6)}
+.dcbar label{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#aab4c4}
+.dcbar .hint{grid-column:1/-1;margin:2px 0 0;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;color:#8b95a6}
+kbd{font-family:var(--mono);border:1px solid #556;border-radius:3px;padding:0 .35em;color:#dbe2ee}
+
+/* ---------- sections ---------- */
+section.s{padding:clamp(64px,12vh,140px) var(--pad)}
+.s h2{font-size:var(--step-3);margin-bottom:14px;max-width:16em}
+.s .kicker{font-family:var(--mono);font-size:var(--step--1);letter-spacing:.2em;text-transform:uppercase;color:var(--acc);filter:brightness(.8) saturate(1.3);margin:0 0 12px}
+.s .intro{max-width:36em;font-size:var(--step-1);margin:0 0 34px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:16px}
+.card{background:rgba(31,41,55,.92);color:var(--slab-ink);padding:22px;border-radius:4px;border:1px solid rgba(255,255,255,.12);position:relative;transition:transform .45s var(--ease-out),border-color .3s}
+.card:hover{transform:translateY(-6px);border-color:var(--acc)}
+.card::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.55);pointer-events:none}
+.card .no{font-family:var(--mono);font-size:var(--step--1);color:var(--acc);letter-spacing:.2em}
+.card h3{font-size:var(--step-2);margin:8px 0 8px}
+.card p{margin:0;opacity:.85;font-size:var(--step--1)}
+.sw{display:flex;gap:6px;margin-top:14px}.sw i{width:22px;height:22px;border-radius:2px;border:1px solid rgba(255,255,255,.3)}
+.cta{margin:0 var(--pad);padding:clamp(40px,8vw,90px);text-align:center;background:var(--slab);color:var(--slab-ink);border-radius:6px;background-image:repeating-linear-gradient(90deg,transparent 0 22px,rgba(255,255,255,.035) 22px 23px)}
+.cta h2{font-size:var(--step-3);margin:0 auto 12px;max-width:14em}
+.cta p{max-width:30em;margin:0 auto 28px;opacity:.85}
+footer{padding:44px var(--pad) 36px;display:flex;flex-wrap:wrap;gap:16px 32px;justify-content:space-between;align-items:center;font-size:var(--step--1)}
+footer .jp{font-family:var(--jp);font-weight:700}
+
+/* ---------- brief panel ---------- */
+#brief{position:fixed;top:0;right:0;bottom:0;z-index:40;width:min(26rem,100%);padding:84px 28px 28px;background:var(--slab);color:var(--slab-ink);box-shadow:-24px 0 60px -20px rgba(0,0,0,.55);transform:translateX(104%);transition:transform .55s var(--ease-out);overflow:auto;
+  border-left:6px dotted rgba(255,255,255,.18)}
+#brief[hidden]{display:none}
+#brief.open{transform:none}
+#brief h2{font-size:var(--step-2);margin-bottom:6px}
+#brief .jp{font-family:var(--jp);color:var(--acc);font-size:var(--step-1)}
+#brief dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:22px 0;font-size:var(--step--1)}
+#brief dt{font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#8b95a6}
+#brief dd{margin:0}
+#brief .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+#briefClose{position:absolute;top:20px;right:20px}
+#toast{position:fixed;left:50%;bottom:22px;z-index:60;transform:translate(-50%,24px);opacity:0;pointer-events:none;background:var(--slab);color:var(--slab-ink);font-family:var(--mono);font-size:var(--step--1);letter-spacing:.08em;padding:.8em 1.2em;border-radius:3px;border:1px solid var(--acc);transition:opacity .3s,transform .4s var(--ease-out)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- no-WebGL poster ---------- */
+#poster{display:none;position:fixed;inset:0;z-index:0;background:linear-gradient(#f3e3d2 0 52%,#b9c9bc 52% 62%,#8fbf6a 62% 100%)}
+#poster::after{content:"";position:absolute;left:18%;right:18%;bottom:24%;height:9%;background:#d9d2c4;border-bottom:8px solid #3a4148}
+#poster p{position:absolute;left:0;right:0;top:20%;text-align:center;font-family:var(--mono);font-size:var(--step--1);letter-spacing:.1em;padding:0 20px}
+body.no-gl #poster{display:block}body.no-gl #gl{display:none}
+
+@media(max-width:700px){
+  .hero{padding-top:82px}
+  .hero::before{background:linear-gradient(0deg,var(--paper) 0,transparent 70%)}
+  .hero-row{flex-direction:column;align-items:stretch}
+  .dcbar{grid-template-columns:auto 1fr}.btn.dc{min-width:0;width:100%}
+  .dcbar .hint{display:none}
+  .btn.chip.ticket{padding:1em 1.4em;font-size:var(--step-0)}
+}
+@media(prefers-reduced-motion:reduce){#brief{transition:none}.dc .fb,.card{transition:none}.dc .fb.tick{animation:none}}
+</style>
+<script type="importmap">
+{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}
+</script>
+</head>
+<body data-time="noon" data-theme="Spring">
+<canvas id="gl" aria-label="Interactive low-poly 3D diorama of Harukaze railway station: a commuter train arrives every 12 seconds while cherry petals drift. Click the train to focus the camera."></canvas>
+<div id="poster" aria-hidden="true"><p>WebGL is unavailable here — showing a still poster of Harukaze Station.</p></div>
+
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="#top"><b lang="ja">春風駅</b><span>Harukaze</span></a>
+  <ul><li><a href="#line">The Line</a></li><li><a href="#seasons">Seasons</a></li><li><a href="#controls">Controls</a></li></ul>
+  <button class="btn chip primary navcta" type="button" data-brief>[Ride in]</button>
+</nav>
+
+<main class="ui" id="top">
+  <header class="hero">
+    <div class="plate" role="group" aria-label="Station nameplate">
+      <span class="jp" lang="ja">春風駅</span><span class="en">— Harukaze</span>
+      <span class="eta" id="eta" aria-live="off">ETA --</span>
+      <p class="sub" lang="ja">はるかぜ · 春の各駅停車</p>
+    </div>
+    <div class="hero-row">
+      <div class="hero-copy">
+        <p class="eyebrow">A 12-second loop · low-poly diorama</p>
+        <h1>Spring arrives <em>by rail.</em></h1>
+        <p class="lead">A sleepy countryside platform, one commuter train, a thousand petals. Change the season, change the hour — the whole line repaints.</p>
+        <div class="actions">
+          <button class="btn chip primary big" type="button" data-brief>Ride in <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+          <a class="btn chip big" href="#line">See the line</a>
+        </div>
+      </div>
+      <div class="dcbar" role="group" aria-label="Scene controls">
+        <label>Season</label><button class="btn chip dc" type="button" data-dc="theme"><span class="fb" data-next="Summer">Spring</span></button>
+        <label>Hour</label><button class="btn chip dc" type="button" data-dc="time"><span class="fb" data-next="Dusk">Noon</span></button>
+        <p class="hint"><kbd>1</kbd> season · <kbd>2</kbd> hour · <kbd>Space</kbd> petal burst</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="s" id="line" data-reveal>
+    <p class="kicker">01 · The Line</p>
+    <h2>One platform, three cars, twelve seconds.</h2>
+    <p class="intro">The 07 local eases in over 1.5 seconds, dwells for three, and rolls on. The crossing gates drop 2.6 seconds ahead of it — right on time, every loop.</p>
+    <div class="grid">
+      <article class="card"><span class="no">LOOP</span><h3>12 s</h3><p>Arrive, board, depart. The cycle never drifts; the ETA chip counts it down live.</p></article>
+      <article class="card"><span class="no">CARS</span><h3>3 × cream &amp; blue</h3><p>Commuter set with sliding doors and windows that light up from dusk.</p></article>
+      <article class="card"><span class="no">GATES</span><h3>0.9 Hz</h3><p>Two red lamps blink at the level crossing while the barrier is down.</p></article>
+      <article class="card"><span class="no">PETALS</span><h3>700</h3><p>Instanced quads drifting on a sine wind. Press Space for a burst.</p></article>
+    </div>
+  </section>
+
+  <section class="s" id="seasons" data-reveal>
+    <p class="kicker">02 · Seasons</p>
+    <h2>Four palettes, one station.</h2>
+    <p class="intro">The Season chip repaints canopy, ground, hills, sky and the falling particles. The Hour chip rewrites the light itself.</p>
+    <div class="grid">
+      <article class="card"><span class="no">春 SPRING</span><h3>Sakura</h3><p>Pink canopies, drifting petals, warm sky.</p><div class="sw"><i style="background:#f7b8cf"></i><i style="background:#8fbf6a"></i><i style="background:#f3e3d2"></i></div></article>
+      <article class="card"><span class="no">夏 SUMMER</span><h3>Heat haze</h3><p>Deep green leaves, pale blue shimmer sky, no petals.</p><div class="sw"><i style="background:#4f9e58"></i><i style="background:#6fae5a"></i><i style="background:#cfe8f2"></i></div></article>
+      <article class="card"><span class="no">秋 AUTUMN</span><h3>Maple</h3><p>Orange and gold crowns, leaf-fall tint.</p><div class="sw"><i style="background:#e0763a"></i><i style="background:#d9a441"></i><i style="background:#f0d6b4"></i></div></article>
+      <article class="card"><span class="no">冬 WINTER</span><h3>Snow</h3><p>Bare branches, white ground, slow flakes.</p><div class="sw"><i style="background:#eef4f8"></i><i style="background:#6b4a3a"></i><i style="background:#dce8ef"></i></div></article>
+    </div>
+  </section>
+
+  <section class="s" id="controls" data-reveal>
+    <p class="kicker">03 · Controls</p>
+    <h2>Touch everything.</h2>
+    <p class="intro">Drag nothing — just move. The camera leans toward your pointer and dollies in toward the nameplate as you scroll.</p>
+    <div class="grid">
+      <article class="card"><span class="no">POINTER</span><h3>Parallax</h3><p>±0.8 units of camera sway, damped. Hold the button to pause the orbit.</p></article>
+      <article class="card"><span class="no">CLICK</span><h3>The train</h3><p>Click the train to snap the camera onto it. Click again, or press Esc, to release.</p></article>
+      <article class="card"><span class="no">KEYS</span><h3>1 · 2 · Space</h3><p>1 cycles the season, 2 cycles the hour, Space throws a burst of petals.</p></article>
+    </div>
+  </section>
+
+  <div class="cta" data-reveal>
+    <h2>Next train in twelve seconds.</h2>
+    <p>Take the diorama home — paste the prompt into your builder and the station is yours.</p>
+    <button class="btn chip primary ticket" type="button" data-brief>[Ride in]</button>
+  </div>
+
+  <footer>
+    <span><span class="jp" lang="ja">春風駅</span> Harukaze Station — a DepthGlow diorama, built with three.js.</span>
+    <button class="btn chip foot" type="button" id="toTop">Back to top ↑</button>
+  </footer>
+</main>
+
+<aside id="brief" role="dialog" aria-modal="true" aria-labelledby="briefT" hidden>
+  <button class="btn chip navcta" type="button" id="briefClose" aria-label="Close brief">Close [Esc]</button>
+  <p class="jp" lang="ja">春風駅</p>
+  <h2 id="briefT">Ticket to Harukaze</h2>
+  <p>One station diorama, themed to your brand. Here is what the brief covers:</p>
+  <dl>
+    <dt>Scene</dt><dd>Platform, track, crossing, 6 sakura, pine, bamboo</dd>
+    <dt>Life</dt><dd>700 petals, 3-car train, 3 boids</dd>
+    <dt>Changers</dt><dd>Season (4) · Hour (3)</dd>
+    <dt>Accent</dt><dd>#e86f9a sakura pink</dd>
+  </dl>
+  <div class="row"><button class="btn chip primary" type="button" id="copyMail">Copy contact</button></div>
+  <p style="font-size:.8rem;opacity:.7;margin-top:16px">station@harukaze.example — placeholder address; swap it for yours.</p>
+</aside>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="../../js/vendor/lenis.min.js"></script>
+<script src="../../js/vendor/gsap.min.js"></script>
+<script src="../../js/vendor/SplitText.min.js"></script>
+<script type="module">
+import * as THREE from "three";
+
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = (s) => document.querySelector(s);
+const { clamp, lerp } = THREE.MathUtils;
+const PHYS = 1.8; // r170 lights are physical (no legacy pi factor): spec intensities x1.8 keep the spec'd look
+
+/* ---------- UI (runs even when WebGL is missing) ---------- */
+const toast = $("#toast"); let toastT = 0;
+function say(msg, ms = 2400) { toast.textContent = msg; toast.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove("on"), ms); }
+const brief = $("#brief"); let lastFocus = null, briefTm = 0, briefGen = 0;
+function openBrief() { briefGen++; clearTimeout(briefTm); lastFocus = document.activeElement; brief.hidden = false; requestAnimationFrame(() => brief.classList.add("open")); $("#briefClose").focus(); }
+function closeBrief() { if (brief.hidden) return; brief.classList.remove("open"); const g = briefGen; briefTm = setTimeout(() => { if (g === briefGen) brief.hidden = true; }, reduced ? 0 : 520); lastFocus && lastFocus.focus && lastFocus.focus(); }
+document.querySelectorAll("button[data-brief]").forEach((b) => b.addEventListener("click", openBrief));
+$("#briefClose").addEventListener("click", closeBrief);
+$("#toTop").addEventListener("click", () => scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" }));
+$("#copyMail").addEventListener("click", () => {
+  const t = "station@harukaze.example";
+  const ok = () => say("Contact copied");
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, () => { fallbackCopy(t); ok(); });
+  else { fallbackCopy(t); ok(); }
+});
+function fallbackCopy(t) { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); } catch (e) {} a.remove(); }
+if (!matchMedia("(pointer: fine)").matches) document.querySelectorAll("[data-reveal]").forEach((e) => e.classList.add("in")); // kit skips touch -> reveal anyway
+
+let lenis = null;
+if (!reduced && window.Lenis) lenis = new Lenis({ smoothWheel: true });
+if (!reduced && window.gsap && window.SplitText) {
+  try { gsap.registerPlugin(SplitText); const sp = SplitText.create(".hero h1", { type: "chars,words" });
+    gsap.from(sp.chars, { yPercent: 110, rotationX: -80, opacity: 0, duration: .9, ease: "power3.out", stagger: .028, delay: .15 }); } catch (e) {}
+}
+
+/* ---------- themes ---------- */
+const THEMES = {
+  Spring: { sky: 0xf3e3d2, canopy: [0xf7b8cf], ground: 0x8fbf6a, pet: [0xf7b8cf, 0xfbd0e0, 0xf2a3c0], hill: [0xb9c9bc, 0x9db8a8], roof: 0x3a4148, pine: 0x2f6b4a, bare: false, snow: false, petals: 1 },
+  Summer: { sky: 0xcfe8f2, canopy: [0x4f9e58], ground: 0x6fae5a, pet: [0xffffff], hill: [0xb5d2c0, 0x8fb89d], roof: 0x3a4148, pine: 0x2a6a44, bare: false, snow: false, petals: 0 },
+  Autumn: { sky: 0xf0d6b4, canopy: [0xe0763a, 0xd9a441], ground: 0xb8a260, pet: [0xe0763a, 0xd9a441, 0xb8552a], hill: [0xd8c3a0, 0xb9a07c], roof: 0x3a4148, pine: 0x2f5a3c, bare: false, snow: false, petals: 1 },
+  Winter: { sky: 0xdce8ef, canopy: [0xffffff], ground: 0xeef4f8, pet: [0xffffff], hill: [0xe6edf1, 0xcfdbe2], roof: 0xcfd8dd, pine: 0xa9c4b8, bare: true, snow: true, petals: 1 },
+};
+const TIMES = {
+  Noon:  { sky: null, key: 0xfff1de, ki: 1.5, kp: [0.4, 1, 0.5], hs: 0xfff3e0, hg: 0x8fbf6a, hi: 0.7, bounce: 0.25, glow: 0, tint: 0xffffff, night: false },
+  Dusk:  { sky: 0xf2b98a, key: 0xffb46b, ki: 0.7, kp: [-1, 0.3, 0.6], hs: 0xffd8b0, hg: 0x6a7a55, hi: 0.5, bounce: 0.4, glow: 0.8, tint: 0xffcfae, night: false },
+  Night: { sky: 0x14213c, key: 0xa8c4e8, ki: 0.25, kp: [-0.5, 0.9, 0.3], hs: 0x4a6a98, hg: 0x23304a, hi: 0.62, bounce: 0.3, glow: 1, tint: 0x6b7ea6, night: true },
+};
+const THEME_KEYS = Object.keys(THEMES), TIME_KEYS = Object.keys(TIMES);
+let themeI = 0, timeI = 0;
+
+function syncDcButtons() {
+  const t = THEME_KEYS[themeI], h = TIME_KEYS[timeI];
+  for (const [k, cur, nxt] of [["theme", t, THEME_KEYS[(themeI + 1) % 4]], ["time", h, TIME_KEYS[(timeI + 1) % 3]]]) {
+    const b = $(`[data-dc="${k}"]`), fb = b.firstElementChild;
+    fb.textContent = cur; fb.dataset.next = nxt; b.setAttribute("aria-label", `${k === "theme" ? "Season" : "Hour"}: ${cur}. Activate for ${nxt}.`);
+    fb.classList.remove("tick"); void fb.offsetWidth; fb.classList.add("tick");
+  }
+  document.body.dataset.time = h.toLowerCase(); document.body.dataset.theme = t;
+}
+let applyScene = () => {};
+function stepTheme() { themeI = (themeI + 1) % 4; syncDcButtons(); applyScene(); }
+function stepTime() { timeI = (timeI + 1) % 3; syncDcButtons(); applyScene(); }
+$('[data-dc="theme"]').addEventListener("click", stepTheme);
+$('[data-dc="time"]').addEventListener("click", stepTime);
+
+/* ---------- renderer (graceful fallback) ---------- */
+const canvas = $("#gl");
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: "high-performance" });
+} catch (e) { renderer = null; }
+if (!renderer) { document.body.classList.add("no-gl"); addEventListener("keydown", kb); await new Promise(() => {}); }
+
+let dpr = Math.min(devicePixelRatio || 1, 2);
+renderer.setPixelRatio(dpr);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.setClearColor(0xf3e3d2, 1);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf3e3d2);
+scene.fog = new THREE.Fog(0xf3e3d2, 24, 60);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 150);
+
+/* ---------- helpers ---------- */
+let seed = 7; const rnd = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const hash = (x, y) => { const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return h - Math.floor(h); };
+const vn = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf); return lerp(lerp(hash(xi, yi), hash(xi + 1, yi), u), lerp(hash(xi, yi + 1), hash(xi + 1, yi + 1), u), v); };
+const fbm = (x, y, o) => { let a = 0.5, s = 0, f = 1; for (let i = 0; i < o; i++) { s += a * vn(x * f, y * f); f *= 2; a *= 0.5; } return s / (1 - Math.pow(0.5, o)); };
+const lam = (c, o = {}) => new THREE.MeshLambertMaterial({ color: c, flatShading: true, ...o });
+function box(w, h, d, mat, x, y, z, par, shadow = true) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; par && par.add(m); return m; }
+function noisyTop(w, d, sx, sz, o) {
+  const g = new THREE.PlaneGeometry(w, d, sx, sz); g.rotateX(-Math.PI / 2);
+  const p = g.attributes.position, c = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const n = fbm(p.getX(i) * o.sc + 11, p.getZ(i) * o.sc + 11, o.oct);
+    p.setY(i, o.y0 + (n - 0.5) * o.amp);
+    const s = 1 - o.shade + o.shade * 2 * fbm(p.getX(i) * o.sc * 1.7 + 40, p.getZ(i) * o.sc * 1.7 + 40, o.oct);
+    c[i * 3] = c[i * 3 + 1] = c[i * 3 + 2] = s;
+  }
+  g.setAttribute("color", new THREE.BufferAttribute(c, 3)); return g;
+}
+function glowTexture() { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d"), r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(255,225,170,1)"); r.addColorStop(1, "rgba(255,200,120,0)"); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); }
+const glowTex = glowTexture();
+
+/* ---------- state + tween targets ---------- */
+const cur = { // live (damped) values
+  sky: new THREE.Color(0xf3e3d2), key: new THREE.Color(0xfff1de), ki: 1.5, kp: new THREE.Vector3(0.4, 1, 0.5),
+  hs: new THREE.Color(0xfff3e0), hg: new THREE.Color(0x8fbf6a), hi: 0.7, bounce: 0.25, glow: 0,
+  tint: new THREE.Color(0xffffff), ground: new THREE.Color(0x8fbf6a), roof: new THREE.Color(0x3a4148), pine: new THREE.Color(0x2f6b4a),
+  hillF: new THREE.Color(0xb9c9bc), hillN: new THREE.Color(0x9db8a8), petalMul: 1,
+};
+const tgt = { sky: new THREE.Color(), key: new THREE.Color(), kp: new THREE.Vector3(), hs: new THREE.Color(), hg: new THREE.Color(), tint: new THREE.Color(), ground: new THREE.Color(), roof: new THREE.Color(), pine: new THREE.Color(), hillF: new THREE.Color(), hillN: new THREE.Color(), ki: 1.5, hi: 0.7, bounce: 0.25, glow: 0, petalMul: 1 };
+
+/* ---------- lights ---------- */
+const hemi = new THREE.HemisphereLight(0xfff3e0, 0x8fbf6a, 0.7 * PHYS); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff1de, 1.5 * PHYS);
+sun.castShadow = true; sun.shadow.mapSize.set(innerWidth < 700 ? 1024 : 2048, innerWidth < 700 ? 1024 : 2048); sun.shadow.radius = 4;
+Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 60 }); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.04;
+scene.add(sun, sun.target);
+const bounce = new THREE.PointLight(0xffc9dd, 0.25 * PHYS, 0, 0); bounce.position.set(0, 2.2, 3); scene.add(bounce);
+
+/* ---------- ground ---------- */
+const grassMat = lam(0x8fbf6a, { vertexColors: true });
+const grass = new THREE.Mesh(noisyTop(16, 11, 64, 44, { sc: 0.55, oct: 3, amp: 0.05, y0: 0.02, shade: 0.16 }), grassMat); grass.receiveShadow = true; scene.add(grass);
+box(16, 0.6, 11, lam(0x7a5c45), 0, -0.33, 0, scene).castShadow = false;
+const ballast = new THREE.Mesh(noisyTop(16, 1.5, 64, 6, { sc: 2.2, oct: 3, amp: 0.06, y0: 0.09, shade: 0.28 }), lam(0xa89a86, { vertexColors: true })); ballast.position.z = -1; ballast.receiveShadow = true; scene.add(ballast);
+{ // 12 sleepers + two rails (z = -1 +-0.25)
+  const sm = lam(0x5b4a3c), sl = new THREE.InstancedMesh(new THREE.BoxGeometry(0.25, 0.08, 1.15), sm, 12), d = new THREE.Object3D();
+  for (let i = 0; i < 12; i++) { d.position.set(-7.15 + i * 1.3, 0.13, -1); d.updateMatrix(); sl.setMatrixAt(i, d.matrix); }
+  sl.receiveShadow = true; scene.add(sl);
+  const rm = lam(0x8a8f98, { emissive: 0x000000 });
+  for (const s of [-1, 1]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 16, 6), rm); r.rotation.z = Math.PI / 2; r.position.set(0, 0.2, -1 + s * 0.25); r.castShadow = true; scene.add(r); }
+}
+// level crossing deck + road strips at x = -7
+const roadM = lam(0x5a5f68);
+box(1.3, 0.05, 1.5, lam(0x7b6a58), -7, 0.12, -1, scene, false);
+box(1.3, 0.04, 3.75, roadM, -7, 0.045, -3.625, scene, false); box(1.3, 0.04, 5.75, roadM, -7, 0.045, 2.625, scene, false);
+
+/* ---------- platform ---------- */
+const platMat = lam(0xd9d2c4);
+box(9, 0.45, 1.8, platMat, 0, 0.225, 0.8, scene);
+box(9, 0.02, 0.18, lam(0xe8c84a), 0, 0.46, -0.01, scene, false);
+// nameplate sign (canvas texture, mincho) — wait for the font so glyphs are real
+const signMat = lam(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0 });
+function paintSign() {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 256; const g = c.getContext("2d");
+  g.fillStyle = "#f7f1e4"; g.fillRect(0, 0, 512, 256);
+  g.fillStyle = "#2b6f4f"; g.fillRect(0, 0, 512, 46); g.fillRect(0, 210, 512, 46);
+  g.fillStyle = "#f7f1e4"; g.textAlign = "center"; g.font = "700 26px Satoshi, sans-serif"; g.fillText("H A R U K A Z E", 256, 32); g.fillText("07", 256, 242);
+  g.fillStyle = "#1f2937"; g.font = "700 120px ZenJP, 'Yu Mincho', serif"; g.fillText("春風駅", 256, 168);
+  g.fillStyle = "#e86f9a"; g.fillRect(96, 184, 320, 6);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; signMat.map = t; signMat.emissiveMap = t; signMat.needsUpdate = true;
+}
+paintSign();
+(document.fonts && document.fonts.load ? Promise.race([document.fonts.load("700 80px ZenJP", "春風駅"), new Promise((r) => setTimeout(r, 2500))]) : Promise.resolve()).then(paintSign).catch(() => {});
+const sign = new THREE.Group(); sign.position.set(-3.7, 0.45, 1.25); sign.rotation.y = 0.32; scene.add(sign);
+box(0.06, 1.1, 0.06, lam(0x3a4148), -0.62, 0.55, 0, sign); box(0.06, 1.1, 0.06, lam(0x3a4148), 0.62, 0.55, 0, sign);
+box(1.5, 0.78, 0.06, lam(0x3a4148), 0, 1.0, -0.02, sign);
+const face = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7), signMat); face.position.set(0, 1.0, 0.015); face.castShadow = false; sign.add(face);
+// vending machine
+const vendPanel = lam(0xfff0d0, { emissive: 0xffc890, emissiveIntensity: 0.15 });
+box(0.52, 1.1, 0.46, lam(0xd94f4f), 3.5, 1.0, 1.35, scene);
+{ const p = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.6), vendPanel); p.position.set(3.5, 1.1, 1.585); scene.add(p); }
+// lamps, bench, pots
+const lampMat = lam(0x3a4148), lampHead = lam(0xfff0d0, { emissive: 0xffd9a0, emissiveIntensity: 0 }), lampLights = [], sprites = [];
+function addGlow(x, y, z, s) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0, fog: false })); sp.position.set(x, y, z); sp.scale.setScalar(s); scene.add(sp); sprites.push(sp); }
+for (const x of [-2.2, 2.2]) {
+  box(0.07, 1.9, 0.07, lampMat, x, 1.4, 1.5, scene); const h = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), lampHead); h.position.set(x, 2.42, 1.5); scene.add(h);
+  const pl = new THREE.PointLight(0xffd9a0, 0, 7, 2); pl.position.set(x, 2.3, 1.45); scene.add(pl); lampLights.push(pl); addGlow(x, 2.42, 1.5, 1.6);
+}
+addGlow(3.5, 1.2, 1.7, 1.5);
+{ const wood = lam(0x8a5f3c); box(1.0, 0.06, 0.34, wood, 0.4, 0.88, 1.45, scene); box(1.0, 0.3, 0.05, wood, 0.4, 1.06, 1.62, scene); box(0.06, 0.4, 0.3, lampMat, -0.02, 0.65, 1.45, scene); box(0.06, 0.4, 0.3, lampMat, 0.82, 0.65, 1.45, scene); }
+for (const x of [-0.95, 1.65]) { const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.24, 7), lam(0xb5653d)); pot.position.set(x, 0.57, 1.55); pot.castShadow = true; scene.add(pot);
+  const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22, 0), lam(0x4f9e58)); bush.position.set(x, 0.86, 1.55); bush.castShadow = true; scene.add(bush); }
+
+/* ---------- station house (far side of the track, faces the platform) ---------- */
+const house = new THREE.Group(); house.position.set(2.4, 0, -3.7); scene.add(house);
+const roofMat = lam(0x3a4148);
+box(4.2, 1.7, 2.2, lam(0xf0e6d2), 0, 0.85, 0, house);
+{ const sh = new THREE.Shape(); sh.moveTo(-1.45, 0); sh.lineTo(1.45, 0); sh.lineTo(0, 0.95); sh.closePath();
+  const rg = new THREE.ExtrudeGeometry(sh, { depth: 4.9, bevelEnabled: false }); rg.translate(0, 0, -2.45); rg.rotateY(Math.PI / 2);
+  const roof = new THREE.Mesh(rg, roofMat); roof.position.y = 1.7; roof.castShadow = true; roof.receiveShadow = true; house.add(roof); }
+box(0.5, 0.8, 0.5, lam(0xd9d2c4), -1.5, 2.2, -0.2, house); // chimney
+const winMat = lam(0xffd9a0, { emissive: 0xffd9a0, emissiveIntensity: 0.3 });
+{ const w = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.7), winMat); w.position.set(1.3, 1.05, 1.11); house.add(w); }
+box(1.0, 1.25, 0.04, lam(0x2f2a28), -0.9, 0.7, 1.1, house, false);
+const houseDoors = [-1, 1].map((s) => box(0.46, 1.15, 0.05, lam(0x8a6a4c), -0.9 + s * 0.24, 0.66, 1.14, house, false));
+
+/* ---------- foliage ---------- */
+const trees = [], leafMeshes = [];
+const TREE_POS = [[-5.2, 4.4], [-3.2, 4.8], [2.4, 4.8], [6.3, 3.4], [-5.4, -4.3], [6.6, -4.4]];
+const trunkMat = lam(0x6b4a3a);
+TREE_POS.forEach(([x, z], ti) => {
+  const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
+  const bend = 0.25 + rnd() * 0.2, pts = []; for (let i = 0; i <= 5; i++) pts.push(new THREE.Vector3(Math.sin(i * 0.9 + ti) * bend * (i / 5), i * 0.42, Math.cos(i * 0.7 + ti) * bend * 0.5 * (i / 5)));
+  const curve = new THREE.CatmullRomCurve3(pts), tr = new THREE.Mesh(new THREE.TubeGeometry(curve, 5, 0.11, 6), trunkMat); tr.castShadow = true; g.add(tr);
+  const top = pts[5], crown = new THREE.Group(); crown.position.copy(top); g.add(crown);
+  const branches = new THREE.Group(); crown.add(branches);
+  for (let b = 0; b < 4; b++) { const a = b * 1.7 + ti, br = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.05, 0.9, 5), trunkMat); br.position.set(Math.cos(a) * 0.25, 0.25, Math.sin(a) * 0.25); br.rotation.set(Math.sin(a) * 0.8, 0, -Math.cos(a) * 0.8); br.castShadow = true; branches.add(br); }
+  const balls = [];
+  for (let k = 0; k < 7; k++) {
+    const r = 0.55 + rnd() * 0.3, a = (k / 7) * Math.PI * 2 + ti, m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), lam(0xf7b8cf));
+    m.position.set(k === 0 ? 0 : Math.cos(a) * 0.55, 0.45 + (k === 0 ? 0.35 : rnd() * 0.4), k === 0 ? 0 : Math.sin(a) * 0.55);
+    m.castShadow = true; m.receiveShadow = true; m.userData = { vary: 0.92 + rnd() * 0.16, s: 1, k, tc: new THREE.Color() }; crown.add(m); balls.push(m); leafMeshes.push(m);
+  }
+  trees.push({ g, crown, branches, balls, ph: rnd() * 6.28 });
+});
+{ // pine
+  const g = new THREE.Group(); g.position.set(-4.8, 0, -3.2); scene.add(g); box(0.16, 0.7, 0.16, trunkMat, 0, 0.35, 0, g);
+  window.__pine = []; [[1.0, 1.1, 0.7], [0.8, 1.0, 1.3], [0.55, 0.9, 1.8]].forEach(([r, h, y]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 7), lam(0x2f6b4a)); c.position.y = y; c.castShadow = true; g.add(c); __pine.push(c); });
+}
+{ // bamboo: 7 stalks + ring instances
+  const g = new THREE.Group(); g.position.set(7.0, 0, -3.0); scene.add(g);
+  const sm = lam(0x8fbf5a), rm = lam(0x6f9a40), d = new THREE.Object3D(), st = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.045, 1, 5), sm, 7), rg = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.058, 0.058, 0.04, 5), rm, 42);
+  let ri = 0; for (let i = 0; i < 7; i++) {
+    const x = Math.cos(i * 2.4) * 0.35, z = Math.sin(i * 2.4) * 0.35, h = 2.6 + rnd() * 0.7;
+    d.position.set(x, h / 2, z); d.scale.set(1, h, 1); d.updateMatrix(); st.setMatrixAt(i, d.matrix);
+    for (let k = 0; k < 6; k++) { d.position.set(x, 0.4 + k * (h - 0.5) / 6, z); d.scale.set(1, 1, 1); d.updateMatrix(); rg.setMatrixAt(ri++, d.matrix); }
+  }
+  st.castShadow = rg.castShadow = true; g.add(st, rg);
+}
+
+/* ---------- hills + torii (flat basic colors, tinted by hour) ---------- */
+function hillMesh(z, fn, mat) { const s = new THREE.Shape(); s.moveTo(-90, -12); for (let x = -90; x <= 90; x += 3) s.lineTo(x, fn(x)); s.lineTo(90, -12); s.closePath(); const m = new THREE.Mesh(new THREE.ShapeGeometry(s), mat); m.position.z = z; scene.add(m); return m; }
+const hillFn = (x) => 3.4 + 1.8 * Math.sin(x * 0.07 + 1) + 1.1 * Math.sin(x * 0.17 + 2), hillNn = (x) => 1.5 + 1.2 * Math.sin(x * 0.09) + 0.7 * Math.sin(x * 0.21 + 1.3);
+const hillFarM = new THREE.MeshBasicMaterial({ color: 0xb9c9bc, fog: false }), hillNearM = new THREE.MeshBasicMaterial({ color: 0x9db8a8, fog: false });
+hillMesh(-40, hillFn, hillFarM); hillMesh(-27, hillNn, hillNearM);
+{ const tm = new THREE.MeshBasicMaterial({ color: 0xc4473a, fog: false }), g = new THREE.Group(), y0 = hillNn(10) - 0.2; g.position.set(10, y0, -26.6);
+  for (const x of [-1.1, 1.1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.28, 3.2, 0.28), tm); p.position.set(x, 1.6, 0); g.add(p); }
+  const b1 = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.28, 0.32), tm); b1.position.y = 3.3; const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.2, 0.26), tm); b2.position.y = 2.7; g.add(b1, b2); scene.add(g); window.__torii = tm; }
+
+/* ---------- train (3 cars) ---------- */
+const train = new THREE.Group(); train.position.y = 0; scene.add(train);
+const cream = lam(0xf6ecd8), stripeM = lam(0x3a78c2), darkM = lam(0x2d3037), leafM = lam(0xc9d4dc);
+const trainWin = lam(0x9fc3d6, { emissive: 0xffd9a0, emissiveIntensity: 0 }), trainIn = lam(0x55504a, { emissive: 0xffd9a0, emissiveIntensity: 0 });
+const doorLeaves = []; const trainHit = [];
+for (let c = 0; c < 3; c++) {
+  const car = new THREE.Group(); car.position.x = (c - 1) * 2.7; train.add(car);
+  trainHit.push(box(2.6, 1.15, 1.5, cream, 0, 1.025, 0, car));
+  box(2.62, 0.16, 1.52, stripeM, 0, 0.75, 0, car, false); box(2.5, 0.1, 1.38, lam(0xb8bcc4), 0, 1.65, 0, car);
+  box(2.3, 0.22, 1.2, darkM, 0, 0.32, 0, car, false); for (const bx of [-0.85, 0.85]) box(0.55, 0.2, 0.95, darkM, bx, 0.22, 0, car, false);
+  for (const s of [1, -1]) {
+    const z = s * 0.752; const w = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.4), trainWin); w.position.set(0, 1.2, z); if (s < 0) w.rotation.y = Math.PI; car.add(w);
+    for (const dx of [-0.75, 0.75]) {
+      const op = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.95), trainIn); op.position.set(dx, 0.95, z); if (s < 0) op.rotation.y = Math.PI; car.add(op);
+      for (const ls of [-1, 1]) { const lf = box(0.35, 0.95, 0.03, leafM, dx + ls * 0.18, 0.95, s * 0.775, car, false); doorLeaves.push({ m: lf, base: lf.position.x, dir: ls }); }
+    }
+  }
+}
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xfff0c8 })); head.position.set(1.32, 0.75, 0); train.children[2].add(head);
+const beamG = new THREE.ConeGeometry(0.9, 5, 16, 1, true); beamG.rotateZ(Math.PI / 2); beamG.translate(2.5, 0, 0);
+const beam = new THREE.Mesh(beamG, new THREE.MeshBasicMaterial({ color: 0xffe3b0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })); beam.position.set(1.32, 0.75, 0); train.children[2].add(beam);
+
+/* ---------- crossing gates ---------- */
+const gates = []; const lampOn = lam(0xff2a2a, { emissive: 0xff2a2a, emissiveIntensity: 0 }), whiteRed = lam(0xd94f4f);
+for (const s of [1, -1]) {
+  const pivot = new THREE.Group(); pivot.position.set(-7 + 0.55, 0.9, -1 + s * 1.55); scene.add(pivot);
+  box(0.16, 0.9 * 2, 0.16, lam(0xeeeeee), 0, -0.1, 0, pivot); // post
+  const arm = new THREE.Group(); pivot.add(arm);
+  const len = 1.4; for (let i = 0; i < 5; i++) box(0.08, 0.08, len / 5, i % 2 ? whiteRed : lam(0xf4f0e6), 0, 0, -s * (len / 5) * (i + 0.5), arm, false);
+  const lm = []; for (const dz of [0.35, 0.95]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), lampOn.clone()); l.position.set(0, 0.2, -s * dz); l.userData.sg = s; pivot.add(l); lm.push(l); }
+  gates.push({ arm, s, lamps: lm, a: 1 }); // a = raised amount 1..0
+}
+
+/* ---------- petals / snow: 700 instanced quads ---------- */
+const NP = 700, pet = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, color: 0xffffff }), NP);
+const P = { x: new Float32Array(NP), y: new Float32Array(NP), z: new Float32Array(NP), ph: new Float32Array(NP), sp: new Float32Array(NP), fall: new Float32Array(NP), bx: new Float32Array(NP), by: new Float32Array(NP), bz: new Float32Array(NP) };
+for (let i = 0; i < NP; i++) { P.x[i] = (rnd() - 0.5) * 18; P.y[i] = rnd() * 8; P.z[i] = (rnd() - 0.5) * 13 + 0.5; P.ph[i] = rnd() * 6.283; P.sp[i] = 1 + rnd() * 2.5; P.fall[i] = 0.85 + rnd() * 0.3; }
+pet.frustumCulled = false; scene.add(pet);
+const petD = new THREE.Object3D(), tmpC = new THREE.Color();
+let petals = { snow: false, burst: 0 };
+function recolorPetals() { const pal = THEMES[THEME_KEYS[themeI]].pet; for (let i = 0; i < NP; i++) { tmpC.set(pal[i % pal.length]); const v = 0.92 + ((i * 37) % 17) / 100; pet.setColorAt(i, tmpC.multiplyScalar(v)); } pet.instanceColor.needsUpdate = true; }
+recolorPetals();
+
+/* ---------- birds: 3 v-shape boids ---------- */
+const wingG = new THREE.BufferGeometry(); wingG.setAttribute("position", new THREE.BufferAttribute(new Float32Array([0.2, 0, 0, -0.25, 0, 0.55, -0.05, 0, 0.12]), 3)); wingG.computeVertexNormals();
+const birdM = new THREE.MeshBasicMaterial({ color: 0x3a4148, side: THREE.DoubleSide }), birds = [];
+[[0, 0, 0], [-1.3, 0.2, 1.0], [-1.3, -0.1, -1.0]].forEach(([x, y, z], i) => {
+  const b = new THREE.Group(); b.userData = { o: [x, y, z], ph: i * 0.9 }; const r = new THREE.Mesh(wingG, birdM), l = new THREE.Mesh(wingG, birdM); l.scale.z = -1; b.add(r, l); b.userData.r = r; b.userData.l = l; b.scale.setScalar(1.2); scene.add(b); birds.push(b);
+});
+
+/* ---------- apply theme/time targets ---------- */
+function skyTarget() { const th = THEMES[THEME_KEYS[themeI]], tm = TIMES[TIME_KEYS[timeI]]; return tm.sky == null ? tgt.sky.set(th.sky) : tgt.sky.set(tm.sky).lerp(tmpC.set(th.sky), tm.night ? 0.06 : 0.15); }
+applyScene = function () {
+  const th = THEMES[THEME_KEYS[themeI]], tm = TIMES[TIME_KEYS[timeI]];
+  skyTarget(); tgt.key.set(tm.key); tgt.kp.set(...tm.kp).normalize().multiplyScalar(18); tgt.ki = tm.ki * PHYS;
+  tgt.hs.set(tm.hs); tgt.hg.set(tm.night || tm.glow ? tm.hg : th.ground); tgt.hi = tm.hi * PHYS; tgt.bounce = tm.bounce * PHYS; tgt.glow = tm.glow; tgt.tint.set(tm.tint);
+  tgt.ground.set(th.ground); tgt.roof.set(th.roof); tgt.pine.set(th.pine); tgt.hillF.set(th.hill[0]); tgt.hillN.set(th.hill[1]); tgt.petalMul = th.petals;
+  petals.snow = th.snow;
+  const pal = th.canopy; leafMeshes.forEach((m, i) => { m.userData.tc.set(pal[i % pal.length]).multiplyScalar(m.userData.vary); m.userData.ts = th.bare ? 0.001 : 1; });
+  recolorPetals(); wakeFrames = 90;
+};
+function snapCur() { // jump cur -> tgt (initial state)
+  cur.sky.copy(tgt.sky); cur.key.copy(tgt.key); cur.kp.copy(tgt.kp); cur.ki = tgt.ki; cur.hs.copy(tgt.hs); cur.hg.copy(tgt.hg); cur.hi = tgt.hi; cur.bounce = tgt.bounce; cur.glow = tgt.glow;
+  cur.tint.copy(tgt.tint); cur.ground.copy(tgt.ground); cur.roof.copy(tgt.roof); cur.pine.copy(tgt.pine); cur.hillF.copy(tgt.hillF); cur.hillN.copy(tgt.hillN); cur.petalMul = tgt.petalMul;
+  leafMeshes.forEach((m) => { m.material.color.copy(m.userData.tc); m.userData.s = m.userData.ts; });
+}
+let wakeFrames = 0; applyScene(); snapCur();
+
+function tween(dt) {
+  const k = 1 - Math.pow(0.0025, dt); // ~1s settle
+  cur.sky.lerp(tgt.sky, k); cur.key.lerp(tgt.key, k); cur.kp.lerp(tgt.kp, k); cur.hs.lerp(tgt.hs, k); cur.hg.lerp(tgt.hg, k); cur.tint.lerp(tgt.tint, k);
+  cur.ground.lerp(tgt.ground, k); cur.roof.lerp(tgt.roof, k); cur.pine.lerp(tgt.pine, k); cur.hillF.lerp(tgt.hillF, k); cur.hillN.lerp(tgt.hillN, k);
+  cur.ki = lerp(cur.ki, tgt.ki, k); cur.hi = lerp(cur.hi, tgt.hi, k); cur.bounce = lerp(cur.bounce, tgt.bounce, k); cur.glow = lerp(cur.glow, tgt.glow, k); cur.petalMul = lerp(cur.petalMul, tgt.petalMul, k);
+  scene.background.copy(cur.sky); scene.fog.color.copy(cur.sky); renderer.setClearColor(cur.sky, 1);
+  sun.color.copy(cur.key); sun.intensity = cur.ki; sun.position.copy(cur.kp); hemi.color.copy(cur.hs); hemi.groundColor.copy(cur.hg); hemi.intensity = cur.hi; bounce.intensity = cur.bounce;
+  grassMat.color.copy(cur.ground); roofMat.color.copy(cur.roof); __pine.forEach((m) => m.material.color.copy(cur.pine));
+  hillFarM.color.copy(cur.hillF).multiply(cur.tint); hillNearM.color.copy(cur.hillN).multiply(cur.tint); birdM.color.set(0x3a4148).multiply(cur.tint); __torii.color.set(0xc4473a).multiply(cur.tint);
+  pet.material.color.copy(cur.tint);
+  const g = cur.glow;
+  trainWin.emissiveIntensity = g * 1.2; trainIn.emissiveIntensity = g * 0.9; winMat.emissiveIntensity = 0.3 + g * 0.9; lampHead.emissiveIntensity = g * 1.6; vendPanel.emissiveIntensity = 0.15 + g * 1.1; signMat.emissiveIntensity = g * 0.5;
+  lampLights.forEach((l) => { l.intensity = g * 22; }); sprites.forEach((s) => { s.material.opacity = g * 0.75; });
+  beam.material.opacity = g * 0.2; head.material.color.setScalar(1 + g);
+  for (let i = 0; i < leafMeshes.length; i++) { const m = leafMeshes[i], u = m.userData; m.material.color.lerp(u.tc, k); u.s = lerp(u.s, u.ts, k * 0.9); m.scale.setScalar(Math.max(u.s, 0.001)); m.visible = u.s > 0.03; }
+}
+
+/* ---------- camera rig ---------- */
+const T = new THREE.Vector3(0, 1.1, 0), SIGN = new THREE.Vector3(-3.7, 1.0, 1.25), tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), look = new THREE.Vector3();
+const BASE = { x: 9.5, y: 5.2, z: 11 }, BR = Math.hypot(BASE.x, BASE.z), BA = Math.atan2(BASE.x, BASE.z);
+let scrollP = 0, scrollC = 0, mouseX = 0, mouseY = 0, parX = 0, parY = 0, down = false, drift = 1, driftPh = 0, follow = 0, followT = 0;
+addEventListener("scroll", () => { const h = document.documentElement.scrollHeight - innerHeight; scrollP = h > 0 ? clamp(scrollY / h, 0, 1) : 0; }, { passive: true });
+addEventListener("pointermove", (e) => { mouseX = e.clientX / innerWidth * 2 - 1; mouseY = e.clientY / innerHeight * 2 - 1; }, { passive: true });
+let downPos = null;
+addEventListener("pointerdown", (e) => { down = true; downPos = [e.clientX, e.clientY]; });
+addEventListener("pointerup", (e) => {
+  down = false; if (!downPos || Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) > 6) return;
+  if (e.target.closest && e.target.closest("button,a,aside,.card,nav,.plate,.dcbar,.cta,input")) return;
+  const r = canvas.getBoundingClientRect(); ray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -((e.clientY - r.top) / r.height) * 2 + 1 }, camera);
+  if (ray.intersectObjects(trainHit, false).length && trainVisible) { followT = followT ? 0 : 1; say(followT ? "Camera locked on the 07 local" : "Camera released"); }
+});
+addEventListener("pointercancel", () => { down = false; });
+const ray = new THREE.Raycaster();
+
+function fit() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.fov = camera.aspect >= 1.2 ? 40 : Math.min(76, 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(20)) * 1.2 / camera.aspect) * 180 / Math.PI);
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", fit); fit();
+
+/* ---------- robustness ---------- */
+canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); lost = true; say("Scene paused — restoring…", 6000); });
+canvas.addEventListener("webglcontextrestored", () => { lost = false; applyScene(); snapCur(); say("Scene restored"); });
+let lost = false;
+
+/* ---------- loop ---------- */
+const V = 34 / 3.75; // cruise speed so that cruise(3 s)+ease-in(1.5 s) covers 34 u -> 12 s loop
+function trainX(c) {
+  if (c < 3) return -34 + V * c;
+  if (c < 4.5) { const s = c - 3; return -34 + 3 * V + V * (s - s * s / 3); }
+  if (c < 7.5) return 0;
+  if (c < 9) { const s = c - 7.5; return V * s * s / 3; }
+  return 0.75 * V + V * (c - 9);
+}
+let T_ = 0, cyc = reduced ? 6 : 0, trainVisible = true, etaTxt = "", etaAcc = 0, last = performance.now(), lowT = 0, fpsE = 60, dprLocked = false, burstT = 0;
+const dummy = new THREE.Object3D(), etaEl = $("#eta");
+const GATE_CLOSE = 12 - 0.06, GATE_OPEN = 3.9;
+
+function setBurst() { burstT = 1.6; for (let i = 0; i < NP; i++) { P.x[i] = (rnd() - 0.5) * 3; P.y[i] = 0.6 + rnd() * 0.8; P.z[i] = 0.8 + (rnd() - 0.5) * 1.2; const a = rnd() * 6.283, v = 1.5 + rnd() * 3; P.bx[i] = Math.cos(a) * v; P.bz[i] = Math.sin(a) * v * 0.7; P.by[i] = 2 + rnd() * 3.5; } }
+function kb(e) {
+  if (e.target.closest && e.target.closest("input,textarea")) return;
+  if (e.key === "Escape") { closeBrief(); followT = 0; }
+  else if (e.key === "1") stepTheme(); else if (e.key === "2") stepTime();
+  else if (e.key === " " && (e.target === document.body || e.target === canvas)) { e.preventDefault(); if (renderer) setBurst(); }
+}
+addEventListener("keydown", kb);
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (lost) return;
+  const dt = Math.min((now - last) / 1000, 0.05); last = now; if (!(dt > 0)) return;
+  if (lenis) lenis.raf(now);
+  // adaptive pixel ratio
+  fpsE = lerp(fpsE, 1 / dt, 0.05); lowT = fpsE < 45 ? lowT + dt : 0;
+  if (lowT > 2 && !dprLocked && dpr > 1) { dprLocked = true; dpr = 1; renderer.setPixelRatio(1); fit(); }
+  if (!reduced) { T_ += dt; cyc = (cyc + dt) % 12; }
+  tween(dt);
+
+  // train + doors + eta
+  const tx = trainX(cyc); train.position.x = tx; trainVisible = Math.abs(tx) < 33; train.visible = trainVisible;
+  const dO = cyc < 7.1 ? clamp((cyc - 4.6) / 0.4, 0, 1) : clamp((7.5 - cyc) / 0.4, 0, 1);
+  for (const d of doorLeaves) d.m.position.x = d.base + d.dir * 0.22 * dO;
+  houseDoors.forEach((m, i) => { m.position.x = -0.9 + (i ? 1 : -1) * (0.24 + 0.3 * dO); });
+  etaAcc += dt;
+  if (etaAcc > 0.2) { etaAcc = 0; const t = cyc < 4.5 ? "ETA " + Math.ceil(4.5 - cyc) + "s" : cyc < 7.5 ? "BOARDING" : "NEXT " + Math.ceil(16.5 - cyc) + "s"; if (t !== etaTxt) { etaTxt = t; etaEl.textContent = t; } }
+
+  // crossing gates: close 2.6 s before the train reaches x = -7, reopen after the tail clears
+  const closed = cyc >= GATE_CLOSE || cyc < GATE_OPEN, blink = closed && Math.sin(T_ * Math.PI * 2 * 0.9) > 0;
+  for (const g of gates) { g.a = lerp(g.a, closed ? 0 : 1, 1 - Math.pow(0.002, dt)); g.arm.rotation.x = g.s * (1.26 * g.a); // 72 deg when raised
+    g.lamps.forEach((l, i) => { l.material.emissiveIntensity = g.a < 0.9 ? ((i ? !blink : blink) ? 2.2 : 0.1) : 0; }); }
+
+  // trees sway
+  if (!reduced) for (const t of trees) { t.crown.rotation.z = Math.sin(T_ * 0.8 + t.ph) * 0.03; t.crown.rotation.x = Math.cos(T_ * 0.6 + t.ph) * 0.02; }
+
+  // petals / snow
+  if (!reduced) {
+    const snow = petals.snow, sz = 0.07 * cur.petalMul, ws = snow ? 0.25 : 0.5;
+    if (burstT > 0) burstT -= dt;
+    for (let i = 0; i < NP; i++) {
+      const fall = (snow ? 0.35 : 0.6) * P.fall[i];
+      P.x[i] += (Math.sin(T_ * 1.3 + P.ph[i]) * ws) * dt; P.y[i] -= fall * dt; P.z[i] += Math.cos(T_ * 0.9 + P.ph[i]) * ws * 0.4 * dt;
+      if (burstT > 0) { P.x[i] += P.bx[i] * dt; P.y[i] += P.by[i] * dt; P.z[i] += P.bz[i] * dt; P.by[i] -= 4 * dt; P.bx[i] *= 0.985; P.bz[i] *= 0.985; if (P.y[i] < 0.1) { P.y[i] = 0.1; P.by[i] = 0; } }
+      if (!(P.y[i] > -0.2) || !(Math.abs(P.x[i]) < 12)) { P.y[i] = 7 + rnd(); P.x[i] = (rnd() - 0.5) * 18; P.z[i] = (rnd() - 0.5) * 13 + 0.5; P.bx[i] = P.by[i] = P.bz[i] = 0; }
+      dummy.position.set(P.x[i], P.y[i], P.z[i]); dummy.rotation.set(T_ * P.sp[i] + P.ph[i], T_ * P.sp[i] * 0.7, P.ph[i]); dummy.scale.setScalar(sz); dummy.updateMatrix(); pet.setMatrixAt(i, dummy.matrix);
+    }
+    pet.instanceMatrix.needsUpdate = true;
+  } else if (wakeFrames > 0) { // reduced motion: frozen in air, but re-scale when the season changes
+    wakeFrames--; const sz = 0.07 * cur.petalMul; for (let i = 0; i < NP; i++) { dummy.position.set(P.x[i], P.y[i], P.z[i]); dummy.rotation.set(P.ph[i], P.ph[i] * 0.7, P.ph[i]); dummy.scale.setScalar(sz); dummy.updateMatrix(); pet.setMatrixAt(i, dummy.matrix); } pet.instanceMatrix.needsUpdate = true;
+  }
+
+  // birds: V formation crosses the sky every 9 s
+  for (const b of birds) { const u = b.userData, ph = reduced ? 0.3 : (T_ / 9) % 1, fl = reduced ? 0 : Math.sin(T_ * 9 + u.ph) * 0.6;
+    b.position.set(-34 + 68 * ph + u.o[0], 5.4 + Math.sin(ph * 6.28) * 0.4 + u.o[1], -14 + u.o[2]); b.rotation.y = 0; u.r.rotation.x = -fl; u.l.rotation.x = fl; }
+
+  // camera: orbit drift (pauses on pointer down) + pointer parallax + scroll dolly + train follow
+  drift = lerp(drift, down || reduced ? 0 : 1, 0.05); driftPh += dt * drift;
+  const az = BA + Math.sin(driftPh * 0.089) * 0.45; // peak angular speed 0.45*0.089 = 0.04 rad/s
+  scrollC = lerp(scrollC, scrollP, 1 - Math.pow(0.001, dt)); const se = 1 - (1 - scrollC) * (1 - scrollC); // power2.out
+  follow = lerp(follow, followT, 1 - Math.pow(0.002, dt));
+  const dolly = 1 - 0.34 * se, y = lerp(5.2, 3.6, se);
+  look.copy(T).lerp(SIGN, se * 0.55);
+  camera.position.set(Math.sin(az) * BR * dolly, y, Math.cos(az) * BR * dolly);
+  const kP = 1 - Math.pow(1 - 0.08, dt * 60); parX = lerp(parX, reduced ? 0 : mouseX, kP); parY = lerp(parY, reduced ? 0 : mouseY, kP);
+  tmpV.set(Math.cos(az), 0, -Math.sin(az)).multiplyScalar(parX * 0.8); camera.position.add(tmpV); camera.position.y += -parY * 0.8;
+  if (follow > 0.001) { const fx = clamp(tx, -9, 9); camera.position.lerp(tmpV2.set(fx + 2.6, 1.9, 5.4), follow); look.lerp(tmpV.set(fx, 0.95, -1), follow); }
+  camera.lookAt(look);
+
+  renderer.render(scene, camera);
+}
+window.__dbg = { renderer, scene, camera };
+requestAnimationFrame((t) => { last = t; frame(t); });
+syncDcButtons();
+</script>
+<script src="../../js/kit/motion.js"></script>
+</body>
+</html>

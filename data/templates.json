@@ -78,7 +78,7 @@
       "date": "2026-10-17",
       "title": "Ghost Pirate Ship",
       "category": "3D",
-      "tier": "pro",
+      "tier": "free",
       "tags": [
         "3D",
         "Interactive",
@@ -92,151 +92,123 @@
       "thumb": "assets/thumbs/ghost-pirate-ship.webp"
     },
     {
-      "id": "molten-forge",
-      "date": "2026-10-19",
-      "title": "Molten Forge",
-      "category": "3D",
-      "tier": "max",
-      "tags": [
-        "3D",
-        "Interactive",
-        "Creative",
-        "Gaming",
-        "Landscape",
-        "Mechanical"
-      ],
-      "demo": "demos/molten-forge/",
-      "accent": "#ff6a1f",
-      "blurb": "A volcanic caldera with mechanical forge arms and robotic workers — holographic control panels, heat shimmer, ember particles. Three.js, ultra-detailed.",
-      "thumb": "assets/thumbs/molten-forge.webp"
-    },
-    {
-      "id": "aurora-ridge",
-      "date": "2026-10-19",
-      "title": "Aurora Ridge",
-      "category": "3D",
-      "tier": "free",
-      "tags": [
-        "3D",
-        "Interactive",
-        "Creative",
-        "Nature",
-        "Landscape"
-      ],
-      "demo": "demos/aurora-ridge/",
-      "accent": "#5dffb8",
-      "blurb": "Aurora Ridge — remake. Build a single-file landing page (one index.html, no build step, no WebGL — Canvas 2D only) for a fictional arctic-cl...",
-      "prompt": "Aurora Ridge — remake. Build a single-file landing page (one index.html, no build step, no WebGL — Canvas 2D only) for a fictional arctic-climate research brand. Full-viewport canvas 2D scene: a polar night ridge under a living aurora. ENGINEERING BLUEPRINT — all numbers below are mandatory.\n\nCOMPOSITE PIPELINE (paint order):\n1. Sky: linear gradient #02030a (zenith) -> #071426 -> #0b1f38 (horizon). Fixed starfield: 380 stars, seeded positions, magnitudes 0.4-1.0 (radius 0.5-1.6px, alpha 0.3-0.9), twinkle = 0.85+0.15*sin(t*2.2 + star.phase). Milky-way band: 140 dimmer stars (alpha 0.15-0.35) clustered along a great-circle band tilted 22 degrees. Meteors: spawn every 7-12s (seeded timer), streak length 90-140px, speed 380 px/s, angle 28-40 degrees, fade over 0.6s.\n2. Aurora (THE HERO): 5 curtains. Each curtain = vertical ribbon of 64 stacked quads. X path of curtain k: x(y,t) = baseX_k + sin(y*0.004 + t*0.12 + k*1.7)*60 + noise2(y*0.01, t*0.08)*40. Ribbon width 40-90px. Vertical fade: alpha ramps 0 at top -> peak 0.35 at 55% height -> 0.15 at ground. COLOR LAYERS (real emission bands): body = oxygen green #3ddc84 (557.7nm) alpha 0.35; rare crimson cap #e23b4e on the 2 tallest curtains (top 8% of ribbon, alpha 0.22); violet-pink fringe along the bottom 12% #c56cff alpha 0.25. Curtains drift independently (drift speeds 0.08, 0.11, 0.06, 0.13, 0.09 relative) so they NEVER sync. Additive blending.\n3. Thin cloud haze: 3 long soft gradients (#1a2c4a, alpha 0.10) sliding at 3-6 px/s, tinted slightly green where they cross curtains (screen blend, alpha 0.06).\n4. Snow ground: two drift layers #cfe0f0 (far, 0.18 parallax) and #e8f2fc (near, 0.05 parallax), with aurora bounce: a horizontal band of #3ddc84 at alpha 0.06-0.12 sliding in sync with curtain x-positions (sample curtain centers every 200ms). Frozen pond: ellipse #a9c6e8 with a vertical reflection gradient of the aurora colors (alpha 0.18, flipped, squashed 0.4 vertically).\n5. Pine silhouettes: 7 triangles #050a12, heights 40-90px along the far drift, parallax 0.10.\n\nPOINTER/SCROLL: pointer X stirs the nearest curtain — inject local x-offset of (pointerX - curtainX) * 0.06 within 180px, spring back with stiffness 120, damping 20. Scroll shifts the whole scene vertically at 0.15 factor with Lenis if available.\n\nPAGE CHROME: nav (brand \"RIDGE LAB\", links Research/Stations/Data, CTA \"Request access\" — button treatment: frosted ice-facet clipped corners, cyan glow on hover). Hero h1 \"Night becomes the instrument.\" Eyebrow \"Arctic signal lab · 68°N\". Stat row: \"380 nights/yr coverage\", \"5 emission bands logged\". Feature grid (3): Curtain / Drift / Signal. Final CTA + footer. Hidden brief panel (data-brief / #briefClose / ESC).\n\nPERF/ROBUSTNESS: dpr<=2; zero allocation in RAF loop (curtain quads pooled); reduced-motion freezes drift at a beautiful frame; 390px safe; zero console errors.",
-      "thumb": "assets/thumbs/aurora-ridge.webp"
-    },
-    {
-      "id": "neon-alley",
-      "date": "2026-10-19",
-      "title": "Neon Alley",
-      "category": "3D",
-      "tier": "max",
-      "tags": [
-        "3D",
-        "Interactive",
-        "Creative",
-        "Gaming",
-        "Cyberpunk",
-        "HUD"
-      ],
-      "demo": "demos/neon-alley/",
-      "accent": "#ff3ec8",
-      "blurb": "A rain-slicked cyberpunk alley with holographic HUD mechanisms, inspection drones, and Iron Man-style combat overlays. Three.js, ultra-detailed.",
-      "thumb": "assets/thumbs/neon-alley.webp"
-    },
-    {
-      "id": "pulseops",
-      "date": "2026-10-19",
-      "title": "PulseOps",
-      "category": "SaaS",
-      "tier": "free",
-      "tags": [
-        "SaaS",
-        "Landing Page",
-        "Interactive",
-        "Gradient",
-        "Dashboard"
-      ],
-      "demo": "demos/pulseops/",
-      "accent": "#4cc9f0",
-      "blurb": "PulseOps — remake. Build a single-file SaaS landing page (one index.html, no build step, Canvas 2D only) for an observability product. The h...",
-      "prompt": "PulseOps — remake. Build a single-file SaaS landing page (one index.html, no build step, Canvas 2D only) for an observability product. The hero IS a live dashboard — honest numbers, streaming data, one clear action. ENGINEERING BLUEPRINT — all numbers mandatory.\n\nBACKGROUND (full-viewport canvas 2D, behind content):\n- Base #070b14. 8 metric lanes stacked vertically (lane height = H/8), each with a mono label on the left (\"ingest\", \"p99\", \"errors\", \"queue\", \"cpu\", \"mem\", \"cache\", \"net\").\n- Each lane draws a sparkline: rolling buffer of 240 samples. Values = clamped random walk: v[i] = clamp(v[i-1] + (noise()-0.5)*0.12, 0.05, 0.95) where noise() = smooth 1D value-noise stepping every 6 samples (so the line reads organic, not jitter). Push a new sample every 100ms; draw the buffer as a polyline (cyan #4cc9f0, lineWidth 1.5) with a gradient area fill below (alpha 0.10).\n- p99 lane: value mapped to a REAL number readout (80-420ms) shown as mono text riding the last sample. Error lane turns amber #ffb347 when its value crosses 0.75, with a soft warning halo.\n- Pulse ring: every lane node has a ring pulse when its sample exceeds its own 20-sample average: ring radius 3->14px over 0.8s, alpha 0.4->0.\n- Scan line: a 1px cyan line at alpha 0.08 sweeping top->bottom every 4s.\n- Scroll parallax: lane group translates up by scrollY*0.08 (Lenis if available).\n\nPAGE CHROME (above canvas):\n- Nav: brand \"PULSEOPS\" + links Platform/Pricing/Docs + CTA \"Get a demo\" — button treatment: terminal-style [ bracket caps ] that fill cyan on hover.\n- Hero: eyebrow \"Observability · Metrics · Traces · Logs\". h1 \"See every signal. Fix it before users notice.\" — use GSAP SplitText for a per-character stagger entrance (chars up 12px, 0.02s stagger). Supporting line with concrete numbers.\n- Feature grid (3, jiro-style blocks): \"1.2M events/sec ingest\", \"<400ms p99 query\", \"One-line agent\" — each card: mono kicker, number as display type, 2-line body.\n- \"How it works\" strip: 3 steps (Ship / Observe / Resolve) with mono step indices 01-03.\n- Final CTA band + footer credit.\n- Hidden <aside id=\"brief\"> panel (button[data-brief] opens; #briefClose / ESC closes) explaining the template.\n\nROBUSTNESS: dpr<=2; resize rebuilds lane geometry; prefers-reduced-motion keeps dashboard visible but freezes the stream (static snapshot frame); 390px no horizontal scroll; zero console errors; no allocation in the RAF loop (buffers preallocated, no per-frame arrays).",
-      "thumb": "assets/thumbs/pulseops.webp"
-    },
-    {
-      "id": "aether",
-      "date": "2026-10-19",
-      "title": "Aether",
-      "category": "Landing Page",
-      "tier": "free",
-      "tags": [
-        "Landing Page",
-        "Interactive",
-        "Gradient",
-        "Editorial",
-        "Scroll"
-      ],
-      "demo": "demos/aether/",
-      "accent": "#b388ff",
-      "blurb": "Aether — remake. Build a single-file scroll-driven product story (one index.html, no build step, Canvas 2D only) for a fictional design stud...",
-      "prompt": "Aether — remake. Build a single-file scroll-driven product story (one index.html, no build step, Canvas 2D only) for a fictional design studio. Three full-viewport chapters. ENGINEERING BLUEPRINT — numbers mandatory.\n\nBACKGROUND (full-viewport canvas 2D):\n- 7 generative gradient orbs. Orb k = radial gradient, radius 0.16-0.30*min(W,H), base color from set: violet #b388ff, teal #64ffda, coral #ff8a65, ice #80d8ff, rose #ff8fab, lime #c6ff6e, gold #ffd54f. Position: seeded around center; drift = Lissajous: x = cx + sin(t*0.11 + k*1.3)*80, y = cy + cos(t*0.09 + k*2.1)*60 + scrollProgress*parallax_k (parallax 0.15-0.40 per orb, so deeper orbs move more with scroll). Draw with 'lighter' composite, globalAlpha 0.5. Blurred 40px via offscreen downscale (draw to 1/4-res buffer, upscale — cheaper than filter:blur each frame).\n- Scroll mapping: scrollProgress = scrollY / (docHeight - vh), eased 0.08 per frame (spring toward target, stiffness 90, damping 20).\n- Chapter accent tint: each chapter section carries data-accent; the nearest orb group crossfades toward that accent (violet -> teal -> coral) over 0.4 progress.\n\nCHAPTERS (sections, IO-triggered entrance: translateY 24px -> 0, opacity 0 -> 1, 0.7s cubic-bezier(0.16,1,0.3,1)):\n1. Chapter 01 — The Idea. Eyebrow mono \"CHAPTER 01 / THE IDEA\". h1 (SplitText stagger per word, 0.04s): \"A product story that scrolls like a film.\" CTA pair.\n2. Chapter 02 — The Build. Three-move feature grid: Frame / Flow / Finish — mono kickers, 2-line bodies.\n3. Chapter 03 — The Proof. Three number cards: \"14 days median build\", \"+38% dwell time\", \"1 file, zero deps\" — display numerals, mono labels. Closing CTA.\n\nPAGE CHROME: fixed nav (brand \"AETHER\", links Story/Work/Contact, CTA \"Start a project\" — button treatment: editorial underline that thickens and drops an arrow glyph on hover; no flat rectangle). Footer credit. Hidden brief panel (data-brief / #briefClose / ESC). Lenis smooth scroll if available; otherwise native scroll with the eased orb response.\n\nROBUSTNESS: dpr<=2; zero allocation in loop (orb array preallocated, no per-frame creation); reduced-motion = orbs static at seeded positions, chapters fade only (no translate); 390px safe; zero console errors.",
-      "thumb": "assets/thumbs/aether.webp"
-    },
-    {
-      "id": "robot-foundry",
-      "date": "2026-10-19",
-      "title": "Robot Foundry",
-      "category": "Creative",
-      "tier": "free",
-      "tags": [
-        "Creative",
-        "Interactive",
-        "Toy",
-        "Generative",
-        "Free"
-      ],
-      "demo": "demos/robot-foundry/",
-      "accent": "#ffd166",
-      "blurb": "Robot Foundry — remake. Build a single-file generative robot-head toy (one index.html, no build step) as a free-tier lead magnet. Dark base ...",
-      "prompt": "Robot Foundry — remake. Build a single-file generative robot-head toy (one index.html, no build step) as a free-tier lead magnet. Dark base #0a0d12. Fixed accent trio only: amber #ffd166, cyan #4cc9f0, pink #f06292. ENGINEERING BLUEPRINT — the generator spec below is authoritative; same seed MUST reproduce the same face exactly.\n\nPRNG: mulberry32. Seed = 6-digit integer, displayed as \"SEED-482913\". One seed drives every choice below — reseed at the start of every draw, so a frame is deterministic.\n\nHEAD GEOMETRY (drawn on a centered canvas stage 480x480 logical, scaled to fit):\n- Head shape: 4 variants — rounded-rect (radius 40), square (bevel 8), hexagon (6 sides, flat top), capsule (radius = half height). Drawn in amber #ffd166 stroke 4px with #1a2030 fill, inner bevel line at 4px inset.\n- Proportions: head w = 200-300px, h = w * (0.72-1.05) from PRNG.\n- Antennae: 0-2 stalks, height 28-56px, tip = dot / ring / fork (3 styles), cyan stroke 3px.\n- Eyes (the soul): 4 styles — visor bar (single amber rounded bar 120x18), twin dots (r=10, cyan), hollow rounds (r=14 stroke, pink), thin bar (80x6, cyan). Eye y = head center - 18px.\n- Mouth: 4 styles — grille (5 vertical amber slots 6px wide), smile arc (bezier, pink stroke 4), straight line (cyan 80x4), none (30% chance). Mouth y = head center + 40px.\n- Ears: 2 side panels, 40% chance, radius 12 circles with 2px bolt dots.\n- Scan-line sweep: a 2px cyan line at alpha 0.25 traversing head top->bottom over 3.2s, repeating; pauses 0.4s at the eye line (it \"looks at you\").\n\nINTERACTION:\n- \"Randomize\" button: new seed, face morphs in (parts scale from 0 with spring stiffness 220 damping 16, stagger 0.04s per part group).\n- \"Download SVG\": serialize the current head as a valid standalone .svg (viewBox 0 0 480 480, all strokes inline, no external refs) and trigger a download blob.\n- Seed-code line (mono, copy-on-click) under the stage.\n\nPAGE CHROME: nav (brand \"FOUNDRY\", links Toy/Export/About, CTA \"Download SVG\" — button treatment: chunky arcade button with 4px offset shadow that depresses on press). h1 \"Forge a robot head. Every seed is a new face.\" Eyebrow \"Free generative toy · procedural · no assets\". Feature grid (3): Procedural / SVG export / Shareable. Hidden brief panel. Footer.\n\nROBUSTNESS: dpr<=2; zero console errors; 390px safe (stage scales); reduced-motion = face appears instantly, no scan-line, no morph.",
-      "thumb": "assets/thumbs/robot-foundry.webp"
-    },
-    {
-      "id": "nexus",
-      "date": "2026-10-19",
-      "title": "NEXUS One",
-      "category": "3D",
-      "tier": "max",
-      "tags": [
-        "3D",
-        "Interactive",
-        "Product",
-        "Landing Page",
-        "model-viewer"
-      ],
-      "demo": "demos/nexus/",
-      "accent": "#8b5cf6",
-      "blurb": "A premium AR-headset product landing page with a live 3D hero — the visor tilts toward your cursor, click to spin it 360°. Glassmorphism nav, fluid type, scroll-reveal features. One HTML file + model-viewer + a local GLB.",
-      "thumb": "assets/thumbs/nexus.webp"
-    },
-    {
-      "id": "firefly-meadow",
-      "date": "2026-10-19",
-      "title": "Firefly Meadow",
+      "id": "cutaway-classroom",
+      "date": "2026-10-20",
+      "title": "Cutaway Classroom",
       "category": "3D",
       "tier": "pro",
       "tags": [
         "3D",
-        "Interactive"
+        "Interactive",
+        "Education",
+        "Creative"
       ],
-      "demo": "demos/firefly-meadow/",
-      "accent": "#8b5cf6",
-      "blurb": "A twilight meadow with four seasons: spring petals, summer fireflies, autumn leaves, winter snow. 8000 grass blades, detailed 3D, weather systems. Pro tier.",
-      "thumb": "assets/thumbs/firefly-meadow.png"
+      "demo": "demos/cutaway-classroom/",
+      "accent": "#3b6ef5",
+      "blurb": "A 3D cutaway science lesson in one file: water flows through fish gills or lungs, numbered callouts track the model, 5-step timeline. Bright, tactile, zero assets.",
+      "thumb": "assets/thumbs/cutaway-classroom.webp"
+    },
+    {
+      "id": "frame-walk-gallery",
+      "date": "2026-10-20",
+      "title": "Frame Walk Gallery",
+      "category": "3D",
+      "tier": "pro",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Portfolio",
+        "Creative"
+      ],
+      "demo": "demos/frame-walk-gallery/",
+      "accent": "#d4b56a",
+      "blurb": "Scroll a museum row of nine procedural artworks, click any frame to dolly in, switch the whole gallery from straight wall to curved arc. Brass UI, pure canvas art.",
+      "thumb": "assets/thumbs/frame-walk-gallery.webp"
+    },
+    {
+      "id": "harukaze-station",
+      "date": "2026-10-20",
+      "title": "Harukaze Station",
+      "category": "3D",
+      "tier": "pro",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Anime",
+        "Creative"
+      ],
+      "demo": "demos/harukaze-station/",
+      "accent": "#e86f9a",
+      "blurb": "A low-poly Japanese countryside platform where petals fall, trains arrive and seasons repaint the world - spring, summer, autumn, winter plus noon-to-night lighting.",
+      "thumb": "assets/thumbs/harukaze-station.webp"
+    },
+    {
+      "id": "isoglow-lab",
+      "date": "2026-10-20",
+      "title": "Isoglow Lab",
+      "category": "3D",
+      "tier": "max",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Gradient",
+        "SaaS"
+      ],
+      "demo": "demos/isoglow-lab/",
+      "accent": "#7c5cff",
+      "blurb": "An isometric neon data-city with a live equalizer, ring transmitters and swarm cloud - every tower you press answers back. Four themes, terrain swap, terminal UI.",
+      "thumb": "assets/thumbs/isoglow-lab.webp"
+    },
+    {
+      "id": "particle-swarm",
+      "date": "2026-10-20",
+      "title": "Particle Swarm",
+      "category": "3D",
+      "tier": "pro",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Creative",
+        "Gradient"
+      ],
+      "demo": "demos/particle-swarm/",
+      "accent": "#6ee7ff",
+      "blurb": "14,000 GPU particles snap between sphere, torus knot and helix with spring physics - throw it between Drift and Storm, click to send a shockwave through the cloud.",
+      "thumb": "assets/thumbs/particle-swarm.webp"
+    },
+    {
+      "id": "pelagia-railway",
+      "date": "2026-10-20",
+      "title": "Pelagia Railway",
+      "category": "3D",
+      "tier": "max",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Creative",
+        "Landing Page"
+      ],
+      "demo": "demos/pelagia-railway/",
+      "accent": "#e2574c",
+      "blurb": "A tropical island miniature with a vintage railway diving through a transparent underwater tunnel - day/night, rain, loco swap and a cutaway reveal of the whole line.",
+      "thumb": "assets/thumbs/pelagia-railway.webp"
+    },
+    {
+      "id": "reef-lagoon",
+      "date": "2026-10-20",
+      "title": "Reef Lagoon",
+      "category": "3D",
+      "tier": "max",
+      "tags": [
+        "3D",
+        "Interactive",
+        "Nature",
+        "Creative"
+      ],
+      "demo": "demos/reef-lagoon/",
+      "accent": "#22d3ee",
+      "blurb": "Throw sharks, turtles, dolphins and mantas off a dock into a top-down lagoon - per-species ballistics, GPU ripples, foam, plus reef themes, weather and camera layouts.",
+      "thumb": "assets/thumbs/reef-lagoon.webp"
     }
   ]
 }

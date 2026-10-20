@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cutaway Classroom — a 3D respiration lesson</title>
+<meta name="description" content="Interactive 3D cutaway science lesson: follow water through a fish's gills or air through lungs, step by step, with live callouts.">
+<meta name="theme-color" content="#f6f1e7">
+<link rel="stylesheet" href="../../js/kit/kit.css">
+<style>
+@font-face{font-family:'Clash Display';src:url(../../fonts/ClashDisplay-600.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Clash Display';src:url(../../fonts/ClashDisplay-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-400.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-700.woff2) format('woff2');font-weight:700;font-display:swap}
+
+:root{
+  --acc:#3b6ef5; --acc-ink:#fff;
+  --ink:#1d2540; --ink2:#4b5573; --bg:#f6f1e7; --paper:rgba(255,252,246,.86); --line:rgba(29,37,64,.16);
+  --display:'Clash Display',system-ui,sans-serif; --sans:'Satoshi',system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono',Consolas,monospace;
+}
+body.th-violet{--acc:#7c5cff;--bg:#eef0ff}
+body.th-mint{--acc:#2fa36b;--acc-ink:#0b2a1b;--bg:#eff8f1}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+html.lenis,html.lenis body{height:auto}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:var(--step-0);line-height:1.55;overflow-x:clip;transition:background .6s}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.05;margin:0;letter-spacing:-.01em}
+p{margin:0}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* canvas + poster */
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;touch-action:pan-y;cursor:grab}
+#gl:active{cursor:grabbing}
+#poster{position:fixed;inset:0;z-index:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:var(--bg);color:var(--ink2);text-align:center;padding:24px}
+#poster svg{width:min(70vw,420px);fill:var(--acc);opacity:.85}
+body.nogl #poster{display:flex}
+body.nogl #gl,body.nogl #marks,body.nogl #leaders{display:none}
+#toast{position:fixed;left:50%;top:76px;transform:translate(-50%,-20px);z-index:60;background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:var(--step--1);opacity:0;pointer-events:none;transition:opacity .3s,transform .4s var(--ease-out)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* tab-folder buttons (shared treatment) */
+.btn.tab{--c:10px;border-radius:0;padding:0;background:var(--acc);color:var(--acc-ink);box-shadow:none;font-family:var(--display);font-weight:600;letter-spacing:.04em;
+  clip-path:polygon(0 100%,0 var(--c),var(--c) 0,calc(100% - var(--c)) 0,100% var(--c),100% 100%)}
+.btn.tab>span{display:inline-flex;align-items:center;gap:.6em;padding:12px 24px 11px}
+.btn.tab.lg>span{padding:16px 30px 15px;font-size:var(--step-0)}
+.btn.tab.primary:hover{box-shadow:none;filter:brightness(1.08)}
+.btn.tab.chip{color:var(--ink)}
+.btn.tab.chip>span{margin:1.5px 1.5px 0;padding:10px 20px 9px;background:#fffaf0;
+  clip-path:polygon(0 100%,0 calc(var(--c) - 1px),calc(var(--c) - 1px) 0,calc(100% - var(--c) + 1px) 0,100% calc(var(--c) - 1px),100% 100%);transition:background .3s}
+.btn.tab.chip:hover>span{background:color-mix(in srgb,var(--acc) 14%,#fffaf0)}
+.btn.tab.chip small{font:600 .68rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+.btn.tab.chip b{font-weight:600}
+[data-dc]{translate:0 -3px;transition:translate .3s var(--spring),transform .3s var(--spring),filter .25s}
+[data-dc]:hover{translate:0 -6px}
+.btn.ulink{color:var(--ink)}
+.btn.bracket{color:var(--ink)}
+.tick{border:0;cursor:pointer;background:transparent}
+
+/* header */
+.nav{position:fixed;inset:0 0 auto 0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px clamp(14px,3vw,36px)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:var(--step-1);color:var(--ink);text-decoration:none}
+.brand svg{width:28px;height:28px;fill:none;stroke:var(--acc);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.links{display:flex;gap:26px}
+.links a{position:relative;color:var(--ink2);text-decoration:none;font-weight:500;font-size:var(--step--1);letter-spacing:.06em;text-transform:uppercase;padding:6px 0;transition:color .25s}
+.links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--acc);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease-out)}
+.links a:hover{color:var(--ink)}.links a:hover::after{transform:scaleX(1)}
+.nav .btn.tab>span{padding:9px 18px 8px;font-size:var(--step--1)}
+
+/* hero */
+.hero{position:relative;z-index:2;height:100svh;min-height:600px;pointer-events:none}
+.hero .copy{position:absolute;left:clamp(14px,3vw,36px);top:clamp(70px,11vh,110px);width:min(520px,calc(100% - 28px));display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.hero .copy>*{pointer-events:auto}
+.plates{display:flex;gap:8px;flex-wrap:wrap}
+.chipx{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);backdrop-filter:blur(8px);font:500 .72rem/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.chipx i{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 var(--acc);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px transparent}}
+.eyebrow{font:500 .75rem/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
+body.th-mint .eyebrow{color:#1f7a4f}
+h1{font-size:clamp(2.05rem,1.1rem + 3.9vw,4.7rem);color:var(--ink)}
+h1 em{font-style:normal;color:var(--acc)}
+body.th-mint h1 em{color:#1f7a4f}
+.lede{color:var(--ink2);max-width:44ch}
+.cta{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.dcbar{display:flex;gap:6px;border-bottom:1.5px solid var(--acc);padding-top:8px;width:100%}
+.hint{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);font:500 .7rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);pointer-events:none;opacity:.8}
+
+/* HUD (fixed overlay: callouts, rail, timeline) */
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+#hud.off{visibility:hidden}
+#hud>*{pointer-events:none}
+#hud>.tl{pointer-events:auto}
+@media (max-height:600px){.lede,.legend{display:none}}
+#leaders{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#leaders path{fill:none;stroke:var(--acc);stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .9s var(--ease-out)}
+#leaders path.in{stroke-dashoffset:0}
+#leaders circle{fill:var(--acc);stroke:#fff;stroke-width:1.5;opacity:0;transition:opacity .4s}
+#leaders circle.in{opacity:1}
+#marks{position:absolute;inset:0}
+.mk{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border:1.5px solid var(--acc);background:var(--paper);backdrop-filter:blur(8px);border-radius:999px;cursor:pointer;pointer-events:auto;font:500 .78rem/1.2 var(--sans);color:var(--ink);white-space:nowrap;opacity:0;transition:opacity .5s,background .25s;will-change:transform}
+.mk.in{opacity:1}
+.mk:hover,.mk.act{background:#fff}
+.mk b{display:grid;place-items:center;min-width:26px;height:26px;padding:0 4px;border-radius:999px;background:var(--acc);color:var(--acc-ink);font:700 .7rem/1 var(--mono)}
+.mk em{font-style:normal;color:var(--ink2)}
+.rail{position:absolute;right:clamp(14px,2.4vw,32px);top:84px;width:272px;display:flex;flex-direction:column;gap:12px}
+.card{pointer-events:auto;background:var(--paper);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.legend{display:flex;flex-direction:column;gap:6px;font-size:var(--step--1)}
+.legend h3{font:600 .7rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px}
+.legend .l{display:flex;align-items:center;gap:8px;transition:transform .5s var(--ease-out)}
+.legend .l i{width:11px;height:11px;border-radius:50%;flex:none}
+.legend .o2 i{background:#5fc8ff}.legend .co2 i{background:#e0556b}
+.legend .co2{order:2}.legend .o2{order:1}
+.rail.swap .legend .o2{order:2}.rail.swap .legend .co2{order:1}
+.legend .count{order:3;font:500 .72rem/1.2 var(--mono);color:var(--ink2);margin-top:4px}
+.legend .count b{color:var(--ink);font-size:.9rem}
+.cap .n{font:600 .7rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:6px}
+body.th-mint .cap .n{color:#1f7a4f}
+.cap h3{font-size:var(--step-1);margin-bottom:4px}
+.cap p{font-size:var(--step--1);color:var(--ink2)}
+.tl{position:absolute;left:clamp(14px,2.4vw,32px);right:clamp(14px,2.4vw,32px);bottom:20px;display:flex;align-items:stretch;gap:6px;pointer-events:auto;background:var(--paper);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:14px;padding:8px}
+.tl .play{flex:none;width:46px;display:grid;place-items:center;background:var(--acc);color:var(--acc-ink);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);transition:filter .2s}
+.tl .play:hover{filter:brightness(1.1)}
+.tl .st{position:relative;flex:1;min-width:0;text-align:left;padding:10px 10px 6px;border-top:2px solid var(--line);color:var(--ink2);transition:color .25s,background .25s}
+.tl .st .bar{position:absolute;left:0;top:-2px;height:2px;width:100%;background:var(--acc);transform:scaleX(0);transform-origin:left}
+.tl .st span{display:block;font:600 .68rem/1 var(--mono);letter-spacing:.12em}
+.tl .st b{display:block;margin-top:4px;font:600 var(--step--1)/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .st:hover{color:var(--ink);background:rgba(255,255,255,.55)}
+.tl .st.cur{color:var(--ink)}
+
+/* sections */
+main{position:relative;z-index:3;background:var(--bg);transition:background .6s}
+.sec{padding:clamp(64px,10vw,130px) clamp(18px,5vw,72px);max-width:1280px;margin:0 auto}
+.sec>h2{font-size:var(--step-3);max-width:18ch}
+.sec>.sub{color:var(--ink2);max-width:56ch;margin-top:14px}
+.k{font:500 .75rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
+body.th-mint .k{color:#1f7a4f}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:40px}
+.pane{background:#fffaf0;border:1px solid var(--line);border-radius:14px;padding:24px;transition:transform .5s var(--ease-out),border-color .3s}
+.pane:hover{transform:translateY(-4px);border-color:var(--acc)}
+.pane svg.i{width:30px;height:30px;color:var(--acc);margin-bottom:14px}
+.pane h3{font-size:var(--step-1);margin-bottom:8px}
+.pane p{color:var(--ink2);font-size:var(--step--1)}
+.track{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:48px}
+.track::before,.track .fill{content:"";position:absolute;left:0;right:0;top:-18px;height:2px;background:var(--line)}
+.track .fill{background:var(--acc);transform:scaleX(0);transform-origin:left}
+.sc{display:flex;flex-direction:column;gap:10px;align-items:flex-start;background:#fffaf0;border:1px solid var(--line);border-radius:14px;padding:20px}
+.sc .no{font:700 2rem/1 var(--display);color:var(--acc)}
+body.th-mint .sc .no{color:#1f7a4f}
+.sc h3{font-size:var(--step-1)}
+.sc p{font-size:var(--step--1);color:var(--ink2);flex:1}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:36px}
+.keys div{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fffaf0}
+kbd{font:600 .8rem/1 var(--mono);padding:6px 9px;border:1px solid var(--ink);border-bottom-width:3px;border-radius:6px;background:#fff;white-space:nowrap}
+.band{margin:0 clamp(14px,3vw,40px);padding:clamp(40px,7vw,90px);border-radius:22px;background:var(--ink);color:#f6f1e7;display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap}
+.band h2{font-size:var(--step-3);max-width:16ch}
+.band .btn.bracket{color:#f6f1e7}
+.band .btn.tab.primary>span{padding:16px 30px 15px}
+footer{position:relative;z-index:3;background:var(--bg);padding:48px clamp(18px,5vw,72px) 36px;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center;color:var(--ink2);font-size:var(--step--1);transition:background .6s}
+footer a{color:var(--ink)}
+
+/* brief panel */
+#brief{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:80;background:#fffaf0;border-left:1px solid var(--line);padding:28px 26px;overflow:auto;transform:translateX(105%);visibility:hidden;transition:transform .55s var(--ease-out),visibility 0s .55s;box-shadow:-20px 0 60px -30px rgba(29,37,64,.35)}
+#brief.open{transform:none;visibility:visible;transition:transform .55s var(--ease-out)}
+#brief h2{font-size:var(--step-2);margin-bottom:12px}
+#brief h3{font:600 .72rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin:22px 0 8px}
+#brief ul{margin:0;padding-left:1.1em;color:var(--ink2);font-size:var(--step--1)}
+#brief li{margin-bottom:6px}
+#briefClose{position:absolute;top:16px;right:16px}
+
+@media (max-width:899px){
+  .links,.lede,.hint{display:none}
+  .hero .copy{gap:11px;top:62px}
+  .eyebrow{display:none}
+  .rail{top:auto;right:12px;left:12px;bottom:88px;width:auto;gap:6px}
+  .legend{flex-direction:row;flex-wrap:wrap;gap:4px 14px;padding:8px 12px}
+  .legend h3{display:none}
+  .legend .count{margin:0}
+  .cap{padding:10px 14px}.cap p{display:none}.cap h3{font-size:var(--step-0);margin:0}.cap .n{margin-bottom:3px}
+  .tl{left:10px;right:10px;bottom:10px;padding:6px}
+  .tl .st b{display:none}.tl .st{padding:10px 6px}
+  .btn.tab.chip>span{padding:8px 12px 7px;font-size:var(--step--1)}
+  .btn.tab.lg>span{padding:12px 20px 11px}
+  .mk em{display:none}.mk.act em{display:inline}
+  .track{grid-template-columns:1fr}
+  .track::before,.track .fill{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .chipx i{animation:none}
+  #leaders path{transition:none}
+  .tl .st .bar{transition:none}
+  [data-dc]{transition:none}
+}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-label="3D cutaway of a fish or lungs. Drag to orbit, scroll to zoom." role="img"></canvas>
+<div id="poster" role="note">
+  <svg viewBox="0 0 240 110" aria-hidden="true"><path d="M8 56c28-30 70-42 112-38 30 3 52 18 66 38l40-26-8 26 8 26-40-26c-14 20-36 35-66 38C78 98 36 86 8 56z"/><circle cx="52" cy="48" r="5" fill="#f6f1e7"/></svg>
+  <p><strong>Enable WebGL</strong> to explore the 3D cutaway.</p>
+  <p style="max-width:40ch;font-size:.9em">The lesson still works as text: use the timeline below to read each of the five breathing steps.</p>
+</div>
+<div id="toast" role="status" aria-live="polite">Graphics context lost — restoring…</div>
+
+<header class="nav ui">
+  <a class="brand" href="#top" aria-label="Cutaway Classroom home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 17c5-7 12-9 18-7 3 1 5 3 6 5l3-4-1 5 1 5-3-4c-1 2-3 4-6 5-6 2-13 0-18-7z"/><path d="M13 12v10M17 11v11M21 12v9" stroke-dasharray="2 2.4"/></svg>
+    Cutaway Classroom
+  </a>
+  <nav class="links" aria-label="Sections"><a href="#why">Why a cutaway</a><a href="#steps">The 5 steps</a><a href="#controls">Controls</a></nav>
+  <button class="btn tab primary" data-start type="button"><span>Start lesson</span></button>
+</header>
+
+<section class="hero" id="top">
+  <div class="copy">
+    <div class="plates">
+      <span class="chipx">Lesson · Respiration</span>
+      <span class="chipx" id="specChip"><i></i><span>Specimen A · Ikan</span></span>
+    </div>
+    <p class="eyebrow">Interactive science lesson · Pelajaran sains interaktif</p>
+    <h1 id="h1">One breath, seen from the <em>inside</em>.</h1>
+    <p class="lede">Slice a fish open and follow the water from mouth to gill to operculum — then swap to a lung and watch air reach the alveoli. Drag, click, and step through it.</p>
+    <div class="cta">
+      <button class="btn tab primary lg" data-start type="button"><span>Start lesson <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+      <button class="btn ulink" data-brief type="button">Read the brief</button>
+    </div>
+    <div class="dcbar" role="group" aria-label="Display controls">
+      <button class="btn tab chip" data-dc="theme" type="button" aria-label="Change board theme"><span><small>Board</small><b>Cream</b></span></button>
+      <button class="btn tab chip" data-dc="asset" type="button" aria-label="Swap specimen"><span><small>Swap</small><b>Specimen A</b></span></button>
+    </div>
+  </div>
+  <p class="hint">Drag to orbit · Scroll to dolly</p>
+</section>
+
+<div id="hud">
+  <svg id="leaders" aria-hidden="true"></svg>
+  <div id="marks"></div>
+  <aside class="rail" id="rail" aria-label="Lesson panel">
+    <div class="card legend">
+      <h3>Legend · Legenda</h3>
+      <div class="l o2"><i></i><span id="lgA">O₂ in water / Oksigen</span></div>
+      <div class="l co2"><i></i><span id="lgB">CO₂ out / Karbon dioksida</span></div>
+      <p class="count"><b id="cnt">0</b> / 260 particles loaded</p>
+    </div>
+    <div class="card cap" aria-live="polite">
+      <p class="n" id="capN">Step 1 / 5</p>
+      <h3 id="capT">Water IN</h3>
+      <p id="capP"></p>
+    </div>
+  </aside>
+  <div class="tl" id="tl" role="group" aria-label="Lesson timeline">
+    <button class="tick play" id="play" type="button" aria-label="Pause"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+  </div>
+</div>
+
+<main>
+  <section class="sec" id="why">
+    <p class="k" data-reveal>Why a cutaway</p>
+    <h2 data-reveal>You cannot see breathing from the outside.</h2>
+    <p class="sub" data-reveal>A fish gulps water, but the real work happens in a chamber you never see. Cutting the model in half lets the flow, the filaments and the exit valve show up in one frame.</p>
+    <div class="grid3">
+      <div class="pane" data-reveal><svg class="i" viewBox="0 0 24 24"><path d="M3 12h13M12 6l6 6-6 6"/><path d="M3 6h6M3 18h6"/></svg><h3>One-way flow</h3><p>Water enters the mouth and leaves behind the operculum. It never reverses, so fresh oxygen is always arriving. / Air mengalir satu arah.</p></div>
+      <div class="pane" data-reveal><svg class="i" viewBox="0 0 24 24"><path d="M4 20c0-9 4-15 8-16 4 1 8 7 8 16"/><path d="M8 20c0-5 2-9 4-10M16 20c0-5-2-9-4-10"/></svg><h3>Thin filaments</h3><p>Each of the four arches carries nine red filaments, thin enough for oxygen to cross into the blood. / Filamen insang sangat tipis.</p></div>
+      <div class="pane" data-reveal><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><h3>Timing matters</h3><p>Mouth opens, flow slows over the gills, gas swaps, the operculum opens. Five beats, three seconds each. / Lima langkah, tiga detik.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="steps">
+    <p class="k" data-reveal>The 5 steps</p>
+    <h2 data-reveal>Water in, oxygen across, water out.</h2>
+    <div class="track" id="track"><span class="fill" id="trackFill"></span></div>
+  </section>
+
+  <section class="sec" id="controls">
+    <p class="k" data-reveal>Controls</p>
+    <h2 data-reveal>Everything is a handle.</h2>
+    <p class="sub" data-reveal>The two tabs under the headline repaint the board and swap the specimen. The rest is keyboard and pointer.</p>
+    <div class="keys" data-reveal>
+      <div><kbd>1</kbd><span>Cycle the board theme</span></div>
+      <div><kbd>2</kbd><span>Swap fish and lungs</span></div>
+      <div><kbd>←</kbd><kbd>→</kbd><span>Previous / next step</span></div>
+      <div><kbd>Space</kbd><span>Play or pause the lesson</span></div>
+      <div><kbd>Drag</kbd><span>Orbit the model</span></div>
+      <div><kbd>Click</kbd><span>Callout: fly in and flash the part</span></div>
+    </div>
+  </section>
+
+  <div class="band" data-reveal>
+    <h2>Ready to look inside?</h2>
+    <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+      <button class="btn tab primary" data-start type="button"><span>Start lesson</span></button>
+      <button class="btn bracket" data-brief type="button"><i class="b">[</i>Lesson brief<i class="b">]</i></button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>Cutaway Classroom — a DepthGlow demo. Procedural three.js, no external assets.</span>
+  <a class="btn ulink" href="#top">Back to top</a>
+</footer>
+
+<aside id="brief" aria-hidden="true" aria-labelledby="briefH">
+  <button class="btn tab chip" id="briefClose" type="button" aria-label="Close brief"><span>Close · Esc</span></button>
+  <h2 id="briefH">Lesson brief</h2>
+  <p style="color:var(--ink2)">A 12-minute classroom demo on gas exchange. Project it, then let students drive.</p>
+  <h3>Objectives</h3>
+  <ul><li>Trace water from mouth to operculum and name each structure.</li><li>Explain why filaments are thin and numerous.</li><li>Compare a gill with a lung: same job, different path.</li></ul>
+  <h3>Run it</h3>
+  <ul><li>Press Start lesson; the five steps auto-advance every 3 seconds.</li><li>Pause with Space and click a numbered callout to zoom in.</li><li>Swap to Specimen B and repeat.</li></ul>
+  <h3>Ask the class</h3>
+  <ul><li>What would happen if the operculum stayed shut?</li><li>Why is the blood red where the water turns red?</li></ul>
+</aside>
+
+<script src="../../js/vendor/lenis.min.js"></script>
+<script src="../../js/vendor/gsap.min.js"></script>
+<script src="../../js/vendor/ScrollTrigger.min.js"></script>
+<script src="../../js/vendor/SplitText.min.js"></script>
+<script type="importmap">{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sstep = (a, b, x) => { x = clamp((x - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+const nz = v => Number.isFinite(v) ? v : 0;
+const rad = d => d * Math.PI / 180;
+const damp = (rate, dt) => 1 - Math.pow(1 - rate, dt * 60);   // per-frame rate -> dt independent
+
+/* ---------- state + content ---------- */
+const THEMES = [
+  { name: 'Cream', bg: 0xf6f1e7, plinth: 0xded4c2, acc: 0x3b6ef5, cls: '' },
+  { name: 'Violet lab', bg: 0xeef0ff, plinth: 0xdfe2f7, acc: 0x7c5cff, cls: 'th-violet' },
+  { name: 'Mint clinic', bg: 0xeff8f1, plinth: 0xd8eadd, acc: 0x2fa36b, cls: 'th-mint' }
+];
+const SPEC = ['Specimen A · Ikan', 'Specimen B · Paru-paru'];
+const STEPS = [
+  { jaw: 1, op: 0, spd: 1.0, slow: 0, glow: 0, park: [0, .22],
+    a: ['Water IN', 'Air masuk', 'The mouth opens and the jaw drops. Fresh, oxygen-rich water is gulped in. / Mulut terbuka, air segar masuk.'],
+    b: ['Air IN', 'Udara masuk', 'The diaphragm drops and air rushes down the trachea. / Udara mengalir turun lewat trakea.'] },
+  { jaw: .3, op: 0, spd: .9, slow: .6, glow: .3, park: [.3, .5],
+    a: ['Over filaments', 'Melewati insang', 'Flow slows between the gill arches so water lingers on every filament. / Aliran melambat di antara lengkung insang.'],
+    b: ['Down the bronchi', 'Menuruni bronkus', 'The airway splits twice and delivers air to each of the four lobes. / Saluran bercabang menuju empat lobus.'] },
+  { jaw: 0, op: 0, spd: .7, slow: .75, glow: 1, park: [.4, .6],
+    a: ['Gas exchange', 'Pertukaran gas', 'O₂ crosses into the blood while CO₂ crosses out. The filaments glow as they work. / O₂ masuk ke darah, CO₂ keluar.'],
+    b: ['Gas exchange', 'Pertukaran gas', 'Alveoli swap O₂ for CO₂ across a membrane one cell thick. / Alveolus menukar O₂ dan CO₂.'] },
+  { jaw: 0, op: 1, spd: 1.0, slow: 0, glow: .2, park: [.65, .95],
+    a: ['Out', 'Keluar', 'The operculum flap lifts and spent water leaves behind the head. / Katup insang membuka, air bekas keluar.'],
+    b: ['Out', 'Keluar', 'The lungs deflate and CO₂-rich air is pushed back up the trachea. / Paru-paru mengempis, udara bekas keluar.'] },
+  { jaw: .5, op: .5, spd: 1.0, slow: .4, glow: .6, park: [0, 1], loop: true,
+    a: ['Loop', 'Ulang', 'Mouth and operculum alternate in a steady rhythm, around 60 breaths a minute. / Siklus berulang terus.'],
+    b: ['Loop', 'Ulang', 'Inhale, exchange, exhale. About 15 breaths a minute at rest. / Tarik, tukar, hembus.'] }
+];
+const CALL = [
+  [ { id: 'A1', en: 'Mouth', idn: 'Mulut', p: [-2.0, -.05, 0], o: [-96, -84], cam: [12, 10, 6.2, -1.7, 0, 0], part: 'mouth' },
+    { id: 'A2', en: 'Gill', idn: 'Insang', p: [.3, -.12, -.3], o: [70, 100], cam: [28, 12, 6.6, 0, 0, -.2], part: 'gill' },
+    { id: 'A3', en: 'Gill arch', idn: 'Lengkung insang', p: [-.27, .5, -.05], o: [-60, -112], cam: [22, 18, 5.8, -.3, .1, -.2], part: 'arch' },
+    { id: 'A4', en: 'Operculum', idn: 'Katup', p: [.85, .3, -.4], o: [100, -78], cam: [35, 10, 6.4, .8, 0, -.2], part: 'op' } ],
+  [ { id: 'B1', en: 'Trachea', idn: 'Trakea', p: [0, 1.25, 0], o: [-110, -36], cam: [8, 8, 6.5, 0, 1, 0], part: 'trachea' },
+    { id: 'B2', en: 'Bronchus', idn: 'Bronkus', p: [.45, .14, 0], o: [120, -64], cam: [10, 12, 6.2, .3, .3, 0], part: 'bronchus' },
+    { id: 'B3', en: 'Alveolus', idn: 'Alveolus', p: [.95, -.3, -.2], o: [118, 84], cam: [25, 10, 5.6, .9, -.2, -.1], part: 'alveolus' },
+    { id: 'B4', en: 'Lung', idn: 'Paru-paru', p: [-.9, .5, -.1], o: [-124, 40], cam: [-20, 10, 6, -.9, .2, 0], part: 'lobe' } ]
+];
+const S = { step: 0, playing: false, theme: 0, asset: 0, clock: 0, t: 0, vis: [1, 0] };
+
+/* ---------- DOM refs ---------- */
+const cv = $('#gl'), hud = $('#hud'), toast = $('#toast');
+const dcTheme = $('[data-dc="theme"]'), dcAsset = $('[data-dc="asset"]');
+
+/* ---------- renderer ---------- */
+let R = null;
+try {
+  R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+} catch (e) { R = null; }
+if (!R) document.body.classList.add('nogl');
+
+const scene = new THREE.Scene();
+const bgCur = new THREE.Color(THEMES[0].bg), bgTgt = new THREE.Color(THEMES[0].bg);
+scene.background = bgCur.clone();
+scene.fog = new THREE.Fog(bgCur.clone(), 22, 46);
+const camera = new THREE.PerspectiveCamera(45, 1, .1, 100);
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);   // removes z>0 half: cut face toward camera
+let PR = Math.min(devicePixelRatio || 1, 2);
+if (R) {
+  R.setPixelRatio(PR);
+  R.setClearColor(bgCur, 1);
+  R.localClippingEnabled = true;
+  R.shadowMap.enabled = true;
+  R.shadowMap.type = THREE.PCFSoftShadowMap;
+  R.toneMapping = THREE.NoToneMapping;
+}
+
+/* lights — x PI because r155+ lights are physical (Lambert = E*albedo/PI) */
+const sun = new THREE.DirectionalLight(0xffffff, 1.5 * Math.PI);
+sun.position.set(.6 * 9, 9, .5 * 9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.radius = 4;
+sun.shadow.bias = -.0004;
+Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: .5, far: 26 });
+const hemi = new THREE.HemisphereLight(0xfff6e8, 0xded4c2, .75 * Math.PI);
+const rim = new THREE.PointLight(0x8fb4ff, 14, 0, 2);
+rim.position.set(-4, 2.5, -4);
+scene.add(sun, hemi, rim);
+
+/* ---------- materials ---------- */
+const flashes = {};   // material -> current flash value
+function M(color, o = {}, base = 0) {
+  const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: .55, metalness: .02, emissive: o.emissive ?? color, emissiveIntensity: base }, o));
+  m.userData.base = base;
+  return m;
+}
+const cl = o => Object.assign({ side: THREE.DoubleSide, clippingPlanes: [clipPlane], clipShadows: true }, o);
+const matBody = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide, roughness: .6, metalness: .03, clippingPlanes: [clipPlane], clipShadows: true });
+const matFin = M(0x4f6f94, { side: THREE.DoubleSide, roughness: .7 });
+const matArch = M(0xd63a52, { roughness: .5 });
+const matFil = M(0xe0556b, { roughness: .45 });
+const matHeart = M(0xc0394b, { roughness: .4 });
+const matBladder = M(0xefe9dc, { roughness: .3 });
+const matJaw = M(0xf0e3cc, cl({}));
+const matPhar = M(0xecb0b8, cl({}));
+const matOp = M(0xa9bcd1, { side: THREE.DoubleSide, roughness: .35, metalness: .3 });
+const matGut = M(0xd9a273, cl({}));
+const matKid = M(0x8f3b3b, cl({}));
+const matTrachea = M(0xd9a0a8, cl({ roughness: .5 }));
+const matBronch = M(0xd9a0a8, cl({ roughness: .5 }));
+const matLobe = M(0xefb9c1, cl({ roughness: .55, emissive: 0xff9a8a }), .05);
+const matAlv = M(0xff8fa3, { roughness: .4 }, .15);
+const parts = { mouth: [matJaw, matPhar], gill: [matFil], arch: [matArch], op: [matOp], trachea: [matTrachea], bronchus: [matBronch], lobe: [matLobe], alveolus: [matAlv] };
+function flash(name) { (parts[name] || []).forEach(m => flashes[m.uuid] = { m, v: 1 }); }
+
+/* ---------- stage: plinth, brass strip, shadows ---------- */
+const plinthMat = new THREE.MeshStandardMaterial({ color: THEMES[0].plinth, roughness: .8 });
+const plinth = new THREE.Mesh(new THREE.BoxGeometry(5.6, .4, 3), plinthMat);
+plinth.position.y = -1.2; plinth.castShadow = plinth.receiveShadow = true;
+const brass = new THREE.Mesh(new THREE.BoxGeometry(5.66, .06, 3.06), new THREE.MeshStandardMaterial({ color: 0xb08d4f, roughness: .35, metalness: .6 }));
+brass.position.y = -1.03; brass.castShadow = true;
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: .2 }));
+floor.rotation.x = -Math.PI / 2; floor.position.y = -1.4; floor.receiveShadow = true;
+function contactTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(40,30,20,.55)'); gr.addColorStop(1, 'rgba(40,30,20,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const contact = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), new THREE.MeshBasicMaterial({ map: contactTex(), transparent: true, depthWrite: false, fog: false }));
+contact.rotation.x = -Math.PI / 2; contact.position.y = -1.395;
+scene.add(plinth, brass, floor, contact);
+
+/* ---------- Subject A: fish ---------- */
+const gA = new THREE.Group(), gB = new THREE.Group();
+scene.add(gA, gB);
+const fish = new THREE.Group(); gA.add(fish);
+
+function loftBody() {
+  const L = 4.2, NS = 48, NR = 22;
+  const CP = [[0, .05, .05], [.12, .42, .5], [.3, .62, .78], [.55, .58, .72], [.8, .3, .4], [1, .05, .12]];
+  const crv = new THREE.CatmullRomCurve3(CP.map(c => new THREE.Vector3(c[0], c[1], c[2])), false, 'centripetal');
+  const st = crv.getPoints(NS);
+  const pos = new Float32Array((NS + 1) * (NR + 1) * 3), col = new Float32Array(pos.length), idx = [];
+  const slate = new THREE.Color(0x5b7fa6), belly = new THREE.Color(0xf0e3cc), line = new THREE.Color(0xc9d6e3), c = new THREE.Color();
+  let v = 0;
+  for (let i = 0; i <= NS; i++) {
+    const p = st[i], x = (clamp(p.x, 0, 1) - .5) * L, w = Math.max(.02, p.y), h = Math.max(.02, p.z);
+    for (let j = 0; j <= NR; j++, v++) {
+      const a = j / NR * Math.PI * 2, ca = Math.cos(a);
+      pos[v * 3] = x; pos[v * 3 + 1] = h * ca; pos[v * 3 + 2] = w * Math.sin(a);
+      c.copy(belly).lerp(slate, sstep(-.1, .3, ca));
+      c.lerp(line, 1 - sstep(.0, .09, Math.abs(ca - .06)));
+      col[v * 3] = c.r; col[v * 3 + 1] = c.g; col[v * 3 + 2] = c.b;
+    }
+  }
+  for (let i = 0; i < NS; i++) for (let j = 0; j < NR; j++) {
+    const a = i * (NR + 1) + j, b = a + NR + 1;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+const body = new THREE.Mesh(loftBody(), matBody);
+body.castShadow = true; body.receiveShadow = true;
+fish.add(body);
+
+function finMesh(pts, mat) {
+  const s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
+  return new THREE.Mesh(new THREE.ShapeGeometry(s), mat);
+}
+const tailG = new THREE.Group(); tailG.position.set(1.98, 0, 0);
+tailG.add(finMesh([[0, .12], [.55, .6], [.4, 0], [.55, -.6], [0, -.12]], matFin));
+const dorsal = finMesh([[0, 0], [.3, .5], [.9, 0]], matFin); dorsal.position.set(-.3, .7, 0);
+fish.add(tailG, dorsal);
+
+/* gill arches + filaments */
+const ARX = [-.6, -.27, .06, .39], filaments = [];
+const filGeo = new THREE.BoxGeometry(.34, .07, .02).translate(.17, 0, 0);
+ARX.forEach(xi => {
+  const pts = [];
+  for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI; pts.push(new THREE.Vector3(xi + .1 * Math.sin(a), .5 * Math.cos(a), -.4 * Math.sin(a))); }
+  fish.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .06, 8, false), matArch));
+  for (let k = 0; k < 9; k++) {
+    const a = (k + .5) / 9 * Math.PI, f = new THREE.Mesh(filGeo, matFil);
+    f.position.set(xi + .1 * Math.sin(a) + .03, .5 * Math.cos(a), -.4 * Math.sin(a));
+    f.rotation.x = Math.atan2(-.5 * Math.sin(a), .4 * Math.cos(a));
+    f.castShadow = true; fish.add(f); filaments.push(f);
+  }
+});
+
+/* heart, swim bladder, organs, mouth hinge, operculum */
+const heart = new THREE.Mesh(new THREE.SphereGeometry(.16, 20, 14), matHeart); heart.position.set(.15, -.58, -.12);
+const bladder = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), matBladder); bladder.scale.set(.8, .2, .24); bladder.position.set(1.15, .22, -.05);
+const tube = (pts, r, m) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 40, r, 8, false), m);
+fish.add(heart, bladder,
+  tube([[.5, -.3, -.1], [.9, -.38, -.05], [1.2, -.28, -.12], [1.5, -.36, -.06], [1.9, -.25, -.02]], .05, matGut),
+  tube([[.2, .5, -.08], [.8, .46, -.08], [1.4, .38, -.06]], .05, matKid),
+  tube([[-1.7, 0, 0], [-1.3, 0, -.02], [-.7, 0, -.02]], .2, matPhar));
+const jawG = new THREE.Group(); jawG.position.set(-1.65, -.22, 0);
+{
+  const g = new THREE.BoxGeometry(.5, .09, .5).translate(-.25, 0, 0), p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) * (.15 + .85 * (p.getX(i) + .5) / .5));
+  g.computeVertexNormals(); jawG.add(new THREE.Mesh(g, matJaw));
+}
+const opG = new THREE.Group(); opG.position.set(.5, -.02, -.4);
+{
+  const s = new THREE.Shape(); s.absellipse(0, 0, .5, .5, 0, Math.PI * 2, false, 0);
+  opG.add(new THREE.Mesh(new THREE.ShapeGeometry(s, 24).translate(.5, 0, 0), matOp));
+}
+fish.add(jawG, opG);
+
+/* ---------- Subject B: lungs ---------- */
+const lungI = new THREE.Group(); gB.add(lungI);
+const LOBES = [{ sx: 1, lx: .9, ly: .55 }, { sx: 1, lx: .95, ly: -.32 }, { sx: -1, lx: -.9, ly: .5 }, { sx: -1, lx: -.95, ly: -.35 }];
+const sph = new THREE.SphereGeometry(1, 24, 16);
+LOBES.forEach(L => {
+  const g = new THREE.Group(); g.position.set(L.lx, L.ly, 0);
+  [[0, 0, .5, [.85, 1.1, .95]], [.16 * L.sx, -.26, .36, [1, 1, 1]], [0, .3, .34, [1, 1, 1]]].forEach(([x, y, r, s]) => {
+    const m = new THREE.Mesh(sph, matLobe); m.position.set(x, y, 0); m.scale.set(r * s[0], r * s[1], r * s[2]); m.castShadow = true; g.add(m);
+  });
+  lungI.add(g);
+});
+lungI.add(tube([[0, 1.55, 0], [0, 1.0, 0], [0, .45, 0]], .12, matTrachea));
+[1, -1].forEach(sx => {
+  lungI.add(tube([[0, .45, 0], [sx * .3, .2, 0], [sx * .62, .06, 0]], .08, matBronch));
+});
+LOBES.forEach(L => lungI.add(tube([[L.sx * .62, .06, 0], [L.lx * .8, (.06 + L.ly) / 2, -.04], [L.lx, L.ly, -.1]], .05, matBronch)));
+/* alveoli: 120 instanced, 30 per lobe, seeded */
+const NA = 120, alvM = new THREE.InstancedMesh(new THREE.SphereGeometry(.03, 8, 6), matAlv, NA), alvP = new Float32Array(NA * 3);
+{
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < NA; i++) {
+    const L = LOBES[i >> 5]; let x, y, z;
+    do { x = (rnd() * 2 - 1) * .45; y = (rnd() * 2 - 1) * .55; z = -rnd() * .42; } while ((x * x) / .2 + (y * y) / .3 + (z * z) / .17 > 1);
+    alvP[i * 3] = L.lx + x; alvP[i * 3 + 1] = L.ly + y; alvP[i * 3 + 2] = z;
+  }
+}
+alvM.frustumCulled = false; alvM.instanceMatrix.setUsage(THREE.DynamicDrawUsage); lungI.add(alvM);
+gB.visible = false; gB.scale.setScalar(.0001);
+
+/* ---------- flow particles ---------- */
+const N = 260, TS = 200;
+const curveTab = pts => {
+  const c = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), sp = c.getSpacedPoints(TS - 1), a = new Float32Array(TS * 3);
+  sp.forEach((p, i) => { a[i * 3] = p.x; a[i * 3 + 1] = p.y; a[i * 3 + 2] = p.z; });
+  return { a, len: c.getLength() };
+};
+const PATH_A = curveTab([[-2.35, -.02, 0], [-1.9, 0, -.02], [-1.4, 0, -.03], [-.95, 0, -.03], [-.55, 0, -.05], [-.1, 0, -.06], [.35, -.02, -.08], [.7, -.08, -.3], [1.0, -.15, .05], [1.4, -.1, .6], [1.9, 0, 1.2]]);
+const PATH_B = LOBES.map(L => curveTab([[0, 1.9, -.02], [0, 1.1, -.02], [0, .5, -.02], [L.sx * .3, .22, -.03], [L.sx * .6, .08, -.04], [L.lx * .9, L.ly * .5 + .04, -.12], [L.lx, L.ly, -.18],
+  [L.lx * .88, L.ly * .5 - .06, -.2], [L.sx * .7, .04 + L.ly * .4, -.16], [L.sx * .5, .02, -.12], [L.sx * .2, .3, -.1], [0, .6, -.1], [0, 1.2, -.1], [0, 1.9, -.1]]));
+const pu = new Float32Array(N), pj = new Float32Array(N), pk = new Float32Array(N), pj2 = new Float32Array(N);
+for (let i = 0; i < N; i++) { pu[i] = i / N; pj[i] = (Math.sin(i * 12.9898) * 43758.5453) % 1; pj[i] = Math.abs(pj[i]); pk[i] = Math.abs((Math.sin(i * 78.233) * 12345.678) % 1); pj2[i] = Math.abs((Math.sin(i * 39.346) * 9871.23) % 1); }
+const partM = new THREE.InstancedMesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshLambertMaterial({ color: 0xffffff }), N);
+partM.frustumCulled = false; partM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+partM.setColorAt(0, new THREE.Color(1, 1, 1));
+scene.add(partM);
+const pm = partM.instanceMatrix.array, pc = partM.instanceColor.array;
+for (let i = 0; i < N; i++) pm[i * 16 + 15] = 1;
+const CF = [.373, .784, 1], CO = [.878, .333, .42], CS = [.624, .714, .788];   // fresh / oxygenated / spent
+let loaded = 0;
+const P = { jaw: 0, op: 0, spd: 1, slow: 0, glow: 0 };   // smoothed step params
+
+function parkParticles() {
+  const r = STEPS[S.step].park;
+  for (let i = 0; i < N; i++) pu[i] = r[0] + pk[i] * (r[1] - r[0]);
+}
+function updateParticles(dt) {
+  const fishMode = S.asset === 0, ps = S.vis[S.asset], tt = S.t;
+  let ld = 0;
+  for (let i = 0; i < N; i++) {
+    const tab = fishMode ? PATH_A : PATH_B[i & 3], a = tab.a;
+    const u = pu[i], f = u * (TS - 1), k = Math.min(TS - 2, f | 0), fr = f - k, o = k * 3;
+    let x = lerp(a[o], a[o + 3], fr), y = lerp(a[o + 1], a[o + 4], fr), z = lerp(a[o + 2], a[o + 5], fr), sc = 1, hold;
+    if (fishMode) {
+      const gill = sstep(-1.0, -.6, x) * (1 - sstep(.4, .8, x));
+      y += (pj2[i] - .5) * .34 * gill; z += (pk[i] - .5) * .12 * gill;
+      hold = gill;
+    } else {
+      const L = LOBES[i & 3], d = Math.hypot(x - L.lx, y - L.ly), dw = 1 - sstep(.18, .55, d);
+      x += Math.sin(tt * 3 + i) * .12 * dw; y += Math.cos(tt * 2.4 + i * 1.7) * .14 * dw; z -= pk[i] * .2 * dw;
+      sc = 1 + .5 * dw * Math.sin(tt * 6 + i); hold = dw;
+    }
+    if (!RM) {
+      const spd = .9 * (1 + .3 * (pj[i] * 2 - 1)) * P.spd * (1 - P.slow * hold);
+      pu[i] = nz(u + spd * dt / tab.len) % 1;
+    }
+    const w = i * 16, s = sc * ps;
+    pm[w] = pm[w + 5] = pm[w + 10] = Math.max(.0001, s);
+    pm[w + 12] = nz(x); pm[w + 13] = nz(y); pm[w + 14] = nz(z);
+    const ox = sstep(.28, .45, u), sp = sstep(.62, .78, u), cI = i * 3;
+    for (let q = 0; q < 3; q++) pc[cI + q] = lerp(lerp(CF[q], CO[q], ox), CS[q], sp);
+    if (ox > .9 && sp < .1) ld++;
+  }
+  loaded = ld;
+  partM.instanceMatrix.needsUpdate = true; partM.instanceColor.needsUpdate = true;
+}
+function updateAlveoli(on) {
+  const am = alvM.instanceMatrix.array, t = S.t;
+  for (let i = 0; i < NA; i++) {
+    const s = on ? 1 + .25 * Math.sin(t * 3 + i) * (.5 + .5 * P.glow) : 1, w = i * 16;
+    am[w] = am[w + 5] = am[w + 10] = s;
+    am[w + 12] = alvP[i * 3]; am[w + 13] = alvP[i * 3 + 1]; am[w + 14] = alvP[i * 3 + 2]; am[w + 15] = 1;
+  }
+  alvM.instanceMatrix.needsUpdate = true;
+}
+
+/* ---------- camera rig ---------- */
+const DEF = { yaw: Math.atan2(6.4, 8.2), pitch: Math.asin(2 / Math.hypot(6.4, 2, 8.2)), dist: Math.hypot(6.4, 2, 8.2), tx: 0, ty: .6, tz: 0 };
+const cam = Object.assign({}, DEF), tgt = Object.assign({}, DEF);
+const PMIN = rad(-10), PMAX = rad(45);
+let tweening = false, dragging = false, heroP = 0, dScale = 1, W = innerWidth, H = innerHeight;
+const ptr = { x: 0, y: 0, sx: 0, sy: 0 };
+
+function flyTo(c) {
+  const to = { yaw: rad(c[0]), pitch: clamp(rad(c[1]), PMIN, PMAX), dist: c[2], tx: c[3], ty: c[4], tz: c[5] };
+  if (RM || !window.gsap) { Object.assign(tgt, to); Object.assign(cam, to); return; }
+  tweening = true;
+  gsap.killTweensOf(tgt);
+  gsap.to(tgt, Object.assign({}, to, { duration: 1.2, ease: 'power2.inOut', onComplete: () => { tweening = false; } }));
+}
+cv.addEventListener('pointerdown', e => { dragging = true; tweening = false; if (window.gsap) gsap.killTweensOf(tgt); cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointerup', () => { dragging = false; });
+cv.addEventListener('pointercancel', () => { dragging = false; });
+cv.addEventListener('dblclick', () => flyTo([DEF.yaw * 180 / Math.PI, DEF.pitch * 180 / Math.PI, DEF.dist, DEF.tx, DEF.ty, DEF.tz]));
+addEventListener('pointermove', e => {
+  ptr.x = e.clientX / W * 2 - 1; ptr.y = e.clientY / H * 2 - 1;
+  if (dragging && e.movementX !== undefined) {
+    tgt.yaw -= e.movementX * .0055;
+    tgt.pitch = clamp(tgt.pitch + e.movementY * .0045, PMIN, PMAX);
+  }
+}, { passive: true });
+
+function resize() {
+  W = innerWidth; H = innerHeight;
+  if (R) R.setSize(W, H, false);
+  camera.aspect = W / H;
+  dScale = Math.max(1, 6.76 / camera.aspect / DEF.dist);
+  const desk = W >= 900;
+  camera.setViewOffset(W, H, desk ? -W * .09 : 0, desk ? 0 : -H * .1, W, H);
+  camera.updateProjectionMatrix();
+}
+function placeCam() {
+  const k = lerp(1, 6.4 / 8.2, heroP);
+  const yaw = cam.yaw + (RM ? 0 : ptr.sx * .06 + Math.sin(S.t * .3) * .04);
+  const pit = clamp(cam.pitch - (RM ? 0 : ptr.sy * .03), PMIN, PMAX), d = cam.dist * dScale * k;
+  camera.position.set(cam.tx + d * Math.cos(pit) * Math.sin(yaw), cam.ty + d * Math.sin(pit), cam.tz + d * Math.cos(pit) * Math.cos(yaw));
+  camera.lookAt(cam.tx, cam.ty, cam.tz);
+}
+
+/* ---------- UI: timeline, steps, callouts ---------- */
+const tl = $('#tl'), stBtns = [], bars = [];
+STEPS.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'st tick';
+  b.innerHTML = '<i class="bar"></i><span>0' + (i + 1) + '</span><b></b>';
+  b.addEventListener('click', () => { setStep(i); });
+  tl.appendChild(b); stBtns.push(b); bars.push(b.querySelector('.bar'));
+});
+const track = $('#track');
+STEPS.forEach((s, i) => {
+  const d = document.createElement('div'); d.className = 'sc'; d.setAttribute('data-reveal', '');
+  d.innerHTML = '<span class="no">0' + (i + 1) + '</span><h3></h3><p></p><button class="btn bracket" type="button"><i class="b">[</i>Show in 3D<i class="b">]</i></button>';
+  d.querySelector('button').addEventListener('click', () => { setStep(i); goTop(); });
+  track.appendChild(d);
+});
+const scs = $$('.sc');
+function paintText() {
+  const key = S.asset ? 'b' : 'a';
+  STEPS.forEach((s, i) => {
+    stBtns[i].querySelector('b').textContent = s[key][0];
+    scs[i].querySelector('h3').textContent = s[key][0] + ' / ' + s[key][1];
+    scs[i].querySelector('p').textContent = s[key][2];
+  });
+  const c = STEPS[S.step][key];
+  $('#capN').textContent = 'Step ' + (S.step + 1) + ' / 5';
+  $('#capT').textContent = c[0] + ' / ' + c[1];
+  $('#capP').textContent = c[2];
+  $('#lgA').textContent = S.asset ? 'O₂ in air / Oksigen' : 'O₂ in water / Oksigen';
+  $('#lgB').textContent = 'CO₂ out / Karbon dioksida';
+}
+function setStep(i, auto) {
+  S.step = (i + 5) % 5; S.clock = 0;
+  stBtns.forEach((b, k) => { b.classList.toggle('cur', k === S.step); b.setAttribute('aria-current', k === S.step ? 'step' : 'false'); });
+  $('#rail').classList.toggle('swap', S.step === 2);
+  paintText();
+  if (RM) parkParticles();
+}
+function setPlaying(v) {
+  S.playing = v;
+  $('#play').setAttribute('aria-label', v ? 'Pause' : 'Play');
+  $('#play').innerHTML = v ? '<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>' : '<svg class="i" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>';
+}
+$('#play').addEventListener('click', () => setPlaying(!S.playing));
+
+const marks = $('#marks'), leaders = $('#leaders'), mk = [];
+const SVGNS = 'http://www.w3.org/2000/svg';
+function buildMarks() {
+  marks.innerHTML = ''; leaders.innerHTML = ''; mk.length = 0;
+  CALL[S.asset].forEach((c, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mk';
+    b.setAttribute('aria-label', c.en + ' / ' + c.idn);
+    b.innerHTML = '<b>' + c.id + '</b><em>' + c.en + ' / ' + c.idn + '</em>';
+    b.addEventListener('click', () => {
+      mk.forEach(m => m.el.classList.remove('act')); b.classList.add('act');
+      flash(c.part); flyTo(c.cam);
+    });
+    marks.appendChild(b);
+    const p = document.createElementNS(SVGNS, 'path'); p.setAttribute('pathLength', '1');
+    const d = document.createElementNS(SVGNS, 'circle'); d.setAttribute('r', '4');
+    leaders.append(p, d);
+    mk.push({ el: b, path: p, dot: d, c, w: 120, h: 34 });
+    setTimeout(() => { b.classList.add('in'); p.classList.add('in'); d.classList.add('in'); }, RM ? 0 : 450 + i * 160);
+  });
+}
+const v3 = new THREE.Vector3();
+function updateMarks() {
+  const top = W >= 900 ? 96 : 300, bot = W >= 900 ? 110 : 200, minX = W >= 900 ? 560 : 8, maxPad = W >= 900 ? 300 : 8;
+  for (const m of mk) { m.w = m.el.offsetWidth || m.w; m.h = m.el.offsetHeight || m.h; }
+  for (const m of mk) {
+    const c = m.c; v3.set(c.p[0], c.p[1], c.p[2]).project(camera);
+    const sx = nz((v3.x * .5 + .5) * W), sy = nz((-v3.y * .5 + .5) * H);
+    const mx = clamp(sx + c.o[0] - (c.o[0] < 0 ? m.w : 0), minX, Math.max(minX, W - m.w - maxPad));
+    const my = clamp(sy + c.o[1], top, Math.max(top, H - bot - m.h));
+    const ex = mx + m.w / 2 < sx ? mx + m.w : mx, ey = my + m.h / 2;
+    m.el.style.transform = 'translate(' + mx.toFixed(1) + 'px,' + my.toFixed(1) + 'px)';
+    m.path.setAttribute('d', 'M' + sx.toFixed(1) + ' ' + sy.toFixed(1) + 'L' + ex.toFixed(1) + ' ' + ey.toFixed(1));
+    m.dot.setAttribute('cx', sx.toFixed(1)); m.dot.setAttribute('cy', sy.toFixed(1));
+  }
+}
+
+/* ---------- display changers ---------- */
+function setTheme(i) {
+  S.theme = (i + THEMES.length) % THEMES.length;
+  const T = THEMES[S.theme];
+  document.body.classList.remove('th-violet', 'th-mint'); if (T.cls) document.body.classList.add(T.cls);
+  bgTgt.setHex(T.bg);
+  dcTheme.querySelector('b').textContent = T.name;
+  document.querySelector('meta[name=theme-color]').content = '#' + T.bg.toString(16).padStart(6, '0');
+}
+function setAsset(i) {
+  S.asset = i ? 1 : 0;
+  dcAsset.querySelector('b').textContent = S.asset ? 'Specimen B' : 'Specimen A';
+  $('#specChip span').textContent = SPEC[S.asset];
+  gA.visible = true; gB.visible = true;
+  for (let k = 0; k < N; k++) pu[k] = pk[k];
+  paintText(); buildMarks();
+  if (RM) { parkParticles(); S.vis = S.asset ? [0, 1] : [1, 0]; }
+  flyTo([DEF.yaw * 180 / Math.PI, DEF.pitch * 180 / Math.PI, DEF.dist, DEF.tx, DEF.ty, DEF.tz]);
+}
+dcTheme.addEventListener('click', () => setTheme(S.theme + 1));
+dcAsset.addEventListener('click', () => setAsset(S.asset ? 0 : 1));
+
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Escape') { closeBrief(); return; }
+  if ($('#brief').classList.contains('open')) return;
+  if (e.key === '1') setTheme(S.theme + 1);
+  else if (e.key === '2') setAsset(S.asset ? 0 : 1);
+  else if (e.key === 'ArrowRight') setStep(S.step + 1);
+  else if (e.key === 'ArrowLeft') setStep(S.step - 1);
+  else if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); setPlaying(!S.playing); }
+});
+
+/* ---------- brief panel, start, nav ---------- */
+const brief = $('#brief'); let briefFrom = null;
+function openBrief() { briefFrom = document.activeElement; brief.classList.add('open'); brief.setAttribute('aria-hidden', 'false'); $('#briefClose').focus({ preventScroll: true }); }
+function closeBrief() { if (!brief.classList.contains('open')) return; brief.classList.remove('open'); brief.setAttribute('aria-hidden', 'true'); if (briefFrom && briefFrom.focus) briefFrom.focus({ preventScroll: true }); }
+$$('button[data-brief]').forEach(b => b.addEventListener('click', openBrief));
+$('#briefClose').addEventListener('click', closeBrief);
+
+let lenis = null;
+if (window.Lenis && !RM) {
+  lenis = new Lenis({ smoothWheel: true });
+  if (window.gsap && window.ScrollTrigger) { gsap.registerPlugin(ScrollTrigger); lenis.on('scroll', ScrollTrigger.update); }
+  if (window.gsap) { gsap.ticker.add(t => lenis.raf(t * 1000)); gsap.ticker.lagSmoothing(0); }
+  else { const lr = t => { lenis.raf(t); requestAnimationFrame(lr); }; requestAnimationFrame(lr); }
+}
+function goTo(y) { if (lenis) lenis.scrollTo(y); else scrollTo({ top: y, behavior: RM ? 'auto' : 'smooth' }); }
+function goTop() { goTo(0); }
+$$('button[data-start]').forEach(b => b.addEventListener('click', () => { setStep(0); setPlaying(true); goTop(); }));
+$$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+  const t = document.querySelector(a.getAttribute('href')); if (!t) return;
+  e.preventDefault(); goTo(a.getAttribute('href') === '#top' ? 0 : t.getBoundingClientRect().top + scrollY - 20);
+}));
+
+/* reveal fallback (the kit skips touch + reduced-motion) */
+{
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .12 });
+  $$('[data-reveal]').forEach(el => io.observe(el));
+}
+
+/* GSAP: hero type choreography + scroll-scrubbed step line */
+if (window.gsap && !RM) {
+  try {
+    gsap.registerPlugin(window.ScrollTrigger, window.SplitText);
+    const sp = SplitText.create('#h1', { type: 'chars,words' });
+    gsap.from(sp.chars, { yPercent: 100, opacity: 0, stagger: .018, duration: .9, ease: 'power3.out', delay: .1 });
+    gsap.from('.hero .copy > :not(h1)', { y: 18, opacity: 0, stagger: .08, duration: .8, ease: 'power3.out', delay: .5, clearProps: 'all' });
+    ScrollTrigger.create({ trigger: '#steps', start: 'top 75%', end: 'bottom 70%', scrub: true, onUpdate: s => { $('#trackFill').style.transform = 'scaleX(' + s.progress.toFixed(3) + ')'; } });
+  } catch (e) { /* type choreography is optional */ }
+}
+
+/* ---------- robustness ---------- */
+cv.addEventListener('webglcontextlost', e => { e.preventDefault(); toast.classList.add('on'); });
+cv.addEventListener('webglcontextrestored', () => { toast.classList.remove('on'); });
+addEventListener('resize', resize);
+
+/* ---------- main loop ---------- */
+let last = performance.now(), fpsT = 0, fpsN = 0, cntT = 0, barCache = [];
+const bgNow = new THREE.Color(), plNow = new THREE.Color(THEMES[0].plinth), plTgt = new THREE.Color(THEMES[0].plinth);
+const rimNow = new THREE.Color(THEMES[0].acc), rimTgt = new THREE.Color(THEMES[0].acc), skyNow = new THREE.Color(0xfff6e8);
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = clamp((now - last) / 1000, 0, .05); last = now;
+  S.t += dt;
+  if (S.playing && !RM) { S.clock += dt; if (S.clock >= 3) setStep(S.step + 1, true); }
+  const sy = scrollY; heroP = clamp(sy / H, 0, 1);
+  const fade = 1 - sstep(.45, .85, heroP);
+  hud.style.opacity = fade.toFixed(3); hud.classList.toggle('off', heroP > .9);
+  ptr.sx += (ptr.x - ptr.sx) * damp(.08, dt); ptr.sy += (ptr.y - ptr.sy) * damp(.08, dt);
+
+  /* step params */
+  const st = STEPS[S.step], k = damp(.08, dt);
+  let jT = st.jaw, oT = st.op;
+  if (st.loop && !RM) { jT = .5 + .5 * Math.sin(S.t * 2.1); oT = .5 + .5 * Math.sin(S.t * 2.1 - 1.6); }
+  P.jaw = lerp(P.jaw, jT, RM ? 1 : k); P.op = lerp(P.op, oT, RM ? 1 : k);
+  P.spd = lerp(P.spd, st.spd, k); P.slow = lerp(P.slow, st.slow, k); P.glow = lerp(P.glow, st.glow, k);
+
+  /* progress bars */
+  for (let i = 0; i < 5; i++) {
+    const v = i < S.step ? 1 : i === S.step ? clamp(S.clock / 3, 0, 1) : 0, sv = 'scaleX(' + v.toFixed(3) + ')';
+    if (barCache[i] !== sv) { barCache[i] = sv; bars[i].style.transform = sv; }
+  }
+  if ((cntT += dt) > .25) { cntT = 0; $('#cnt').textContent = loaded; }
+
+  if (!R || sy > H * 1.2) return;
+
+  /* camera */
+  if (dragging || tweening) { Object.assign(cam, tgt); }
+  else { const kd = damp(.08, dt); for (const q of ['yaw', 'pitch', 'dist', 'tx', 'ty', 'tz']) cam[q] = lerp(cam[q], tgt[q], kd); }
+  placeCam();
+
+  /* theme repaint */
+  const T = THEMES[S.theme], kt = damp(.12, dt);
+  bgNow.copy(scene.background).lerp(bgTgt, RM ? 1 : kt);
+  scene.background.copy(bgNow); scene.fog.color.copy(bgNow); R.setClearColor(bgNow, 1);
+  plTgt.setHex(T.plinth); plNow.lerp(plTgt, kt); plinthMat.color.copy(plNow);
+  rimTgt.setHex(T.acc); rimNow.lerp(rimTgt, kt); rim.color.copy(rimNow);
+  skyNow.setHex(0xfff6e8).lerp(bgNow, .35); hemi.color.copy(skyNow);
+
+  /* specimen swap */
+  for (let i = 0; i < 2; i++) {
+    const want = S.asset === i ? 1 : 0;
+    S.vis[i] = RM ? want : lerp(S.vis[i], want, damp(.14, dt));
+    if (Math.abs(S.vis[i] - want) < .01) S.vis[i] = want;
+    const g = i ? gB : gA; g.visible = S.vis[i] > .02; g.scale.setScalar(Math.max(.0001, S.vis[i]));
+  }
+
+  /* fish animation */
+  const m = RM ? 0 : 1, t = S.t;
+  jawG.rotation.z = rad(18) * P.jaw;
+  opG.rotation.y = -rad(25) * P.op;
+  const beat = Math.pow(Math.max(0, Math.sin(Math.PI * 2 * 1.5 * t)), 3) * m;
+  heart.scale.setScalar(1 + .12 * beat);
+  tailG.rotation.y = Math.sin(t * 2.4) * .25 * m;
+  fish.position.y = Math.sin(t * .9) * .05 * m;
+  for (let i = 0; i < filaments.length; i++) filaments[i].rotation.y = Math.sin(t * 2 + i * .4) * .08 * m;
+  lungI.scale.setScalar(1 + .05 * (P.jaw - P.op));
+
+  /* flashes + glow */
+  matFil.emissiveIntensity = P.glow * (.3 + .3 * Math.sin(t * 6) * m);
+  matAlv.emissiveIntensity = .15 + P.glow * .35 * (S.asset ? 1 : 0);
+  for (const id in flashes) {
+    const f = flashes[id]; f.v *= Math.exp(-dt * 2.6);
+    const base = f.m === matFil ? matFil.emissiveIntensity : f.m.userData.base;
+    f.m.emissiveIntensity = base + f.v * 1.1;
+    if (f.v < .01) { f.m.emissiveIntensity = base; delete flashes[id]; }
+  }
+
+  updateParticles(dt);
+  if (S.vis[1] > .02) updateAlveoli(!RM);
+  updateMarks();
+
+  /* adaptive pixel ratio */
+  fpsT += dt; fpsN++;
+  if (fpsT > 1.5) { if (fpsN / fpsT < 45 && PR > 1) { PR = 1; R.setPixelRatio(1); resize(); } fpsT = 0; fpsN = 0; }
+
+  R.render(scene, camera);
+}
+
+/* ---------- boot ---------- */
+resize();
+setTheme(0);
+setPlaying(false);
+setStep(0);
+buildMarks();
+parkParticles();
+for (let i = 0; i < N; i++) pu[i] = i / N;
+if (RM) parkParticles();
+updateAlveoli(false);
+window.__dbg = { renderer: R, scene, camera };
+if (!RM) setTimeout(() => setPlaying(true), 1000);
+requestAnimationFrame(frame);
+</script>
+<script src="../../js/kit/motion.js"></script>
+</body>
+</html>

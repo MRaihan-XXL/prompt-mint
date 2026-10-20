@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Frame Walk — A Procedural 3D Gallery</title>
+<meta name="description" content="Frame Walk is an interactive 3D museum track: scroll to walk a row of nine procedural artworks, click a frame to dolly in for a closer look.">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="../../js/kit/kit.css">
+<style>
+@font-face{font-family:'Clash Display';src:url(../../fonts/ClashDisplay-600.woff2) format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Clash Display';src:url(../../fonts/ClashDisplay-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-400.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Satoshi';src:url(../../fonts/Satoshi-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Fraunces';src:url(../../fonts/Fraunces-var.woff2) format('woff2');font-weight:100 900;font-display:swap}
+
+:root{--acc:#d4b56a;--acc-ink:#2a1f0b;--ink:#f1ece0;--mut:#b6b2a5;--panel:rgba(22,23,29,.68);--line:rgba(212,181,106,.3);--solid:#202228}
+body.th-day{--panel:rgba(50,53,64,.74);--ink:#f7f3e9;--line:rgba(236,214,150,.4);--solid:#30333d}
+body.th-opening{--panel:rgba(34,29,50,.72);--line:rgba(166,142,255,.4);--solid:#272331}
+*{box-sizing:border-box}
+html{scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+html.lock{overflow:hidden}
+body{margin:0;background:#2f3340;color:var(--ink);font:400 var(--step-0)/1.55 var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p{margin:0}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;touch-action:pan-y}
+.vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(120% 95% at 50% 46%,transparent 52%,rgba(8,9,12,.58))}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:var(--grain,none)}
+main{position:relative;z-index:2}
+svg.i{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---- nav ---- */
+.nav{position:fixed;inset:0 0 auto 0;height:64px;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,3vw,40px);background:linear-gradient(rgba(18,19,24,.78),transparent);transition:background .4s}
+body.past .nav{background:rgba(24,25,31,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:.6em;font:600 var(--step-1)/1 var(--display);letter-spacing:.02em;color:var(--ink);text-decoration:none}
+.brand svg{width:26px;height:26px;stroke:var(--acc)}
+.nav-links{display:flex;gap:30px}
+.nav-links a{position:relative;padding:6px 0;font-size:var(--step--1);text-transform:uppercase;letter-spacing:.16em;color:var(--mut);text-decoration:none;transition:color .25s}
+.nav-links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--acc);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease-out)}
+.nav-links a:hover{color:var(--acc)}
+.nav-links a:hover::after{transform:scaleX(1)}
+
+/* ---- brass plate family ---- */
+.btn.plate{overflow:hidden;border-radius:3px;border:1px solid #6e5a28;color:var(--acc-ink);text-transform:uppercase;letter-spacing:.16em;font-weight:700;text-shadow:0 1px 0 rgba(255,238,184,.6);
+  padding:12px 30px;background-color:var(--acc);
+  background-image:radial-gradient(circle at 10px 50%,#4f3d12 0 1.5px,rgba(255,243,200,.65) 2px 2.7px,transparent 3.2px),radial-gradient(circle at calc(100% - 10px) 50%,#4f3d12 0 1.5px,rgba(255,243,200,.65) 2px 2.7px,transparent 3.2px),linear-gradient(180deg,#f4dfa0,#d4b56a 48%,#a88a45);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(0,0,0,.28),0 8px 22px -8px rgba(212,181,106,.55)}
+.btn.plate.primary{background-color:var(--acc)}
+.btn.plate::before,.btn.etch::before{content:"";position:absolute;top:0;bottom:0;left:-70%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:left .75s var(--ease-out);pointer-events:none}
+.btn.plate:hover::before,.btn.etch:hover::before{left:130%}
+.btn.plate.sm{padding:9px 24px;font-size:11px}
+.btn.plate.lg{padding:17px 42px;font-size:var(--step--1)}
+.btn.plate:active{transform:translateY(1px) scale(.98)}
+.btn.etch{min-height:44px;padding:10px 18px 10px 36px;border-radius:3px;overflow:hidden;color:#dcc88c;text-transform:uppercase;letter-spacing:.16em;font-size:11.5px;
+  background-color:#2a271f;background-image:linear-gradient(180deg,rgba(0,0,0,.38),rgba(255,235,170,.05));border:1px solid #7a6730;outline:1px solid rgba(212,181,106,.22);outline-offset:-5px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.7),inset 0 -1px 0 rgba(255,235,170,.2),0 0 0 3px rgba(20,18,12,.55),0 10px 20px -10px #000;
+  text-shadow:0 -1px 0 rgba(0,0,0,.85),0 1px 0 rgba(255,232,160,.3)}
+.btn.etch:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.btn.etch .led{position:absolute;left:14px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--acc);box-shadow:0 0 9px var(--acc),inset 0 0 0 1px rgba(0,0,0,.4)}
+.btn.etch.flash .led{animation:led .6s var(--ease-out)}
+@keyframes led{0%{transform:scale(2.2);opacity:.4}100%{transform:none;opacity:1}}
+.btn.tick{border-radius:0;color:var(--acc);padding:14px 28px;text-transform:uppercase;letter-spacing:.18em;font-size:11.5px;background-color:transparent;
+  background-image:linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc)),linear-gradient(var(--acc),var(--acc));
+  background-size:12px 1px,1px 12px,12px 1px,1px 12px,12px 1px,1px 12px,12px 1px,1px 12px;
+  background-position:0 0,0 0,100% 0,100% 0,0 100%,0 100%,100% 100%,100% 100%;background-repeat:no-repeat;
+  transition:background-size .5s var(--ease-out),color .25s,transform .3s var(--spring),letter-spacing .4s var(--ease-out)}
+.btn.tick:hover{background-size:50% 1px,1px 50%,50% 1px,1px 50%,50% 1px,1px 50%,50% 1px,1px 50%;color:var(--ink);letter-spacing:.22em}
+.btn.ulink{color:var(--ink);pointer-events:auto}
+.btn.ulink .i{transition:transform .35s var(--ease-out)}
+.btn.ulink:hover .i{transform:translateX(5px)}
+
+/* ---- HUD ---- */
+.hud{position:fixed;left:clamp(16px,3vw,40px);top:76px;z-index:25;display:flex;align-items:center;gap:16px;transition:opacity .45s}
+.chip{display:flex;align-items:center;gap:8px;min-width:78px;padding:7px 11px 6px;font:600 11px/1 var(--mono);letter-spacing:.22em;color:var(--acc);background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:2px}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
+.chip.auto::before{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.rail{display:flex;align-items:center;gap:9px}
+.dot{position:relative;width:10px;height:10px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:transparent;cursor:pointer;transition:transform .4s var(--spring),background .25s,border-color .25s}
+.dot::before{content:"";position:absolute;inset:-9px}
+.dot:hover{border-color:var(--acc)}
+.dot.on{transform:scale(1.75);background:var(--acc);border-color:var(--acc)}
+.dcbar{position:fixed;right:clamp(16px,3vw,40px);top:72px;z-index:25;display:flex;gap:12px;transition:opacity .45s}
+body.past .hud,body.past .dcbar{opacity:0;pointer-events:none}
+.cap{position:fixed;left:50%;bottom:24px;z-index:26;width:min(580px,calc(100vw - 32px));display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding:14px 16px;background:var(--panel);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:4px;opacity:0;transform:translate(-50%,18px);pointer-events:none;transition:opacity .45s var(--ease-out),transform .45s var(--ease-out)}
+body.is-focus .cap{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+body.past .cap{opacity:0;pointer-events:none}
+.cap .no{font:600 var(--step-3)/1 var(--display);color:var(--acc);min-width:2.2ch}
+.cap h3{font:600 var(--step-1)/1.2 var(--display)}
+.cap .by{font:400 var(--step--1)/1.4 var(--serif);color:var(--mut);margin-top:3px}
+.cap .by b{font-weight:500;color:var(--ink)}
+.cap .nav2{display:flex;gap:8px}
+.arrow{width:42px;height:42px;padding:0;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:background .25s,border-color .25s,transform .35s var(--spring)}
+.arrow:hover{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);transform:scale(1.08)}
+.arrow svg{width:18px;height:18px}
+.tip{position:fixed;left:0;top:0;z-index:40;pointer-events:none;padding:8px 12px;font:500 12px/1.3 var(--sans);letter-spacing:.04em;color:var(--ink);background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:3px;opacity:0;transition:opacity .2s;white-space:nowrap}
+.tip.on{opacity:1}
+.tip b{color:var(--acc);font-weight:700;margin-right:6px}
+.toast{position:fixed;left:50%;top:84px;z-index:60;transform:translate(-50%,-12px);padding:10px 18px;font-size:var(--step--1);background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:3px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s var(--ease-out)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---- hero + row ---- */
+.hero{position:relative;min-height:max(100svh,560px);display:flex;align-items:center;padding:100px clamp(20px,5vw,72px) 90px;pointer-events:none}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(20,21,27,.92),rgba(20,21,27,.66) 38%,transparent 68%)}
+.hero-in{max-width:min(660px,100%)}
+.hero a,.hero button{pointer-events:auto}
+.kick{margin:0 0 20px;font:500 var(--step--1)/1 var(--mono);letter-spacing:.26em;text-transform:uppercase;color:var(--acc)}
+h1{font:700 var(--step-4)/.98 var(--display);letter-spacing:-.02em;margin-bottom:.4em}
+.hl{display:block;overflow:hidden;padding:.05em 0 .12em}
+.hl.acc{color:var(--acc)}
+.sub{max-width:36ch;font-size:var(--step-1);line-height:1.5;color:#dcd8cc;margin-bottom:34px}
+.hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:26px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:44px;font:500 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.hero-meta span::before{content:"";display:inline-block;width:14px;height:1px;background:var(--acc);margin-right:8px;vertical-align:middle}
+.scrollcue{position:absolute;left:clamp(20px,5vw,72px);bottom:28px;display:flex;align-items:center;gap:12px;font:500 11px/1 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--mut)}
+.scrollcue i{display:block;width:1px;height:38px;background:linear-gradient(var(--acc),transparent);transform-origin:top;animation:cue 2.2s var(--ease-out) infinite}
+@keyframes cue{0%{transform:scaleY(0)}60%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+.row{position:relative;height:350vh;pointer-events:none}
+.pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:flex-end;padding:0 clamp(20px,3vw,40px) 28px}
+.row-card{max-width:350px;padding:20px 22px;background:var(--panel);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:4px;transition:opacity .5s}
+body.is-focus .row-card{opacity:0}
+.row-card .kick{margin-bottom:12px}
+.row-card h2{font:600 var(--step-2)/1.1 var(--display);margin-bottom:10px}
+.row-card p{font-size:var(--step--1);color:var(--mut)}
+.row-card .keys{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+kbd{font:500 10.5px/1 var(--mono);letter-spacing:.08em;padding:5px 7px 4px;color:var(--acc);border:1px solid var(--line);border-radius:2px;background:rgba(0,0,0,.25)}
+
+/* ---- solid sections ---- */
+.solid{position:relative;z-index:3;background:var(--solid);box-shadow:0 -50px 90px rgba(0,0,0,.5);transition:background .6s}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(72px,11vw,150px) clamp(20px,4vw,48px)}
+.sec{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,90px);align-items:center}
+.sec h2,.cta h2{font:700 var(--step-3)/1.04 var(--display);letter-spacing:-.015em;margin-bottom:.5em}
+.sec p.lead{color:var(--mut);max-width:44ch;margin-bottom:30px;font-size:var(--step-0)}
+.stats{display:grid;gap:14px}
+.stat{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:baseline;padding:22px 24px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:4px;transition:border-color .3s,transform .5s var(--ease-out),background .3s}
+.stat:hover{border-color:var(--acc);background:rgba(212,181,106,.06);transform:translateX(6px)}
+.stat b{grid-row:span 2;font:700 var(--step-3)/1 var(--display);color:var(--acc);min-width:3.4ch}
+.stat h3{font:600 var(--step-1)/1.2 var(--display)}
+.stat span{font-size:var(--step--1);color:var(--mut)}
+.arcfig{padding:clamp(18px,3vw,34px);border:1px solid var(--line);border-radius:4px;background:rgba(0,0,0,.18)}
+.arcfig svg{display:block;width:100%;height:auto}
+.arcfig .cap2{margin-top:12px;font:500 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between}
+.cta{text-align:center}
+.cta .wrap{padding-top:clamp(60px,9vw,120px);padding-bottom:clamp(60px,9vw,120px)}
+.cta p{color:var(--mut);max-width:46ch;margin:0 auto 34px}
+.cta .row2{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;align-items:center}
+.foot{border-top:1px solid var(--line);padding:30px clamp(20px,4vw,48px);display:flex;flex-wrap:wrap;gap:14px 30px;align-items:center;justify-content:space-between;font-size:var(--step--1);color:var(--mut)}
+.foot a{color:var(--acc);text-decoration:none;letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+.foot a:hover{text-decoration:underline;text-underline-offset:4px}
+
+/* ---- brief drawer ---- */
+.scrim{position:fixed;inset:0;z-index:70;background:rgba(8,9,12,.6);opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
+body.brief-open .scrim{opacity:1;visibility:visible;transition:opacity .4s}
+#brief{position:fixed;top:0;right:0;bottom:0;z-index:80;width:min(440px,100%);overflow:auto;padding:30px 28px 40px;background:#1b1c22;border-left:1px solid var(--line);transform:translateX(102%);visibility:hidden;transition:transform .55s var(--ease-out),visibility 0s .55s}
+#brief.open{transform:none;visibility:visible;transition:transform .55s var(--ease-out)}
+#brief h2{font:700 var(--step-3)/1 var(--display);margin:6px 0 22px}
+#brief h3{margin:26px 0 10px;font:500 11px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--acc)}
+#brief dl{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;margin:0;font-size:var(--step--1)}
+#brief dt{color:var(--acc)}
+#brief dd{margin:0;color:#d4d0c4}
+#brief ul{margin:0;padding-left:18px;font-size:var(--step--1);color:#d4d0c4;display:grid;gap:6px}
+#briefClose{position:absolute;top:18px;right:18px;width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:50%;background:none;border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:background .25s,color .25s,transform .4s var(--spring)}
+#briefClose:hover{background:var(--acc);color:var(--acc-ink);transform:rotate(90deg)}
+
+/* ---- no-WebGL poster ---- */
+.poster{display:none;position:absolute;right:clamp(20px,5vw,72px);top:50%;transform:translateY(-50%);width:min(420px,42vw);gap:14px;flex-wrap:wrap}
+.poster .pa{height:150px;flex:1 1 40%;border:8px solid #4a3a2e;border-bottom-width:10px;box-shadow:0 12px 30px -10px #000}
+.poster .pa:nth-child(1){background:radial-gradient(circle at 35% 40%,#e0556b 0 22%,transparent 23%),radial-gradient(circle at 62% 55%,#3b6ef5 0 26%,transparent 27%),#efe6d2}
+.poster .pa:nth-child(2){background:repeating-linear-gradient(100deg,#14151a 0 6px,#f4f1e8 6px 14px);border-color:#14151a}
+.poster .pa:nth-child(3){background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.9) 0 2px,transparent 3px) 0 0/16px 16px,#7c5cff;flex-basis:100%}
+.poster p{flex-basis:100%;font-size:var(--step--1);color:var(--mut)}
+body.nogl .poster{display:flex}
+body.nogl #stage,body.nogl .hud,body.nogl .dcbar,body.nogl .cap,body.nogl .row{display:none}
+body.nogl .hero::before{background:none}
+
+@media (max-width:860px){
+  .sec{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  .nav-links{display:none}
+  .hero{align-items:flex-start;padding-top:112px;padding-bottom:40px}
+  .hero::before{background:linear-gradient(180deg,rgba(20,21,27,.92),rgba(20,21,27,.7) 55%,transparent 82%)}
+  .hero-meta,.scrollcue{display:none}
+  .sub{font-size:var(--step-0);margin-bottom:22px}
+  .hero-cta{gap:16px}
+  .hud{top:62px}
+  .rail{gap:7px}
+  .dcbar{top:auto;bottom:14px;left:14px;right:14px}
+  .dcbar .btn{flex:1;padding-left:30px;padding-right:10px;font-size:10px;letter-spacing:.1em}
+  .cap{bottom:70px;gap:10px;padding:12px}
+  .cap .no{font-size:var(--step-2)}
+  .row-card p,.row-card .keys{display:none}
+  .row-card{padding:12px 14px;margin-bottom:60px}
+  .row-card h2{font-size:var(--step-1);margin:0}
+  .row-card .kick{margin-bottom:6px}
+  .poster{position:relative;transform:none;right:auto;top:auto;width:100%;margin-top:30px}
+  body.nogl .hero{flex-direction:column}
+}
+@media (prefers-reduced-motion:reduce){
+  .scrollcue i,.chip.auto::before{animation:none}
+  .btn.plate::before,.btn.etch::before{display:none}
+}
+</style>
+<script type="importmap">{"imports":{"three":"../../js/vendor/three.module.min.js","three/addons/":"../../js/vendor/jsm/"}}</script>
+</head>
+<body class="th-night">
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="vig"></div><div class="grain"></div>
+
+<header class="nav">
+  <a class="brand" href="#top" data-nav="top"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><rect x="6.5" y="8.5" width="11" height="7"/></svg>Frame Walk</a>
+  <nav class="nav-links" aria-label="Sections">
+    <a href="#row" data-nav="row">The Row</a><a href="#focus" data-nav="focus">Focus</a><a href="#arc" data-nav="arc">Arc</a>
+  </nav>
+  <button class="btn primary plate sm" data-act="enter">Enter gallery</button>
+</header>
+
+<div class="hud ui" id="hud">
+  <div class="chip" id="chip" aria-live="polite">WALK</div>
+  <div class="rail" id="rail" role="group" aria-label="Frame progress"></div>
+</div>
+<div class="dcbar ui" id="dcbar" role="group" aria-label="Display controls">
+  <button class="btn etch" data-dc="theme" title="Lighting theme — click to cycle"><i class="led"></i><span>Gallery Night</span></button>
+  <button class="btn etch" data-dc="layout" title="Wall layout — click to switch"><i class="led"></i><span>Straight Row</span></button>
+</div>
+<div class="cap ui" id="cap" aria-live="polite">
+  <div class="no" id="capNo">01</div>
+  <div><h3 id="capTitle">—</h3><p class="by"><b id="capArtist"></b> · <span id="capMedium"></span></p></div>
+  <div class="nav2">
+    <button class="arrow" id="capPrev" aria-label="Previous artwork"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="arrow" id="capNext" aria-label="Next artwork"><svg class="i" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<main>
+  <section class="hero" id="top">
+    <div class="hero-in">
+      <p class="kick">A walk-through exhibition · 9 frames</p>
+      <h1><span class="hl">Walk the row</span><span class="hl acc">of light.</span></h1>
+      <p class="sub">Nine procedural artworks hang on a dark museum track. Scroll to walk it, click a frame to lean in.</p>
+      <div class="hero-cta">
+        <button class="btn primary plate lg" data-act="enter">Enter gallery <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="btn ulink" data-brief>Read the brief <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="hero-meta"><span>21.6u track</span><span>Canvas-painted art</span><span>Zero images</span></div>
+    </div>
+    <div class="poster" aria-hidden="false"><div class="pa"></div><div class="pa"></div><div class="pa"></div><p>WebGL is unavailable in this browser, so the gallery is shown as a still. Try a current Chrome, Edge, Firefox or Safari.</p></div>
+    <div class="scrollcue"><i></i>Scroll to walk</div>
+  </section>
+
+  <section class="row" id="row" aria-label="The Row">
+    <div class="pin"><div class="row-card ui" data-reveal>
+      <p class="kick">01 — The Row</p>
+      <h2>Nine frames, one long wall.</h2>
+      <p>Scrub the page to glide past every piece. Hover a frame and its lamp swells; click it and the camera dollies in.</p>
+      <div class="keys"><kbd>Scroll</kbd><kbd>Click</kbd><kbd>Esc</kbd><kbd>←  →</kbd><kbd>1–9</kbd><kbd>Space</kbd></div>
+    </div></div>
+  </section>
+
+  <div class="solid">
+    <section class="wrap" id="focus"><div class="sec">
+      <div data-reveal>
+        <p class="kick">02 — Focus mode</p>
+        <h2>Click once. The wall comes to you.</h2>
+        <p class="lead">A frame click tweens the camera to a close, straight-on view with the caption card, neighbour arrows and a pulled-back escape. Nothing snaps — every move eases.</p>
+        <button class="btn tick" data-act="try-focus">Try focus mode</button>
+      </div>
+      <div class="stats">
+        <div class="stat" data-reveal><b>1.1s</b><h3>Dolly in</h3><span>power2.inOut to 2.3u from the canvas.</span></div>
+        <div class="stat" data-reveal style="transition-delay:.08s"><b>0.9s</b><h3>Neighbour slide</h3><span>Arrows, keys 1–9 or a click on the art.</span></div>
+        <div class="stat" data-reveal style="transition-delay:.16s"><b>±4°</b><h3>Pointer look</h3><span>Damped 0.08, walk mode only.</span></div>
+      </div>
+    </div></section>
+
+    <section class="wrap" id="arc" style="padding-top:0"><div class="sec">
+      <div class="arcfig" data-reveal>
+        <svg viewBox="0 0 400 220" role="img" aria-label="Schematic: nine frames on a straight line and on a 120 degree arc">
+          <g fill="none" stroke="#d4b56a" stroke-width="1.5" stroke-linecap="round">
+            <path d="M20 40H380" opacity=".35"/>
+            <path d="M60 205A150 150 0 0 1 340 205" opacity=".35" transform="translate(0,-26)"/>
+          </g>
+          <g id="figRow" fill="#d4b56a"></g>
+          <g id="figArc" fill="#d4b56a"></g>
+        </svg>
+        <div class="cap2"><span>Straight · x ±10.8</span><span>Arc · r9 · 120°</span></div>
+      </div>
+      <div data-reveal>
+        <p class="kick">03 — Curved arc</p>
+        <h2>Same nine frames. A hundred and twenty degrees.</h2>
+        <p class="lead">Flip the layout plate and the frames regroup onto a radius-9 arc while the camera path swaps from a corridor walk to a slow orbit inside the curve.</p>
+        <button class="btn tick" data-act="try-arc">Hang them on the arc</button>
+      </div>
+    </div></section>
+
+    <section class="cta"><div class="wrap" data-reveal>
+      <p class="kick">Open late</p>
+      <h2>Hang your own wall.</h2>
+      <p>Every artwork is drawn on the fly with the canvas API — swap the generators, keep the walk.</p>
+      <div class="row2">
+        <button class="btn primary plate lg" data-brief>Read the brief</button>
+        <a class="btn tick" href="#row" data-nav="row">Back to the row</a>
+      </div>
+    </div></section>
+
+    <footer class="foot"><span>© 2026 Frame Walk — a DepthGlow demo. Procedural artworks · three.js r170 · no images, no models.</span><a href="#top" data-nav="top">Back to top ↑</a></footer>
+  </div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside id="brief" aria-hidden="true" aria-label="Gallery brief" inert>
+  <button id="briefClose" aria-label="Close brief"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <p class="kick" style="margin:0">Gallery brief</p>
+  <h2>How to move.</h2>
+  <h3>Controls</h3>
+  <dl>
+    <dt>Scroll</dt><dd>Walk the row (scrub)</dd>
+    <dt>Click frame</dt><dd>Dolly in · click art again for the next</dd>
+    <dt>Esc</dt><dd>Pull back to the walk</dd>
+    <dt>← / →</dt><dd>Neighbour frame</dd>
+    <dt>1 – 9</dt><dd>Jump to a frame</dd>
+    <dt>Space</dt><dd>Auto-walk at 0.4 u/s</dd>
+  </dl>
+  <h3>Display plates</h3>
+  <ul>
+    <li><b>Lighting</b> — Gallery Night, Gallery Day, Opening Hour.</li>
+    <li><b>Layout</b> — Straight Row or Curved Arc.</li>
+  </ul>
+  <h3>Spec</h3>
+  <ul>
+    <li>Camera fov 46 · eye 1.6u · 5.2u from the wall</li>
+    <li>9 spot lamps, shadows on the nearest 3</li>
+    <li>ACES filmic, exposure 1.15</li>
+    <li>Pixel ratio capped at 2, adaptive below 45 fps</li>
+  </ul>
+</aside>
+
+<script src="../../js/vendor/lenis.min.js"></script>
+<script src="../../js/vendor/gsap.min.js"></script>
+<script src="../../js/vendor/SplitText.min.js"></script>
+<script src="../../js/kit/motion.js"></script>
+<script type="module">
+import * as THREE from 'three';
+
+const D2R = Math.PI / 180;
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fin = v => (Number.isFinite(v) ? v : 0);
+const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const ease = t => (t < .5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t));          // power2.inOut
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const NS = 'http://www.w3.org/2000/svg';
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+/* ================= shared page UI (works without WebGL) ================= */
+const lenis = (!reduce && window.Lenis) ? new Lenis({ smoothWheel: true, lerp: .09 }) : null;
+const heroEl = $('#top'), rowEl = $('#row');
+let range = 1;
+const measure = () => { range = Math.max(1, heroEl.offsetHeight + rowEl.offsetHeight - innerHeight); };
+function scrollToY(y, o) {
+  if (lenis) lenis.scrollTo(y, o || { duration: 1.3 });
+  else scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+}
+
+// brief drawer
+const brief = $('#brief'); let briefFrom = null;
+function openBrief(from) {
+  briefFrom = from || document.activeElement;
+  brief.inert = false; brief.classList.add('open'); brief.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('brief-open');
+  $('#briefClose').focus({ preventScroll: true });
+}
+function closeBrief() {
+  brief.classList.remove('open'); brief.setAttribute('aria-hidden', 'true'); brief.inert = true;
+  document.body.classList.remove('brief-open');
+  if (briefFrom && briefFrom.focus) briefFrom.focus({ preventScroll: true });
+}
+$('#briefClose').addEventListener('click', closeBrief);
+$('#scrim').addEventListener('click', closeBrief);
+
+let onEsc = null;
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (brief.classList.contains('open')) closeBrief(); else if (onEsc) onEsc();
+});
+
+// schematic dots (straight vs arc)
+(function () {
+  const row = $('#figRow'), arc = $('#figArc');
+  for (let i = 0; i < 9; i++) {
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', 20 + i * 42 - 9); r.setAttribute('y', 31); r.setAttribute('width', 18); r.setAttribute('height', 18); r.setAttribute('rx', 1.5);
+    row.appendChild(r);
+    const th = (-60 + i * 15) * D2R, c = document.createElementNS(NS, 'rect');
+    c.setAttribute('x', -9); c.setAttribute('y', -9); c.setAttribute('width', 18); c.setAttribute('height', 18); c.setAttribute('rx', 1.5);
+    c.setAttribute('transform', `translate(${200 + 150 * Math.sin(th)},${232.8 - 150 * Math.cos(th)}) rotate(${i * 15 - 60})`);
+    arc.appendChild(c);
+  }
+})();
+
+// reveal fallback (kit skips touch + reduced-motion)
+if (!$('#reticle')) {
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .15 });
+  $$('[data-reveal]').forEach(el => io.observe(el));
+}
+
+// hero headline: GSAP SplitText char stagger
+if (!reduce && window.gsap && window.SplitText) {
+  try {
+    gsap.registerPlugin(SplitText);
+    const chars = $$('.hl').flatMap(el => new SplitText(el, { type: 'chars' }).chars);
+    gsap.from(chars, { yPercent: 108, rotate: 5, duration: 1.05, ease: 'expo.out', stagger: .03, delay: .15 });
+    gsap.from('.hero-in > :not(h1)', { y: 26, opacity: 0, duration: .9, ease: 'expo.out', stagger: .09, delay: .5, clearProps: 'transform,opacity' });
+  } catch (err) { /* headline stays plain */ }
+}
+
+// film grain (blob url keeps CSP happy)
+(function () {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), d = g.createImageData(128, 128);
+  for (let i = 0; i < d.data.length; i += 4) { const v = 90 + Math.random() * 130; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+  g.putImageData(d, 0, 0);
+  c.toBlob(b => { if (b) document.documentElement.style.setProperty('--grain', `url(${URL.createObjectURL(b)})`); });
+})();
+
+/* ================= GL boot ================= */
+let renderer = null;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: $('#stage'), antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+  if (!renderer.getContext()) renderer = null;
+} catch (err) { renderer = null; }
+if (!renderer) document.body.classList.add('nogl');
+
+/* ================= procedural artworks ================= */
+const AW = 896, AH = 512;                                       // logical art space (aspect 1.75)
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const shade = (h, f) => { const n = parseInt(h.slice(1), 16); return `rgb(${[n >> 16, n >> 8 & 255, n & 255].map(v => Math.round(clamp(v * f, 0, 255)))})`; };
+const TAU = Math.PI * 2;
+
+const ARTS = [
+  { title: 'Bauhaus Orbit', artist: 'Ilse Marandt', medium: 'Acrylic on panel', fn(g, r) {
+    g.fillStyle = '#efe6d2'; g.fillRect(0, 0, AW, AH);
+    const P = (c, pts) => { g.fillStyle = c; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); };
+    const C = (x, y, rad, c) => { g.fillStyle = c; g.beginPath(); g.arc(x, y, rad, 0, TAU); g.fill(); };
+    P('#f5d76e', [[600, 40], [860, 480], [340, 480]]);
+    C(300, 270, 200, '#3b6ef5'); C(580, 250, 140, '#e0556b'); C(440, 330, 64, '#f5d76e');
+    g.fillStyle = '#14151a'; g.fillRect(40, 60, 520, 8); g.fillRect(70, 440, 760, 6);
+    g.strokeStyle = '#14151a'; g.lineWidth = 6; g.beginPath(); g.arc(300, 270, 250, -1.2, .5); g.stroke();
+    g.beginPath(); g.moveTo(580, 250); g.lineTo(860, 40); g.stroke();
+    C(780, 110, 26, '#14151a'); P('#e0556b', [[90, 480], [150, 380], [210, 480]]);
+    for (let i = 0; i < 14; i++) C(60 + r() * 780, 40 + r() * 430, 3 + r() * 5, '#14151a');
+  } },
+  { title: 'Current Study', artist: 'Tomas Quill', medium: 'Generative ink, 2024', fn(g, r) {
+    const gr = g.createLinearGradient(0, 0, AW, AH); gr.addColorStop(0, '#1f4a80'); gr.addColorStop(1, '#2a72a0');
+    g.fillStyle = gr; g.fillRect(0, 0, AW, AH); g.lineWidth = 1.8; g.lineCap = 'round';
+    for (let i = 0; i < 520; i++) {
+      let x = r() * AW, y = r() * AH; g.strokeStyle = `rgba(110,231,255,${.35 + r() * .5})`; g.beginPath(); g.moveTo(x, y);
+      for (let s = 0; s < 46; s++) {
+        const a = Math.sin(x * .0065 + 1.3) * 2.1 + Math.cos(y * .011 - .6) * 2.1 + Math.sin((x + y) * .004) * 1.4;
+        x += Math.cos(a) * 5; y += Math.sin(a) * 5; g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+  } },
+  { title: 'Contour of Brass', artist: 'Reva Okonkwo', medium: 'Topographic etching', fn(g, r) {
+    g.fillStyle = '#3d4150'; g.fillRect(0, 0, AW, AH); g.lineWidth = 2.6;
+    [[460, 250, 36, 0], [180, 400, 18, 2.3], [760, 110, 14, 4.1]].forEach(([cx, cy, n, ph]) => {
+      for (let k = 1; k < n; k++) {
+        const base = 10 + k * 13; g.strokeStyle = `rgba(212,181,106,${.95 - k / n * .5})`; g.beginPath();
+        for (let a = 0; a <= TAU + .12; a += .1) {
+          const rr = base + Math.sin(a * 3 + k * .35 + ph) * base * .08 + Math.sin(a * 5 - ph) * base * .04;
+          const x = cx + Math.cos(a) * rr * 1.25, y = cy + Math.sin(a) * rr;
+          a ? g.lineTo(x, y) : g.moveTo(x, y);
+        }
+        g.stroke();
+      }
+    });
+  } },
+  { title: 'Halftone Dawn', artist: 'Jun Haraguchi', medium: 'Screenprint, 3 colours', fn(g) {
+    g.fillStyle = '#efe3c8'; g.fillRect(0, 0, AW, AH);
+    for (let y = 8; y < AH; y += 22) for (let x = 8; x < AW; x += 22) {
+      const t = clamp((x / AW) * .62 + (y / AH) * .38, 0, 1);
+      g.fillStyle = '#d4455b'; g.beginPath(); g.arc(x, y, 1 + t * 10.5, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(47,95,168,.8)'; g.beginPath(); g.arc(x + 11, y + 11, 1 + (1 - t) * 8, 0, TAU); g.fill();
+    }
+  } },
+  { title: 'Isometric Room', artist: 'Odile Brandt', medium: 'Digital gouache', fn(g, r) {
+    g.fillStyle = '#34425d'; g.fillRect(0, 0, AW, AH);
+    const pal = ['#e0556b', '#f5d76e', '#6ee7ff', '#9d8cff', '#f09a5a'], ox = 448, oy = 140;
+    const P = (c, pts) => { g.fillStyle = c; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); };
+    const hs = []; for (let i = 0; i < 49; i++) hs.push(20 + r() * 80);
+    for (let s = 0; s <= 12; s++) for (let i = 0; i < 7; i++) {
+      const j = s - i; if (j < 0 || j > 6) continue;
+      const x = ox + (i - j) * 48, y = oy + (i + j) * 28, h = hs[i * 7 + j], c = pal[(i * 3 + j * 2) % 5];
+      P(shade(c, .62), [[x - 48, y - h], [x, y - h + 28], [x, y + 28], [x - 48, y]]);
+      P(shade(c, .8), [[x + 48, y - h], [x, y - h + 28], [x, y + 28], [x + 48, y]]);
+      P(shade(c, 1.08), [[x, y - h - 28], [x + 48, y - h], [x, y - h + 28], [x - 48, y - h]]);
+    }
+  } },
+  { title: 'Four Washes', artist: 'Mateo Ferrante', medium: 'Oil on linen', fn(g, r) {
+    g.fillStyle = '#dccaa6'; g.fillRect(0, 0, AW, AH);
+    const soft = (x, y, w, h, c) => { g.fillStyle = c; for (let k = 0; k < 14; k++) { g.globalAlpha = .08; g.fillRect(x - 14 + k * 2, y - 14 + k * 2, w + 28 - k * 4, h + 28 - k * 4); } g.globalAlpha = .93; g.fillRect(x + 14, y + 14, w - 28, h - 28); g.globalAlpha = 1; };
+    soft(60, 44, 776, 210, '#c8553d'); soft(60, 276, 776, 192, '#3e7c8c'); soft(110, 232, 676, 56, '#e9a23b');
+    for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${r() < .5 ? '255,255,255' : '40,30,20'},${r() * .07})`; g.fillRect(r() * AW, r() * AH, 2, 2); }
+  } },
+  { title: 'Violet Static', artist: 'Sunniva Holt', medium: 'Pigment & salt', fn(g, r) {
+    const gr = g.createRadialGradient(AW / 2, AH / 2, 40, AW / 2, AH / 2, 560); gr.addColorStop(0, '#9378ff'); gr.addColorStop(1, '#7c5cff');
+    g.fillStyle = gr; g.fillRect(0, 0, AW, AH);
+    for (let i = 0; i < 2300; i++) {
+      const a = r() * TAU, d = (r() + r() + r()) / 3 * 520, x = AW / 2 + Math.cos(a) * d * 1.5, y = AH / 2 + Math.sin(a) * d * .9;
+      g.fillStyle = `rgba(255,255,255,${.45 + r() * .55})`; g.beginPath(); g.arc(x, y, .8 + r() * r() * 3.4, 0, TAU); g.fill();
+    }
+    g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.5; g.beginPath(); g.arc(AW / 2, AH / 2, 160, 0, TAU); g.stroke();
+  } },
+  { title: 'Moiré Hymn', artist: 'Kai Delacroix', medium: 'Ink on gesso', fn(g) {
+    g.fillStyle = '#f4f1e8'; g.fillRect(0, 0, AW, AH); g.strokeStyle = '#14151a'; g.lineWidth = 7;
+    for (let y = -20; y < AH + 40; y += 14) {
+      g.beginPath();
+      for (let x = 0; x <= AW; x += 8) {
+        const bulge = Math.exp(-Math.pow((x - AW / 2) / 230, 2)) * 34;
+        const yy = y + Math.sin(x * .022 + y * .03) * (6 + bulge) + Math.sin(x * .05) * bulge * .35;
+        x ? g.lineTo(x, yy) : g.moveTo(x, yy);
+      }
+      g.stroke();
+    }
+  } },
+  { title: 'Arc & Ink', artist: 'Noor Esfahani', medium: 'Sumi on paper', fn(g, r) {
+    g.fillStyle = '#2d2f3a'; g.fillRect(0, 0, AW, AH); g.lineCap = 'round';
+    for (let i = 0; i < 15; i++) {
+      const cx = 120 + r() * 660, cy = 80 + r() * 360, rad = 90 + r() * 280, a0 = r() * TAU, a1 = a0 + 1 + r() * 2.2;
+      g.strokeStyle = `rgba(255,255,255,${.78 + r() * .22})`; g.lineWidth = 16 + r() * 34;
+      g.beginPath(); g.arc(cx, cy, rad, a0, a1); g.stroke();
+    }
+    g.strokeStyle = '#d4b56a'; g.lineWidth = 9; g.beginPath(); g.arc(640, 170, 120, 3.4, 5.4); g.stroke();
+  } },
+];
+
+function paintArt(i) {
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.setTransform(512 / AW, 0, 0, 1, 0, 0);
+  ARTS[i].fn(g, rng(0x9e37 + i * 7919));
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  for (let n = 0; n < 4; n++) {                                  // luminance floor: avg >= 66/255 so every canvas clears the 60 contract
+    const d = g.getImageData(0, 0, 512, 512).data; let s = 0;
+    for (let k = 0; k < d.length; k += 64) s += .2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2];
+    if (s / (d.length / 64) >= 66) break;
+    g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(0, 0, 512, 512);
+  }
+  return c;
+}
+
+/* ================= 3D gallery ================= */
+function initGL() {
+  const canvas = renderer.domElement;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  let pr = Math.min(devicePixelRatio || 1, 2); renderer.setPixelRatio(pr);
+
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2f3340);   // charcoal, never #000, never alpha
+  const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, .1, 120);
+  window.__dbg = { renderer, scene, camera };
+
+  const { Vector3: V3, Color: Col, Mesh, Group } = THREE;
+  const N = 9, PITCH = 2.4, ARC_R = 9, ARC_C = 9;
+  const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const SRGB = THREE.SRGBColorSpace, ADD = THREE.AdditiveBlending;
+  const M = o => new THREE.MeshStandardMaterial(o);
+
+  const radial = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.4, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = SRGB; return t;
+  })();
+
+  /* ---- themes (display-changer i) ---- */
+  const THEMES = [
+    { id: 'night',   name: 'Gallery Night', wall: new Col(0x383c48), floor: new Col(0x434753), bg: new Col(0x2f3340), spot: new Col(0xffd9a0), spotI: 30, fillI: .4, hemiI: .95, sconce: 2.2 },
+    { id: 'day',     name: 'Gallery Day',   wall: new Col(0x4a4e5c), floor: new Col(0x454956), bg: new Col(0x343742), spot: new Col(0xfff2dc), spotI: 12, fillI: 1.1, hemiI: .8,  sconce: .25 },
+    { id: 'opening', name: 'Opening Hour',  wall: new Col(0x453e50), floor: new Col(0x423c52), bg: new Col(0x322e40), spot: new Col(0x7c5cff), spotI: 34, fillI: .25, hemiI: .8, sconce: 1.4 },
+  ];
+  const cur = { wall: THEMES[0].wall.clone(), floor: THEMES[0].floor.clone(), bg: THEMES[0].bg.clone(), spot: THEMES[0].spot.clone(), spotI: 28, fillI: 0, hemiI: .55, sconce: 2.2 };
+  let thI = 0;
+
+  /* ---- lights ---- */
+  const hemi = new THREE.HemisphereLight(0x4a4e5c, 0x1c1e24, .95); scene.add(hemi);
+  const fill = new THREE.DirectionalLight(0xcfe0ff, 0); fill.position.set(3, 6, 8); scene.add(fill);
+
+  /* ---- room ---- */
+  const wallS = M({ color: 0x2b2e37, roughness: .92, transparent: false });
+  const wallA = wallS.clone(); wallA.side = THREE.BackSide;
+  const wS = new Mesh(new THREE.PlaneGeometry(34, 7), wallS); wS.position.set(0, 3.5, -.15); wS.receiveShadow = true; scene.add(wS);
+  const wA = new Mesh(new THREE.CylinderGeometry(ARC_R + .15, ARC_R + .15, 7, 72, 1, true, Math.PI - 75 * D2R, 150 * D2R), wallA);
+  wA.position.set(0, 3.5, ARC_C); wA.receiveShadow = true; wA.visible = false; scene.add(wA);
+  const floorMat = M({ color: 0x31343d, roughness: .28, metalness: .05, transparent: true, opacity: .55, depthWrite: false });
+  const floor = new Mesh(new THREE.PlaneGeometry(90, 70).rotateX(-Math.PI / 2), floorMat); floor.position.set(0, 0, 10); floor.receiveShadow = true; floor.renderOrder = 2; scene.add(floor);
+  const seamMat = M({ color: 0x3a3e49, roughness: .9 });
+  const brass = M({ color: 0xd4b56a, metalness: .6, roughness: .38, emissive: 0x2c2208 });
+  const woodMat = M({ color: 0x4a3a2e, roughness: .55, metalness: .05 });
+  const blackMat = M({ color: 0x14151a, roughness: .35, metalness: .2 });
+  const creamMat = M({ color: 0xece4d2, roughness: .95 });
+  const walnut = M({ color: 0x5a3d28, roughness: .6 });
+
+  /* ---- shared geometry ---- */
+  const frameShape = new THREE.Shape(); frameShape.moveTo(-.8, -.55); frameShape.lineTo(.8, -.55); frameShape.lineTo(.8, .55); frameShape.lineTo(-.8, .55); frameShape.closePath();
+  const hole = new THREE.Path(); hole.moveTo(-.68, -.43); hole.lineTo(-.68, .43); hole.lineTo(.68, .43); hole.lineTo(.68, -.43); hole.closePath(); frameShape.holes.push(hole);
+  const frameGeo = new THREE.ExtrudeGeometry(frameShape, { depth: .06, bevelEnabled: true, bevelThickness: .014, bevelSize: .014, bevelSegments: 2 }).translate(0, 0, -.09);
+  const matGeo = new THREE.PlaneGeometry(1.4, .9), artGeo = new THREE.PlaneGeometry(1.12, .64), plaqueGeo = new THREE.PlaneGeometry(1.3, .2);
+  const poolGeo = new THREE.PlaneGeometry(3.2, 3.2).rotateX(-Math.PI / 2);
+  const railGeo = new THREE.BoxGeometry(2.42, .08, .1), baseGeo = new THREE.BoxGeometry(2.4, .14, .04), seamGeo = new THREE.BoxGeometry(.04, 7, .02);
+  const lampGeo = new THREE.CylinderGeometry(.07, .1, .16, 12);
+  const CONE_L = 2.9, coneGeo = new THREE.ConeGeometry(Math.tan(.32) * CONE_L, CONE_L, 28, 1, true).translate(0, -CONE_L / 2, 0).rotateX(-Math.PI / 2);
+  const coneMat = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: .06, blending: ADD, depthWrite: false, side: THREE.DoubleSide });
+  const dustMat = new THREE.PointsMaterial({ size: .035, map: radial, color: 0xffe2b0, transparent: true, opacity: .6, blending: ADD, depthWrite: false });
+
+  // spot geometry (local to a frame group): apex above/in front, aimed at the art
+  const AX = 0, AY = 3.55, AZ = 1.6, TY = 1.7, SL = Math.hypot(AY - TY, AZ);
+  const DY = (TY - AY) / SL, DZ = -AZ / SL;                        // axis dir (dx = 0); perp v = (0, DZ, -DY)
+
+  const FR = [], pickables = [];
+  function makeDust(n, rnd) {
+    const pos = new Float32Array(n * 3), prm = new Float32Array(n * 6);
+    for (let k = 0; k < n; k++) {
+      prm[k * 6] = .4 + rnd() * 2.0; prm[k * 6 + 1] = Math.sqrt(rnd()); prm[k * 6 + 2] = rnd() * TAU;
+      prm[k * 6 + 3] = (rnd() - .5) * .06; prm[k * 6 + 4] = (rnd() - .5) * .1; prm[k * 6 + 5] = (rnd() - .5) * .2;   // drift ~0.03 u/s
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const pts = new THREE.Points(geo, dustMat); pts.frustumCulled = false; pts.renderOrder = 4;
+    return { pts, pos, prm, n };
+  }
+  function stepDust(d, dt) {
+    const { pos, prm, n } = d;
+    for (let k = 0; k < n; k++) {
+      const o = k * 6;
+      let s = prm[o] + prm[o + 3] * dt, q = prm[o + 1] + prm[o + 4] * dt, a = prm[o + 2] + prm[o + 5] * dt;
+      if (s < .4 || s > 2.5) { prm[o + 3] = -prm[o + 3]; s = clamp(s, .4, 2.5); }
+      if (q < 0 || q > 1) { prm[o + 4] = -prm[o + 4]; q = clamp(q, 0, 1); }
+      prm[o] = s; prm[o + 1] = q; prm[o + 2] = a;
+      const rad = q * .3 * s, sn = Math.sin(a);
+      pos[k * 3] = AX + Math.cos(a) * rad;
+      pos[k * 3 + 1] = AY + DY * s + DZ * sn * rad;
+      pos[k * 3 + 2] = AZ + DZ * s - DY * sn * rad;
+    }
+    d.pts.geometry.attributes.position.needsUpdate = true;
+  }
+
+  const dustRnd = rng(4242);
+  for (let i = 0; i < N; i++) {
+    const g = new Group(), body = new Group(); body.position.y = 1.7; g.add(body);
+    const tex = new THREE.CanvasTexture(paintArt(i)); tex.colorSpace = SRGB; tex.anisotropy = aniso;
+    const frame = new Mesh(frameGeo, i % 2 ? blackMat : woodMat); frame.castShadow = true;
+    const mat = new Mesh(matGeo, creamMat); mat.position.z = -.07; mat.receiveShadow = true;
+    const art = new Mesh(artGeo, M({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: .45, roughness: .9 })); art.position.z = -.062;
+    body.add(frame, mat, art);
+
+    const pc = document.createElement('canvas'); pc.width = 1024; pc.height = 158;
+    const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = SRGB; ptex.anisotropy = aniso;
+    const plaque = new Mesh(plaqueGeo, M({ map: ptex, emissiveMap: ptex, emissive: 0xffffff, emissiveIntensity: .55, roughness: .6, metalness: .1 })); plaque.position.set(0, .98, -.135);
+    g.add(plaque);
+
+    const mir = new Mesh(artGeo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: .6, side: THREE.DoubleSide, depthWrite: false }));
+    mir.position.set(0, -1.7, -.062); mir.scale.y = -1; mir.renderOrder = 1; g.add(mir);   // fake floor reflection (no Reflector)
+
+    const pool = new Mesh(poolGeo, new THREE.MeshBasicMaterial({ map: radial, color: 0xffd9a0, transparent: true, opacity: .34, blending: ADD, depthWrite: false }));
+    pool.position.set(0, .012, .95); pool.scale.set(1, 1, .8); pool.renderOrder = 3; g.add(pool);
+
+    const spot = new THREE.SpotLight(0xffd9a0, 28, 7, .32, .5, 2);
+    spot.position.set(AX, AY, AZ); spot.target.position.set(0, TY, 0); g.add(spot, spot.target);
+    spot.shadow.mapSize.set(512, 512); spot.shadow.camera.near = .4; spot.shadow.camera.far = 6; spot.shadow.bias = -.0004; spot.shadow.normalBias = .02;
+    const lamp = new Mesh(lampGeo, brass); lamp.position.set(AX, AY + .07, AZ); g.add(lamp);
+    const cone = new Mesh(coneGeo, coneMat); cone.position.set(AX, AY, AZ); cone.rotation.x = Math.atan2(-DY, DZ); cone.renderOrder = 3; g.add(cone);
+
+    const rail = new Mesh(railGeo, brass); rail.position.set(0, 3.72, AZ); g.add(rail);
+    const base = new Mesh(baseGeo, seamMat); base.position.set(0, .07, -.13); g.add(base);
+    const seams = [1.2].concat(i === 0 ? [-1.2] : []).map(x => { const s = new Mesh(seamGeo, seamMat); s.position.set(x, 3.5, -.14); g.add(s); return s; });
+
+    const dust = makeDust(i < 3 ? 34 : 33, dustRnd); g.add(dust.pts);
+    [frame, art, mat, plaque].forEach(m => { m.userData.i = i; pickables.push(m); });
+    scene.add(g);
+    FR.push({ g, body, spot, pool, rail, base, seams, dust, pc, ptex, hv: 0, sx: -(N - 1) / 2 * PITCH + i * PITCH, th: (-60 + i * 15) * D2R });
+  }
+
+  // props: 2 walnut benches + potted plant (scale references)
+  const props = new Group(); scene.add(props);
+  [-3.6, 3.6].forEach(x => {
+    const b = new Group(), top = new Mesh(new THREE.BoxGeometry(1.5, .07, .5), walnut); top.position.y = .43;
+    const l1 = new Mesh(new THREE.BoxGeometry(.06, .4, .46), walnut), l2 = l1.clone(); l1.position.set(-.65, .2, 0); l2.position.set(.65, .2, 0);
+    b.add(top, l1, l2); b.position.set(x, 0, 3.4); b.children.forEach(c => { c.castShadow = true; }); props.add(b);
+  });
+  const plant = new Group();
+  const pot = new Mesh(new THREE.CylinderGeometry(.2, .15, .4, 20), M({ color: 0x2a2c33, roughness: .5 })); pot.position.y = .2; plant.add(pot);
+  const leafMat = M({ color: 0x3f7a52, roughness: .8, emissive: 0x0b2012 });
+  for (let k = 0; k < 8; k++) {
+    const leaf = new Mesh(new THREE.ConeGeometry(.07, .8, 6), leafMat), a = k / 8 * TAU;
+    leaf.position.set(Math.cos(a) * .12, .75, Math.sin(a) * .12); leaf.rotation.set(Math.sin(a) * .5, 0, -Math.cos(a) * .5); leaf.castShadow = true; plant.add(leaf);
+  }
+  scene.add(plant);
+
+  // sconces
+  const sconces = [-1, 1].map(sd => {
+    const g = new Group(), plate = new Mesh(new THREE.BoxGeometry(.16, .34, .05), brass);
+    const glass = new Mesh(new THREE.CylinderGeometry(.07, .07, .26, 14), M({ color: 0xffd9a0, emissive: 0xffd9a0, emissiveIntensity: 2.2, roughness: .3 })); glass.position.z = .06;
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: radial, color: 0xffd9a0, blending: ADD, transparent: true, depthWrite: false, opacity: .5 })); glow.scale.set(1.6, 1.6, 1); glow.position.z = .12;
+    g.add(plate, glass, glow); scene.add(g); return { g, glass, glow, sd };
+  });
+
+  /* ---- layout (display-changer iv): straight row <-> r9 / 120° arc ---- */
+  const lay = { k: 0, to: 0, m: 0 };
+  function applyLayout(m) {
+    for (const f of FR) {
+      f.g.position.set(lerp(f.sx, ARC_R * Math.sin(f.th), m), 0, lerp(0, ARC_C - ARC_R * Math.cos(f.th), m));
+      f.g.rotation.y = -f.th * m;
+      f.seams.forEach(s => { s.position.z = lerp(-.14, -.06, m); });
+      f.rail.scale.x = lerp(1, .82, m); f.base.position.z = lerp(-.13, -.075, m);
+    }
+    wallS.opacity = 1 - m; wallA.opacity = m; wS.visible = m < 1; wA.visible = m > 0;
+    const tr = m > 0 && m < 1; wallS.transparent = wallA.transparent = tr;
+    for (const s of sconces) {
+      const ph = s.sd * 72 * D2R;
+      s.g.position.set(lerp(s.sd * 12.4, (ARC_R + .06) * Math.sin(ph), m), 2.3, lerp(-.09, ARC_C - (ARC_R + .06) * Math.cos(ph), m));
+      s.g.rotation.y = -ph * m;
+    }
+    plant.position.set(lerp(11.4, 7.2, m), 0, lerp(.8, 6.2, m));
+  }
+  applyLayout(0);
+
+  /* ---- plaques ---- */
+  function drawPlaque(i) {
+    const f = FR[i], g = f.pc.getContext('2d'), A = ARTS[i];
+    g.fillStyle = '#211e17'; g.fillRect(0, 0, 1024, 158);
+    g.strokeStyle = '#8b7536'; g.lineWidth = 4; g.strokeRect(6, 6, 1012, 146);
+    g.fillStyle = '#f0e4c4'; g.font = '600 54px "Clash Display", system-ui, sans-serif'; g.fillText(`No.0${i + 1} - ${A.title}`, 36, 76);
+    g.fillStyle = '#b9a265'; g.font = '400 34px Satoshi, system-ui, sans-serif'; g.fillText(`${A.artist} · ${A.medium}`, 36, 126);
+    f.ptex.needsUpdate = true;
+  }
+  const drawPlaques = () => FR.forEach((_, i) => drawPlaque(i));
+  drawPlaques();
+  Promise.race([Promise.all([document.fonts.load('600 54px "Clash Display"'), document.fonts.load('400 34px Satoshi')]), new Promise(r => setTimeout(r, 2500))]).then(drawPlaques).catch(() => {});
+
+  /* ---- HUD ---- */
+  const rail = $('#rail'), chip = $('#chip'), tip = $('#tip');
+  const dots = ARTS.map((a, i) => {
+    const b = document.createElement('button'); b.className = 'dot'; b.setAttribute('aria-label', `Frame ${i + 1}: ${a.title}`);
+    b.addEventListener('click', () => jump(i)); rail.appendChild(b); return b;
+  });
+  let dotOn = -1;
+  const setDot = i => { if (i === dotOn) return; if (dotOn >= 0) dots[dotOn].classList.remove('on'); dots[i].classList.add('on'); dotOn = i; };
+  function updateCaption() {
+    const A = ARTS[fi];
+    $('#capNo').textContent = String(fi + 1).padStart(2, '0'); $('#capTitle').textContent = A.title;
+    $('#capArtist').textContent = A.artist; $('#capMedium').textContent = A.medium;
+  }
+
+  /* ---- camera system ---- */
+  let mode = 'walk', fi = 0, tw = null, auto = false, nearest = 0, uS = 0, firstU = true;
+  const cam = { p: new V3(0, 1.6, 5.2), l: new V3(0, 1.7, 0) };
+  const lookC = new V3(-9.6, 1.7, 0), tP = new V3(), tL = new V3(), tmp = new V3();
+  let tanHalf = Math.tan(23 * D2R), focusDist = 2.3;
+
+  function walkPose(P, L, dt) {
+    const m = lay.m, u = uS;
+    nearest = clamp(Math.round(u * (N - 1)), 0, N - 1);
+    const sx = -(N - 1) / 2 * PITCH + u * (N - 1) * PITCH, th = (-60 + 120 * u) * D2R, rho = ARC_R - 5.2;
+    P.set(lerp(sx, rho * Math.sin(th), m), 1.6, lerp(5.2, ARC_C - rho * Math.cos(th), m));
+    const f = FR[nearest]; tmp.set(f.g.position.x, 1.7, f.g.position.z);
+    lookC.lerp(tmp, 1 - Math.pow(.92, dt * 60));                       // 8% damping toward nearest frame
+    L.copy(lookC);
+    // hero: slide the scene right (landscape) / down (portrait) so the headline owns the left/top
+    const h = clamp(1 - scrollY / (innerHeight * .9), 0, 1), he = h * h * (3 - 2 * h), asp = camera.aspect;
+    const lat = 2 * sm(.8, 1.6, asp) * he, up = .9 * (1 - sm(.8, 1.2, asp)) * he;
+    let fx = L.x - P.x, fz = L.z - P.z; const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl;
+    P.x -= -fz * lat; P.z -= fx * lat; L.x -= -fz * lat; L.z -= fx * lat; P.y += up; L.y += up;
+  }
+  function focusPose(P, L) {
+    const f = FR[fi], psi = f.g.rotation.y, nx = Math.sin(psi), nz = Math.cos(psi);
+    L.set(f.g.position.x, 1.7, f.g.position.z);
+    P.set(L.x + nx * focusDist, 1.6, L.z + nz * focusDist);
+  }
+  function startTween(dur) { tw = reduce ? null : { t: 0, dur, p0: cam.p.clone(), l0: cam.l.clone() }; }
+  const setChip = () => { chip.textContent = mode === 'focus' ? 'FOCUS' : 'WALK'; chip.classList.toggle('auto', auto); };
+  function focusOn(i, dur) {
+    const wasWalk = mode === 'walk';
+    fi = i; startTween(dur || (wasWalk ? 1.1 : .9));
+    if (wasWalk) {
+      mode = 'focus'; auto = false; document.documentElement.classList.add('lock'); document.body.classList.add('is-focus'); if (lenis) lenis.stop();
+    }
+    updateCaption(); setChip(); setShadows(i);
+  }
+  function exitFocus() {
+    if (mode !== 'focus') return;
+    lookC.copy(cam.l); startTween(1.1); mode = 'walk';
+    document.documentElement.classList.remove('lock'); document.body.classList.remove('is-focus'); if (lenis) lenis.start();
+    setChip();
+  }
+  onEsc = exitFocus;
+  function jump(i) {
+    i = (i + N) % N;
+    if (mode === 'focus') focusOn(i, .9); else { auto = false; setChip(); scrollToY(i / (N - 1) * range, { duration: 1.2 }); }
+  }
+  $('#capPrev').addEventListener('click', () => jump(fi - 1));
+  $('#capNext').addEventListener('click', () => jump(fi + 1));
+
+  /* ---- shadows: castShadow only on the nearest 3 lamps ---- */
+  let shadowsOn = true, shadowLo = -1;
+  function setShadows(n) {
+    if (!shadowsOn) return;
+    const lo = clamp(n - 1, 0, N - 3); if (lo === shadowLo) return; shadowLo = lo;
+    FR.forEach((f, i) => { f.spot.castShadow = i >= lo && i < lo + 3; });
+  }
+
+  /* ---- display-changer controls ---- */
+  const dcTheme = $('[data-dc="theme"]'), dcLayout = $('[data-dc="layout"]');
+  const flash = b => { b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash'); };
+  dcTheme.addEventListener('click', () => {
+    thI = (thI + 1) % THEMES.length; const T = THEMES[thI];
+    dcTheme.querySelector('span').textContent = T.name;
+    document.body.classList.remove('th-night', 'th-day', 'th-opening'); document.body.classList.add('th-' + T.id); flash(dcTheme);
+  });
+  const toggleLayout = () => {
+    lay.to = 1 - lay.to; dcLayout.querySelector('span').textContent = lay.to ? 'Curved Arc' : 'Straight Row'; flash(dcLayout);
+  };
+  dcLayout.addEventListener('click', toggleLayout);
+  function stepTheme(dt) {
+    const T = THEMES[thI], k = 1 - Math.exp(-dt * 5);
+    cur.wall.lerp(T.wall, k); cur.floor.lerp(T.floor, k); cur.bg.lerp(T.bg, k); cur.spot.lerp(T.spot, k);
+    cur.spotI = fin(lerp(cur.spotI, T.spotI, k)); cur.fillI = fin(lerp(cur.fillI, T.fillI, k)); cur.hemiI = fin(lerp(cur.hemiI, T.hemiI, k)); cur.sconce = fin(lerp(cur.sconce, T.sconce, k));
+    wallS.color.copy(cur.wall); wallA.color.copy(cur.wall); floorMat.color.copy(cur.floor); scene.background.copy(cur.bg);
+    seamMat.color.copy(cur.wall).offsetHSL(0, 0, .05);
+    hemi.intensity = cur.hemiI; fill.intensity = cur.fillI; coneMat.color.copy(cur.spot);
+    for (const s of sconces) { s.glass.material.emissiveIntensity = cur.sconce; s.glow.material.opacity = clamp(cur.sconce * .22, 0, .5); }
+    for (const f of FR) { f.spot.color.copy(cur.spot); f.pool.material.color.copy(cur.spot); f.pool.material.opacity = clamp(.14 + cur.spotI * .007, .2, .4); }
+  }
+
+  /* ---- pointer / picking ---- */
+  const rc = new THREE.Raycaster(), UI = 'button,a,aside,.cap,.hud,.dcbar,.nav,.tip';
+  const ptr = { x: 0, y: 0, nx: 0, ny: 0, ok: false };
+  addEventListener('pointermove', e => {
+    ptr.x = e.clientX; ptr.y = e.clientY; ptr.nx = e.clientX / innerWidth * 2 - 1; ptr.ny = -(e.clientY / innerHeight * 2 - 1);
+    ptr.ok = e.pointerType !== 'touch' && !e.target.closest(UI);
+  }, { passive: true });
+  document.documentElement.addEventListener('pointerleave', () => { ptr.ok = false; });
+  addEventListener('wheel', () => { if (auto) { auto = false; setChip(); } }, { passive: true });
+  addEventListener('touchstart', () => { if (auto) { auto = false; setChip(); } }, { passive: true });
+  function pick(nx, ny) {
+    rc.setFromCamera({ x: nx, y: ny }, camera);
+    const h = rc.intersectObjects(pickables, false)[0]; return h ? h.object.userData.i : -1;
+  }
+  let active = true;
+  addEventListener('click', e => {
+    if (!active || document.body.classList.contains('brief-open') || e.target.closest(UI)) return;
+    const i = pick(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight * 2 - 1)); if (i < 0) return;
+    if (mode === 'walk') focusOn(i); else focusOn(i === fi ? (fi + 1) % N : i, .9);
+  });
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape' || brief.classList.contains('open') || e.metaKey || e.ctrlKey || e.altKey || !active) return;
+    if (e.key >= '1' && e.key <= '9') { jump(+e.key - 1); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const d = e.key === 'ArrowRight' ? 1 : -1;
+      if (mode === 'focus') { e.preventDefault(); jump(fi + d); } else jump(clamp(nearest + d, 0, N - 1));
+    } else if (e.code === 'Space') {
+      e.preventDefault();
+      if (mode === 'focus') return;
+      if (reduce) { toast('Auto-walk is off while reduced motion is on'); return; }
+      auto = !auto; if (auto && uS > .995) scrollToY(0, { immediate: true }); setChip();
+    }
+  });
+
+  /* ---- resize: refit fov so ~3.6u stays visible on portrait ---- */
+  function onResize() {
+    const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = Math.max(46, 2 * Math.atan(1.8 / 5.2 / camera.aspect) / D2R);
+    camera.updateProjectionMatrix();
+    tanHalf = Math.tan(camera.fov * D2R / 2);
+    focusDist = Math.max(2.3, 1.05 / (tanHalf * camera.aspect));
+    measure();
+  }
+  addEventListener('resize', onResize);
+  if (document.fonts) document.fonts.ready.then(measure);
+
+  /* ---- robustness ---- */
+  let lost = false;
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; toast('Graphics context lost — restoring…'); });
+  canvas.addEventListener('webglcontextrestored', () => { lost = false; toast('Gallery restored'); });
+  if (reduce) FR.forEach(f => { f.dust.pts.visible = false; });
+
+  /* ---- main loop ---- */
+  let last = performance.now(), fpsT = 0, fpsN = 0, tAlive = 0, stage = 0, past = false, hov = -1, lastTip = -2, plx = 0, ply = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (lenis) lenis.raf(now);
+    let dt = (now - last) / 1000; last = now; if (!(dt > 0)) dt = .016; dt = Math.min(dt, .05);
+    const sy = scrollY;
+    active = sy < range + innerHeight * 1.02;
+    const p2 = sy > range + innerHeight * .12; if (p2 !== past) { past = p2; document.body.classList.toggle('past', past); }
+    if (lost || !active || document.hidden) return;
+
+    if (auto && mode === 'walk') {                                 // 0.4 u/s glide
+      const ny = Math.min(range, sy + range * (.4 / ((N - 1) * PITCH)) * dt);
+      if (ny >= range) { auto = false; setChip(); toast('End of the row'); }
+      if (lenis) lenis.scrollTo(ny, { immediate: true }); else scrollTo(0, ny);
+    }
+    const uRaw = clamp(sy / range, 0, 1);
+    uS = firstU ? uRaw : fin(uS + (uRaw - uS) * (1 - Math.exp(-dt * (lenis ? 18 : 10)))); firstU = false;
+
+    if (lay.k !== lay.to) {
+      lay.k = reduce ? lay.to : clamp(lay.k + Math.sign(lay.to - lay.k) * dt / 1.2, 0, 1);
+      lay.m = ease(lay.k); applyLayout(lay.m);
+    }
+    stepTheme(dt);
+
+    // camera
+    if (mode === 'focus') focusPose(tP, tL); else walkPose(tP, tL, dt);
+    if (tw) {
+      tw.t = Math.min(1, tw.t + dt / tw.dur); const k = ease(tw.t);
+      cam.p.lerpVectors(tw.p0, tP, k); cam.l.lerpVectors(tw.l0, tL, k); if (tw.t >= 1) tw = null;
+    } else { cam.p.copy(tP); cam.l.copy(tL); }
+    if (!Number.isFinite(cam.p.x + cam.p.y + cam.p.z + cam.l.x + cam.l.y + cam.l.z)) { cam.p.set(0, 1.6, 5.2); cam.l.set(0, 1.7, 0); }
+    camera.position.copy(cam.p); camera.lookAt(cam.l);
+    const pk = 1 - Math.pow(.92, dt * 60), pw = mode === 'walk' && ptr.ok ? 1 : 0;
+    plx += (ptr.nx * pw - plx) * pk; ply += (ptr.ny * pw - ply) * pk;
+    camera.rotateY(-fin(plx) * 4 * D2R); camera.rotateX(fin(ply) * 4 * D2R);   // pointer look-around ±4°
+    camera.updateMatrixWorld();
+
+    const idx = mode === 'focus' ? fi : nearest; setDot(idx); setShadows(idx);
+
+    // hover: frame lifts, lamp swells, tooltip
+    hov = ptr.ok ? pick(ptr.nx, ptr.ny) : -1;
+    canvas.style.cursor = hov >= 0 ? 'pointer' : '';
+    for (let i = 0; i < N; i++) {
+      const f = FR[i]; f.hv = fin(f.hv + ((i === hov ? 1 : 0) - f.hv) * (reduce ? 1 : 1 - Math.exp(-dt * 10)));
+      f.body.position.z = .04 * f.hv; f.spot.intensity = cur.spotI * (1 + .35 * f.hv);
+      if (!reduce) stepDust(f.dust, dt);
+    }
+    if (hov !== lastTip) { lastTip = hov; if (hov >= 0) { tip.innerHTML = `<b>No.0${hov + 1}</b>${ARTS[hov].title}`; tip.classList.add('on'); } else tip.classList.remove('on'); }
+    if (hov >= 0) tip.style.transform = `translate(${Math.min(ptr.x + 16, innerWidth - 220)}px,${ptr.y + 18}px)`;
+
+    renderer.render(scene, camera);
+
+    // adaptive quality: shadows off first, then pixel ratio 1.0
+    fpsT += dt; fpsN++; tAlive += dt;
+    if (fpsT >= 2) {
+      const fps = fpsN / fpsT; fpsT = 0; fpsN = 0;
+      if (tAlive > 4 && fps < 45) {
+        if (stage === 0) { shadowsOn = false; FR.forEach(f => { f.spot.castShadow = false; }); stage = 1; }
+        else if (stage === 1 && pr > 1) { pr = 1; renderer.setPixelRatio(1); onResize(); stage = 2; }
+      }
+    }
+  }
+
+  onResize(); setDot(0); updateCaption(); setChip();
+  for (let k = 0; k < 3; k++) stepTheme(1);
+  requestAnimationFrame(frame);
+
+  return {
+    enter: () => scrollToY(innerHeight * .9),
+    tryFocus: () => { scrollToY(3 / (N - 1) * range, { duration: 1.4 }); setTimeout(() => { if (mode === 'walk') focusOn(3); }, reduce ? 0 : 1600); },
+    tryArc: () => { if (!lay.to) toggleLayout(); scrollToY(.5 * range, { duration: 1.4 }); },
+  };
+}
+
+const GL = renderer ? initGL() : null;
+measure();
+addEventListener('resize', measure);
+
+/* ================= nav + action delegation ================= */
+document.addEventListener('click', e => {
+  const brf = e.target.closest('[data-brief]');
+  const act = e.target.closest('[data-act]');
+  const nav = e.target.closest('[data-nav]');
+  const btn = e.target.closest('button');
+  if (btn && e.detail > 0 && !btn.matches('[data-brief]')) btn.blur();       // mouse click: give Space back to auto-walk
+  if (brf) { openBrief(brf); return; }
+  if (act) {
+    const a = act.dataset.act;
+    if (a === 'enter') { GL ? GL.enter() : scrollToY(innerHeight); }
+    else if (a === 'try-focus' && GL) GL.tryFocus();
+    else if (a === 'try-arc' && GL) GL.tryArc();
+    return;
+  }
+  if (nav) {
+    e.preventDefault();
+    const id = nav.dataset.nav;
+    const y = id === 'top' ? 0 : id === 'row' ? innerHeight * .9 : ($('#' + id).getBoundingClientRect().top + scrollY - 64);
+    scrollToY(y);
+  }
+});
+</script>
+</body>
+</html>
