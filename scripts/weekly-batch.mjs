@@ -16,7 +16,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { jsSyntaxCheck } from "./lib-js-syntax.mjs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -30,7 +30,11 @@ const LOG_FILE = path.join(ROOT, "eval-shots", "batch-log.jsonl");
 const args = process.argv.slice(2);
 const DRY = args.includes("--dry-run");
 const LIMIT = parseInt(args.find(a => a.startsWith("--limit"))?.split("=")[1] || "99", 10);
-const ONLY = args.find(a => a.startsWith("--only"))?.split("=")[1]?.split(",") || null;
+const onlyArg = args.find(a => a.startsWith("--only"));
+const ONLY = onlyArg
+  ? (onlyArg.includes("=") ? onlyArg.split("=")[1] : args[args.indexOf(onlyArg) + 1])?.split(",")
+  : null;
+const FORCE = args.includes("--force"); // remake: ignore already-succeeded-this-week
 
 // ---- config ----
 const RETRY_MAX = 2;              // total attempts per template = 1 + RETRY_MAX
@@ -51,7 +55,7 @@ function readLog() {
 }
 
 // ---- parse vault .md -> { prompt, tier, title } ----
-function parseVaultMd(mdPath) {
+export function parseVaultMd(mdPath) {
   const raw = fs.readFileSync(mdPath, "utf8");
   const titleM = raw.match(/^#\s+(.+)$/m);
   const tierM = raw.match(/\*\*Tier:\*\*\s*(\w+)/i);
@@ -65,7 +69,7 @@ function parseVaultMd(mdPath) {
 }
 
 // ---- gen adapter (CSP-safe + KIBLAT quality bar) ----
-function buildAdapter(prompt, tier) {
+export function buildAdapter(prompt, tier) {
   const mvNote = tier === "max"
     ? `\n10. For model-viewer heroes: vendor model-viewer.min.js to ../../js/vendor/model-viewer.min.js (CSP blocks CDN). Load GLB from a local file in this folder (e.g. model.glb). Add a full-viewport 2D <canvas id="bg"> BEHIND the model-viewer that draws an animated background (brightness gate samples this canvas — model-viewer's canvas is in shadow DOM and unreachable).`
     : "";
@@ -112,8 +116,24 @@ E. BUTTONS: DISTINCTIVE OR FAIL. The default flat "primary + ghost" rectangle pa
 F. LAYOUT RICHNESS: nav + hero + at least 2-3 content sections (features/specs/story) + CTA + footer. Feels like a real product/landing page, not a toy.
 ${tierContract}
 
+=== BLUEPRINT DNA (MANDATORY — this is what separates us from generic AI templates) ===
+Every decision is PRE-DECIDED with concrete numbers. Vague poetry ("beautiful", "smooth", "stunning") without parameters is a FAIL. Treat this as an engineering blueprint, not a mood board:
+1. CAMERA/FRAME (3D: exact height, FOV, target, near/far, damping numbers. 2D: exact canvas coordinate system, scale math, zoom/parallax deltas.)
+2. MOTION CONSTANTS: real numbers — easing curves, spring stiffness/damping/mass (e.g. 200/18/1), velocity decay (e.g. velocity *= 0.9935), clamped delta-time.
+3. COMPOSITE ORDER: list the draw/composite passes in order (e.g. depth -> scene -> glow -> bloom -> grade). 2D canvas: layer paint order.
+4. MATERIAL/ATMOSPHERE CONSTANTS: concrete values — fog color+density, exposure, tone mapping, absorption tint vectors (e.g. vec3(0.30,0.058,0.04)), noise scales.
+5. PROCEDURAL GEOMETRY: name the generator (Catmull-Rom spline, fBm noise octaves, InstancedMesh) + parameters (segment count, amplitude, seed).
+6. DATA LAYOUT: typed arrays / instanced attributes (e.g. 4 vec4 per instance: position, orientation, color, state). Zero allocation in the hot loop.
+7. BEHAVIOR UNITS: if multiple agents/variants exist, list each with mass, speed, pattern numbers — not "fish swim around".
+8. ENTRY/PHYSICS: per-unit gravity, flight/phase time, entry orientation numbers when units or particles enter or move.
+9. UI SPEC: exact position, size, typeface, color, interaction for EVERY control — including the brief panel.
+10. ROBUSTNESS: adaptive pixel ratio (drop PR when fps < 50), resize handler, prefers-reduced-motion (keep scene visible, stop auto-motion), graceful fallback when WebGL unavailable (static styled poster + short message), context-loss handler.
+11. PERF RULES: zero GC in hot loop (reuse arrays/object pools), NaN guards on every accumulate, devicePixelRatio capped at 2.
+12. FAILURE MODES: define fallback for missing GLB, low memory, context loss — explicitly, not "just in case".
+
 === PROJECT ADAPTATIONS (delivery mechanics) ===
 1. three.js (REQUIRED for pro/max; FREE tier must NOT use WebGL): native ES modules with import map: "three": "../../js/vendor/three.module.min.js" (r170) and "three/addons/": "../../js/vendor/jsm/". OrbitControls: "three/addons/controls/OrbitControls.js". BufferGeometryUtils: "three/addons/utils/BufferGeometryUtils.js".
+1b. Motion libraries (VENDORED locally — use them, do NOT reinvent): Lenis smooth scroll: <script src="../../js/vendor/lenis.min.js"></script> then new Lenis({ smoothWheel:true }) + raf loop syncing update. GSAP 3.13 + ScrollTrigger + SplitText: <script src="../../js/vendor/gsap.min.js"></script>, ScrollTrigger.min.js, SplitText.min.js — use GSAP for hero typographic choreography (SplitText char stagger), scroll-pinned sections, and shared-element card→panel transitions. Lenis + ScrollTrigger: lenis.on('scroll', ScrollTrigger.update).
 2. Fonts: NEVER Google Fonts/CDN. Use @font-face with relative paths: Fraunces -> ../../fonts/Fraunces-var.woff2; Nunito Sans -> ../../fonts/NunitoSans-var.woff2; Clash Display -> ../../fonts/ClashDisplay-600.woff2 / ClashDisplay-700.woff2; Satoshi -> ../../fonts/Satoshi-400.woff2 / -500.woff2 / -700.woff2; Zen Old Mincho -> ../../fonts/ZenOldMincho-700.woff2.
 3. Assets: 100% procedural unless tier=max with GLB (see note 10). No remote images, no data-URLs from the net.
 4. Performance: clamp devicePixelRatio <= 2; handle resize; prefers-reduced-motion -> keep scene visible but stop auto-motion; at 390px no horizontal scroll; touch/pointer works.
@@ -184,7 +204,7 @@ async function main() {
       const id = path.basename(qf, ".md");
       const qPath = path.join(QUEUE, qf);
 
-      if (succeededThisWeek.has(id)) {
+      if (!FORCE && succeededThisWeek.has(id)) {
         log("batch", `${id} already succeeded this week — skipping`);
         fs.renameSync(qPath, path.join(QUEUE_DONE, qf));
         continue;
@@ -289,4 +309,7 @@ async function main() {
   log("batch", `Next: run deploy-gate.mjs, then capture-thumbs, then sync-vault, then wrangler deploy`);
 }
 
-main().catch(e => { log("batch", "FATAL: " + e.message); process.exit(1); });
+// main() hanya jalan saat dieksekusi langsung (bukan saat di-import utk testing adapter)
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => { log("batch", "FATAL: " + e.message); process.exit(1); });
+}

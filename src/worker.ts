@@ -25,6 +25,10 @@ const CSP_MAIN =
 const CSP_DEMO =
   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
   "img-src 'self' data: blob:; font-src 'self'; object-src 'none'; base-uri 'self'; " +
+  // GLTFLoader picks ImageBitmapLoader in Chrome, which fetch()es the embedded
+  // texture's blob: URL — without this the fetch falls back to default-src
+  // 'self' and every textured GLB renders texture-less on the live site.
+  "connect-src 'self' blob:; " +
   "frame-ancestors 'self'; upgrade-insecure-requests";
 
 function assetHeaders(pathname: string): Record<string, string> {

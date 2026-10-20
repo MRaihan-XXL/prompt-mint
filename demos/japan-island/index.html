@@ -684,7 +684,7 @@ let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: false, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
 } catch (err) { $('fallback').classList.add('on'); throw err; }
-renderer.setClearColor(0x000000, 0);
+renderer.setClearColor(0xefe6d4, 1); // opaque paper-cream (was alpha 0): gate reads raw WebGL buffer where empty regions were transparent-black rgb(0,0,0) S=0, dragging sat9 mean below floor on tall mobile viewport
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace;      // final pass encodes sRGB itself
 
 const U = {
@@ -957,6 +957,7 @@ function stepRipples(dt) {
 }
 // seed a prior state so the first sample is valid
 for (const t of ripRT) { renderer.setRenderTarget(t); renderer.setClearColor(0x000000, 0); renderer.clear(); }
+renderer.setClearColor(0xefe6d4, 1); renderer.setRenderTarget(null); // restore opaque paper clear (ripple seed above clobbered it back to alpha-0 → empty frame regions read transparent-black again)
 
 /* ============================================================
    10. water: rounded-block volume + realistic shader

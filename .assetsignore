@@ -1,23 +1,30 @@
-# Keep site assets only — no code/secrets in the static upload.
-.env
-.env.*
-node_modules
+# Internal files — never upload as public static assets
+eval-shots/
+AGENTS.md
+MEMO.md
+scripts/
+wrangler.jsonc
+.gitignore
+.assetsignore
 functions
 src
-scripts
-.git
-.gitignore
 .github
 package.json
 package-lock.json
 tsconfig.json
-wrangler.jsonc
-.assetsignore
+schema.sql
+README.md
 .DS_Store
 Thumbs.db
 *.log
-.dev.vars
-schema.sql
-README.md
-.wrangler
+*.md
 demos/*/*.md
+
+# secrets + repo internals (incident: .env & .git leaked via static assets)
+.env
+.env.*
+*.env
+.dev.vars
+.git/
+.wrangler/
+node_modules/

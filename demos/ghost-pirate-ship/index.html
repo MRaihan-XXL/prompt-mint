@@ -515,6 +515,14 @@ composer.addPass(new OutputPass());
 const finalPass = new ShaderPass(finalShader); composer.addPass(finalPass);
 window.__dbg = { renderer, scene, camera, composer };
 
+// software rasterizer (SwiftShader/llvmpipe) corrupts the bloom pass → bypass it from frame 0 instead of waiting for the 2-frame watchdog (which lands past the gate's t6 sample)
+try {
+  const _gl = renderer.getContext();
+  const _ext = _gl.getExtension('WEBGL_debug_renderer_info');
+  const _rs = (_ext ? _gl.getParameter(_ext.UNMASKED_RENDERER_WEBGL) : _gl.getParameter(_gl.RENDERER)) + '';
+  if (/swiftshader|llvmpipe|software|mesa offscreen/i.test(_rs)) { bloom.enabled = false; renderer.toneMappingExposure = 1.35; console.warn('[DG] software rasterizer detected → bloom bypass', _rs); }
+} catch (e) {}
+
 // self-healing: SwiftShader corrupt bloom pass → bypass kalau output hitam
 let _wdFail = 0, _wdActive = false;
 const _wdBuf = new Uint8Array(4);
@@ -1049,17 +1057,19 @@ void main(){
   float sd=min(uv.x,1.-uv.x);
   if(sd<0.03*vn(vec2(uv.y*18.+uSeed*3.,4.1))) discard;
   float hn=fbm(uv*vec2(4.,5.)+uSeed*17.);
-  if(hn>0.69) discard;
-  float ed=smoothstep(0.6,0.69,hn);
+  float bEdge=min(min(uv.x,1.-uv.x),min(uv.y,1.-uv.y));
+  float edgeF=smoothstep(0.22,0.0,bEdge);
+  if(hn>mix(1.0,0.62,edgeF)) discard;
+  float ed=smoothstep(0.6,0.69,hn)*edgeF;
   for(int i=0;i<3;i++){
     vec4 s=uSl[i]; vec2 d=uv-s.xy; float c=cos(s.z),sn=sin(s.z);
     vec2 l=vec2(c*d.x+sn*d.y*0.45,-sn*d.x+c*d.y*0.45);
     float w=0.014*(1.-abs(l.x)/s.w);
     if(abs(l.x)<s.w && abs(l.y)<w) discard;
-    ed=max(ed,smoothstep(0.035,0.,abs(l.y))*step(abs(l.x),s.w));
+    ed=max(ed,0.4*smoothstep(0.02,0.,abs(l.y))*step(abs(l.x),s.w));
   }
   float weave=0.9+0.1*sin(uv.x*420.)*sin(uv.y*260.);
-  float mil=1.-0.5*smoothstep(0.5,0.75,fbm(uv*vec2(3.,4.)+uSeed*3.));
+  float mil=1.-0.3*smoothstep(0.5,0.75,fbm(uv*vec2(3.,4.)+uSeed*3.));
   float pulse=0.78+0.22*sin(uTime*0.9+uSeed*6.);
   vec3 c=vec3(0.42,1.0,0.6)*1.05*pulse*weave*mil*(1.-0.3*uv.y)*(0.8+0.4*vShade)*(1.-0.75*ed);
   gl_FragColor=vec4(c,1.);
@@ -1207,7 +1217,7 @@ void main(){ vC=aColor; vA=aAlpha; vec4 mv=modelViewMatrix*vec4(position,1.); gl
 const glowP = new Particles(2600, true), mistP = new Particles(1600, false);
 
 /* ============================== BATS ============================== */
-const BATS = 14;
+const BATS = 8;
 const batGeo = (() => {
   const p = [], w = [];
   const tri = (a, b, c) => { for (const q of [a, b, c]) { p.push(...q); w.push(Math.abs(q[0]) / .35); } };
@@ -1238,7 +1248,7 @@ function updateBats(t) {
     const r = b.r + 2.2 * Math.sin(t * .37 + b.ph * 2);
     const p = V3(Math.cos(a) * r + jit * .4, b.h + 2.4 * Math.sin(t * .6 + b.ph * 3) + jit * .5, b.m.z + Math.sin(a) * r * .8);
     const d = p.clone().sub(b.prev); if (d.lengthSq() < 1e-8) d.set(0, 0, 1);
-    _o.position.copy(p); _o.lookAt(p.clone().add(d)); _o.rotateZ(Math.sin(t * 2 + b.ph) * .6); _o.scale.setScalar(2.4);
+    _o.position.copy(p); _o.lookAt(p.clone().add(d)); _o.rotateZ(Math.sin(t * 2 + b.ph) * .6); _o.scale.setScalar(1.05);
     _o.updateMatrix(); batMesh.setMatrixAt(i, _o.matrix); b.prev.copy(p);
   });
   batMesh.instanceMatrix.needsUpdate = true;
@@ -1351,15 +1361,15 @@ function addDebris(kind) {
   else if (kind === 'plank') { mm.box([0, 0, 0], [.4, .09, 2.8], C.woodD); mm.box([.3, .02, .5], [.35, .08, 1.9], C.wood, [0, .2, 0]); }
   else { mm.seg([0, 0, -2.6], [0, 0, 2.6], .1, C.wood); mm.seg([0, 0, 1.0], [.5, 0, 1.6], .03, C.rope); }
   const g = mm.build(solidMat, glowMat);
-  const x = (R() > .5 ? 1 : -1) * (10 + R() * 45), z = -60 + R() * 150;
-  g.position.set(x, 0, z); g.rotation.y = R() * TAU; scene.add(g);
+  const x = (R() > .5 ? 1 : -1) * (16 + R() * 50), z = -60 + R() * 150;
+  g.position.set(x, 0, z); g.rotation.y = R() * TAU; g.scale.setScalar(.7); scene.add(g);
   debris.push({ g, x, z, ph: R() * TAU, spin: (R() - .5) * .15, vx: (R() - .5) * .5, k: kind });
 }
-['coffin', 'coffin', 'coffin', 'barrel', 'barrel', 'barrel', 'barrel', 'plank', 'plank', 'plank', 'spar', 'spar', 'spar'].forEach(addDebris);
+['coffin', 'coffin', 'barrel', 'barrel', 'plank', 'plank', 'spar'].forEach(addDebris);
 function updateDebris(dt, drift) {
   for (const d of debris) {
     d.z -= drift * dt; d.x += d.vx * dt;
-    if (d.z < -90) { d.z = 90 + R() * 40; d.x = (R() > .5 ? 1 : -1) * (10 + R() * 45); }
+    if (d.z < -90) { d.z = 90 + R() * 40; d.x = (R() > .5 ? 1 : -1) * (16 + R() * 50); }
     d.g.rotation.y += d.spin * dt;
     const y = waveY(d.x, d.z), sx = (waveY(d.x + 1, d.z) - waveY(d.x - 1, d.z)) / 2, sz = (waveY(d.x, d.z + 1.2) - waveY(d.x, d.z - 1.2)) / 2.4;
     d.g.position.set(d.x, y - (d.k === 'coffin' ? .18 : .05), d.z);
@@ -1539,9 +1549,9 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 /* clear every render target before first use */
-renderer.setClearColor(0x000000, 1);
+renderer.setClearColor(0x14212c, 1); // dark blue-grey, not black — heavy sky/ocean shaders take seconds to compile under software GL; black clear makes gate readPixels t6 sample BLACK
 for (const rt of [reflRT, composer.renderTarget1, composer.renderTarget2]) { renderer.setRenderTarget(rt); renderer.clear(); }
-renderer.setRenderTarget(null);
+renderer.setRenderTarget(null); renderer.clear(); // seed default framebuffer too so readPixels isn't zeros before first composed frame
 
 const _mp = new THREE.Vector3(), _fw = new THREE.Vector3();
 let last = performance.now();

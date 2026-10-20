@@ -50,7 +50,7 @@ async function getText(path) {
 
 // ---------- 1. Header contract (the _headers stacking bug must never return) ----------
 {
-  const demo = await rawGet("/demos/ki-aura/");
+  const demo = await rawGet("/demos/ocean-shallows/");
   const demoCsp = getAll(demo, "content-security-policy");
   const demoXfo = getAll(demo, "x-frame-options");
   const demoCc = getAll(demo, "cache-control");
@@ -79,7 +79,7 @@ async function getText(path) {
   ok(sitemap.body.includes(BASE), "sitemap uses live origin (no dead depthglow.dev)");
   ok(!/depthglow\.dev/.test(sitemap.body), "sitemap free of depthglow.dev");
   const urlCount = (sitemap.body.match(/<loc>/g) || []).length;
-  ok(urlCount >= 21, "sitemap lists home + 20 template pages", "got " + urlCount + " <loc>");
+  ok(urlCount >= 4, "sitemap lists home + 3 template pages", "got " + urlCount + " <loc>");
 
   const robots = await getText("/robots.txt");
   ok(robots.status === 200 && robots.body.includes(BASE + "/sitemap.xml"), "robots points at live sitemap");
@@ -88,13 +88,13 @@ async function getText(path) {
   ok(home.body.includes('rel="canonical"') && home.body.includes(BASE + "/"), "home canonical = live origin");
   ok(!/depthglow\.dev/.test(home.body), "home free of depthglow.dev in meta/JSON-LD");
 
-  const tpl = await getText("/t/aurora-hero");
+  const tpl = await getText("/t/ocean-shallows");
   ok(tpl.status === 200, "/t/<id> 200", String(tpl.status));
-  ok(tpl.body.includes('rel="canonical" href="' + BASE + '/t/aurora-hero"'), "/t/<id> canonical self-referencing");
+  ok(tpl.body.includes('rel="canonical" href="' + BASE + '/t/ocean-shallows"'), "/t/<id> canonical self-referencing");
   ok(tpl.body.includes('application/ld+json'), "/t/<id> has JSON-LD block");
   ok(tpl.body.includes('"@type":"Product"'), "/t/<id> JSON-LD is Product");
   ok(tpl.body.includes("og:image"), "/t/<id> has og:image");
-  const thumbRef = (tpl.body.match(/assets\/thumbs\/aurora-hero\.webp/) || []).length;
+  const thumbRef = (tpl.body.match(/assets\/thumbs\/ocean-shallows\.webp/) || []).length;
   ok(thumbRef >= 1, "/t/<id> references template thumbnail", "matches=" + thumbRef);
 
   const missing = await getText("/t/does-not-exist-xyz");
@@ -146,6 +146,50 @@ async function getText(path) {
 
     const badErrors = consoleErrors.filter((e) => /refused|frame-ancestors|Content Security Policy/i.test(e));
     ok(badErrors.length === 0, "no CSP/frame console errors", badErrors.slice(0, 2).join(" | "));
+  } finally {
+    await browser.close();
+  }
+}
+
+// ---------- 5. 3D (ES-module) preview actually renders — black-canvas regression guard ----------
+// Regression this guards: a sandboxed opaque-origin iframe CORS-blocked the
+// three.js ES-module import, so every 3D preview showed a black box. The WebGL
+// canvas is only appended AFTER the module imports, so canvas presence === fix.
+{
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const consoleErrors = [];
+    page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
+    await page.goto(BASE + "/", { waitUntil: "networkidle", timeout: 60000 });
+
+    const card3d = page.locator('[aria-label="Open Japan Island Jelly preview"]');
+    await card3d.waitFor({ state: "visible", timeout: 15000 });
+    await card3d.click();
+
+    let frame = null;
+    for (let i = 0; i < 40 && !frame; i++) {
+      frame = page.frames().find((f) => f.url().includes("/demos/japan-island"));
+      if (!frame) await page.waitForTimeout(250);
+    }
+    ok(!!frame, "3D preview frame attached", frame ? frame.url() : "no frame");
+
+    let canvasOk = false;
+    if (frame) {
+      try {
+        await frame.waitForSelector("canvas", { timeout: 15000 });
+        canvasOk = await frame.evaluate(() => {
+          const c = document.querySelector("canvas");
+          return !!c && c.width > 0 && c.height > 0;
+        });
+      } catch (e) { canvasOk = false; }
+    }
+    ok(canvasOk, "WebGL canvas in 3D preview (module loaded, not black)", canvasOk ? "" : "no canvas");
+
+    const modErrors = consoleErrors.filter((e) =>
+      /module|import|cross-origin|resource-policy|CORS|Failed to fetch|dynamically imported/i.test(e)
+    );
+    ok(modErrors.length === 0, "no module/CORS errors in 3D preview", modErrors.slice(0, 2).join(" | "));
   } finally {
     await browser.close();
   }
